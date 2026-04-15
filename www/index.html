@@ -4,75 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Up-Nepa Osun Elite</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: #0a0a0b; color: #fdfdfd; padding: 16px; padding-bottom: 80px; }
+        :root {
+            --primary: #bb86fc;
+            --success: #03dac6;
+            --danger: #cf6679;
+            --bg: #0a0a0b;
+            --card: #161618;
+            --text-dim: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #fdfdfd; padding: 16px; padding-bottom: 80px; }
         
-        /* Header & Counters */
-        .header-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .member-count { background: rgba(187, 134, 252, 0.1); color: #bb86fc; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid #bb86fc; }
-        .connection-status { font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 5px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .dot-online { background: #03dac6; box-shadow: 0 0 8px #03dac6; }
-        .dot-offline { background: #cf6679; }
+        /* Elite Header & Counters */
+        .app-header { margin-bottom: 20px; border-bottom: 1px solid #252528; padding-bottom: 15px; }
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .brand-tag { color: var(--primary); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+        .brand-name { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
+        
+        .member-count { background: rgba(187, 134, 252, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; border: 1px solid var(--primary); }
+        
+        .connection-status { font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--text-dim); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; transition: 0.3s; }
+        .dot-online { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        .dot-offline { background: var(--danger); }
 
         /* Ticker */
-        .news-container { background: #161618; border-radius: 12px; padding: 10px; display: flex; align-items: center; margin-bottom: 20px; border: 1px solid #333; overflow: hidden; }
-        .news-label { background: #03dac6; color: #000; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; flex-shrink: 0; }
+        .news-container { background: var(--card); border-radius: 14px; padding: 10px; display: flex; align-items: center; margin-bottom: 20px; border: 1px solid #333; overflow: hidden; }
+        .news-label { background: var(--success); color: #000; padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.65rem; flex-shrink: 0; }
         .ticker-wrapper { overflow: hidden; white-space: nowrap; flex-grow: 1; margin-left: 10px; }
-        .news-ticker { display: inline-block; animation: scroll 20s linear infinite; font-size: 0.85rem; color: #bb86fc; }
+        .news-ticker { display: inline-block; animation: scroll 20s linear infinite; font-size: 0.8rem; color: var(--primary); font-weight: 600; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
         /* General UI */
         .google-btn { width: 100%; padding: 16px; border-radius: 16px; background: #fff; color: #000; font-weight: 800; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
         .google-btn img { width: 20px; }
-        .card-section { background: #161618; padding: 20px; border-radius: 24px; border: 1px solid #333; margin-bottom: 25px; }
-        .section-title { color: #bb86fc; margin-bottom: 12px; font-weight: 800; }
+        .card-section { background: var(--card); padding: 20px; border-radius: 24px; border: 1px solid #333; margin-bottom: 25px; }
+        .section-title { color: var(--primary); margin-bottom: 12px; font-weight: 800; }
         .ui-input { width: 100%; padding: 14px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: white; border-radius: 12px; outline: none; }
 
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; position: sticky; top: 10px; z-index: 100; }
         .search-input { background: #252528; border: 2px solid #444; border-radius: 14px; padding: 12px; font-size: 0.9rem; color: #fff; width: 100%; outline: none; }
-        .town-dropdown { background: #bb86fc; color: #000; border: none; border-radius: 14px; padding: 12px; font-weight: 800; outline: none; }
+        .town-dropdown { background: var(--primary); color: #000; border: none; border-radius: 14px; padding: 12px; font-weight: 800; outline: none; }
 
         /* Cards */
-        .card { background: #161618; border: 1px solid #252528; border-radius: 28px; padding: 20px; margin-bottom: 20px; position: relative; }
-        .status-badge { padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; position: absolute; top: 20px; right: 20px; }
-        .light-on { background: #03dac6; color: #000; }
-        .light-off { background: #cf6679; color: #fff; }
+        .card { background: var(--card); border: 1px solid #252528; border-radius: 28px; padding: 20px; margin-bottom: 20px; position: relative; }
+        .status-badge { padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; position: absolute; top: 20px; right: 20px; text-transform: uppercase; }
+        .light-on { background: var(--success); color: #000; }
+        .light-off { background: var(--danger); color: #fff; }
         
         .chips-row { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .chip { background: #252528; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; color: #eee; border: 1px solid #333; cursor: pointer; white-space: nowrap; }
-        .chip.active { background: #bb86fc; color: #000; font-weight: 800; }
+        .chip.active { background: var(--primary); color: #000; font-weight: 800; }
+
+        .lucide { width: 16px; height: 16px; vertical-align: middle; margin-right: 4px; }
 
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-        .action-btn { padding: 15px; border-radius: 14px; border: 1px solid transparent; font-weight: 800; cursor: pointer; text-align: center; transition: 0.3s; }
+        .action-btn { padding: 15px; border-radius: 14px; border: 1px solid transparent; font-weight: 800; cursor: pointer; text-align: center; transition: 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .action-btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
-        .btn-restored { background: rgba(3, 218, 198, 0.1); color: #03dac6; border-color: #03dac6; }
-        .btn-outage { background: rgba(207, 102, 121, 0.1); color: #cf6679; border-color: #cf6679; }
-        .counter-text { display: block; font-size: 0.65rem; margin-top: 4px; opacity: 0.8; }
+        .btn-restored { background: rgba(3, 218, 198, 0.1); color: var(--success); border-color: var(--success); }
+        .btn-outage { background: rgba(207, 102, 121, 0.1); color: var(--danger); border-color: var(--danger); }
+        .counter-text { display: block; font-size: 0.65rem; margin-top: 4px; opacity: 0.8; font-weight: 400; }
 
-        .post-display { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 3px solid #bb86fc; font-size: 0.85rem; }
-        .user-tag { color: #bb86fc; font-weight: 800; font-size: 0.75rem; }
+        .post-display { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--primary); font-size: 0.85rem; }
+        .user-tag { color: var(--primary); font-weight: 800; font-size: 0.75rem; }
         .post-btn { width: 100%; background: #6200ee; color: white; padding: 16px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; }
 
         footer { text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid #222; }
-        .support-link { color: #bb86fc; font-weight: 800; text-decoration: none; margin: 0 10px; }
+        .support-link { color: var(--primary); font-weight: 800; text-decoration: none; margin: 0 10px; }
     </style>
 </head>
 <body>
 
-    <div class="header-meta">
-        <div>
-            <h1 style="font-size: 1.8rem;">Up-Nepa Osun</h1>
-            <div id="conn-ui" class="connection-status"><span class="dot dot-offline"></span> Offline</div>
+    <header class="app-header">
+        <div class="header-top">
+            <div>
+                <p class="brand-tag">Elite Edition</p>
+                <h1 class="brand-name">Up-Nepa <span style="color:var(--primary)">Osun</span></h1>
+                <div id="conn-ui" class="connection-status">
+                    <span class="dot dot-offline"></span> Offline
+                </div>
+            </div>
+            <div id="user-count-ui" class="member-count">0 MEMBERS</div>
         </div>
-        <div id="user-count-ui" class="member-count">0 Members</div>
-    </div>
+    </header>
 
     <div class="news-container">
-        <span class="news-label">🟢  ELITE</span>
+        <span class="news-label">ELITE</span>
         <div class="ticker-wrapper">
             <div class="news-ticker">Welcome to the Elite community. Real-time updates for Adeeke, Aiba, and more. Register to participate!</div>
         </div>
@@ -193,7 +215,9 @@
                 <div class="card">
                     <span class="status-badge ${isLightOn ? 'light-on' : 'light-off'}">${s.status || 'No Light'}</span>
                     <h2 style="font-size:1.6rem; font-weight:800;">${s.name}</h2>
-                    <p style="color:#666; font-size:0.75rem;">📍 ${s.town} • <span style="color:#bb86fc;">🕒 ${timeAgo(s.last_updated)}</span></p>
+                    <p style="color:var(--text-dim); font-size:0.75rem; margin-top:4px;">
+                        <i data-lucide="map-pin"></i> ${s.town} • <span style="color:var(--primary);">🕒 ${timeAgo(s.last_updated)}</span>
+                    </p>
                     
                     <div class="chips-row">
                         <div class="chip" onclick="applyChip(this, ${s.id}, '⛈️ Weather Issue')">⛈️ Weather</div>
@@ -203,10 +227,12 @@
 
                     <div class="btn-grid">
                         <button class="action-btn btn-restored" ${isLightOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'Light On', 'on_count')">
-                            🟢 Restored<span class="counter-text">Total: ${s.on_count || 0}</span>
+                            <div><i data-lucide="sun"></i> Restored</div>
+                            <span class="counter-text">Total: ${s.on_count || 0}</span>
                         </button>
                         <button class="action-btn btn-outage" ${!isLightOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'No Light', 'off_count')">
-                            🔴 Outage<span class="counter-text">Total: ${s.off_count || 0}</span>
+                            <div><i data-lucide="moon"></i> Outage</div>
+                            <span class="counter-text">Total: ${s.off_count || 0}</span>
                         </button>
                     </div>
 
@@ -219,6 +245,9 @@
                 </div>
                 `;
             }).join('');
+            
+            // Render the newly added Lucide icons
+            lucide.createIcons();
         }
 
         function applyChip(btn, id, text) {
@@ -261,5 +290,4 @@
         initApp();
     </script>
 </body>
-            </html>
-    
+</html>
