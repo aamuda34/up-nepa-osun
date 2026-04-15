@@ -7,9 +7,9 @@
     <title>Up-Nepa Osun</title>
     <meta name="description" content="Elite real-time electricity tracking for Osun.">
     
-    <link rel="manifest" href="manifest.json?v=1.3">
-    <link rel="icon" type="image/png" href="icon.png?v=1.3">
-    <link rel="apple-touch-icon" href="icon.png?v=1.3">
+    <link rel="manifest" href="manifest.json?v=1.4">
+    <link rel="icon" type="image/png" href="icon.png?v=1.4">
+    <link rel="apple-touch-icon" href="icon.png?v=1.4">
     
     <meta name="apple-mobile-web-app-title" content="Up-Nepa Osun">
     <meta name="application-name" content="Up-Nepa Osun">
@@ -33,7 +33,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: #fdfdfd; padding: 16px; padding-bottom: 80px; }
         
-        /* HEADER STYLING */
         .app-header { margin-bottom: 20px; border-bottom: 1px solid #252528; padding-bottom: 15px; }
         .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
         
@@ -56,7 +55,6 @@
         .news-ticker { display: inline-block; animation: scroll 20s linear infinite; font-size: 0.8rem; color: var(--primary); font-weight: 600; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
-        /* FIXED GOOGLE BUTTON & ICON SIZE */
         .google-btn { width: 100%; padding: 16px; border-radius: 16px; background: #fff; color: #000; font-weight: 800; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
         .google-btn img { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
 
@@ -299,7 +297,6 @@
                 if (Notification.permission !== 'granted') Notification.requestPermission();
             }
 
-            // Correctly Update Database Follower Count
             await _client.rpc(action === 'increment' ? 'increment_count' : 'decrement_count', { row_id: id, col_name: 'follower_count' });
 
             localStorage.setItem('followed_streets', JSON.stringify(followedStreets));
@@ -361,5 +358,4 @@
         initApp();
     </script>
 </body>
-    </html>
-    
+</html>
