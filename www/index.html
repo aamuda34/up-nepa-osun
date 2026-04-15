@@ -165,7 +165,7 @@
                 return;
             }
             if (step === 'verify') {
-                box.innerHTML = `<h3 class="section-title">Verify Code</h3><input type="text" id="verify-code" class="ui-input" placeholder="Enter Gmail Code"><button class="post-btn" onclick="completeVerification(this)">Complete</button>`;
+                box.innerHTML = `<h3 class="section-title">Verify Code</h3><input type="text" id="verify-code" class="ui-input" placeholder="Enter 6-Digit Code"><button class="post-btn" onclick="completeVerification(this)">Complete</button>`;
                 return;
             }
             const isSignup = authMode === 'signup';
@@ -186,6 +186,7 @@
             btn.disabled = true; btn.innerText = "Connecting...";
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-pass').value;
+            
             if (authMode === 'login') {
                 const { error } = await _client.auth.signInWithPassword({ email, password: pass });
                 if (error) { alert(error.message); btn.disabled = false; btn.innerText = "Sign In"; }
@@ -194,20 +195,30 @@
                 const name = document.getElementById('auth-name').value;
                 const user = document.getElementById('auth-user').value;
                 if(!name || !user) { alert("Include Name & Username"); btn.disabled = false; btn.innerText = "Create Account"; return; }
-                window.pendingData = { email, pass, name, user };
-                const { error } = await _client.auth.signInWithOtp({ email });
+                
+                window.pendingEmail = email; // Store email for verification
+                
+                // Fixed: Use signUp instead of signInWithOtp for registration
+                const { error } = await _client.auth.signUp({ 
+                    email, 
+                    password: pass,
+                    options: { data: { full_name: name, username: user, banned: false } }
+                });
+                
                 if (error) { alert(error.message); btn.disabled = false; btn.innerText = "Create Account"; }
                 else renderAuthUI('verify');
             }
         }
 
         async function completeVerification(btn) {
+            btn.disabled = true;
             const token = document.getElementById('verify-code').value;
             const { error } = await _client.auth.verifyOtp({ 
-                email: window.pendingData.email, token, type: 'signup',
-                options: { data: { full_name: window.pendingData.name, username: window.pendingData.user, banned: false } }
+                email: window.pendingEmail, 
+                token, 
+                type: 'signup' // Must match the signup method
             });
-            if (error) alert("Invalid code.");
+            if (error) { alert("Invalid code."); btn.disabled = false; }
             else location.reload();
         }
 
@@ -285,9 +296,7 @@
             }).join('');
         }
 
-        // --- UPDATED: Secure Apply Chip Function ---
         function applyChip(btn, id, text) {
-            // Check if user is logged in
             if (!currentUser) {
                 return alert("🔒 Log in to select an issue.");
             }
@@ -295,7 +304,6 @@
             const input = document.getElementById(`cmt-${id}`);
             if(input) {
                 input.value = text;
-                // Visual update for the chip
                 const row = btn.parentElement;
                 const chips = row.querySelectorAll('.chip');
                 chips.forEach(c => c.classList.remove('active'));
@@ -349,5 +357,4 @@
         initApp();
     </script>
 </body>
-    </html>
-    
+</html>
