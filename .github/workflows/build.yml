@@ -28,26 +28,27 @@ jobs:
 
       - name: Prepare Web Assets
         run: |
-          # Create the www directory that Capacitor expects
+          # Create the directory
           mkdir -p www
-          # Copy your HTML and Icon into it (don't move them, just copy)
-          cp index.html www/ 2>/dev/null || cp *.html www/
+          # List files to debug (visible in your GitHub logs)
+          ls -R
+          # Copy whatever html file exists to www/index.html
+          find . -maxdepth 1 -name "*.html" -exec cp {} www/index.html \;
+          # Copy icon if it exists
           cp icon.png www/ 2>/dev/null || true
 
       - name: Initialize and Add Android
         run: |
-          # 1. Initialize using 'www' as the web directory
+          # 1. Initialize using 'www'
           npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir www
 
-          # 2. Add and Sync the Android platform
+          # 2. Add and Sync
           npx cap add android
           npx cap sync android
           
-          # 3. Generate the launcher icons
+          # 3. Generate icons from the root icon.png
           if [ -f "icon.png" ]; then
             npx @capacitor/assets generate --android --assetPath .
-          else
-            echo "Warning: icon.png not found, skipping icon generation"
           fi
 
       - name: Build Android APK
