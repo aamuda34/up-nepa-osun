@@ -14,17 +14,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          # CRITICAL: Ensure there is NO 'cache: npm' line here.
-          # If that line exists, the build will fail because you don't have a lock file.
+          # CRITICAL: We have removed 'cache: npm' entirely. 
+          # This stops the "Dependencies lock file is not found" error.
 
-      - name: Debug - List Files
-        run: ls -R # This helps us see if package.json and the android folder are actually there
-
-      - name: Install Dependencies
+      - name: Force Install Dependencies
         run: |
-          # If package.json is missing, this will fail. 
-          # We use --no-package-lock to prevent the runner from looking for one.
-          npm install --legacy-peer-deps --no-package-lock --no-audit
+          # --no-package-lock: Tells npm not to look for or create a lock file
+          # --legacy-peer-deps: Fixes the ERESOLVE version conflict errors
+          npm install --legacy-peer-deps --no-package-lock
           npm install @capacitor/android @capacitor/core @capacitor/cli --legacy-peer-deps
 
       - name: Set up JDK 17
@@ -35,8 +32,8 @@ jobs:
 
       - name: Capacitor Sync
         run: |
+          # Ensure the web folder exists before syncing
           mkdir -p www
-          # Create a dummy index if one isn't found to prevent Capacitor sync failure
           if [ ! -f "www/index.html" ]; then echo "<html></html>" > www/index.html; fi
           
           npx cap add android || true
@@ -49,7 +46,7 @@ jobs:
             chmod +x gradlew
             ./gradlew assembleDebug
           else
-            echo "ERROR: Android folder not found. Capacitor Sync likely failed."
+            echo "Android folder missing - Capacitor Sync failed."
             exit 1
           fi
 
