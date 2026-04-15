@@ -35,6 +35,11 @@
         
         .app-header { margin-bottom: 20px; border-bottom: 1px solid #252528; padding-bottom: 15px; }
         .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        
+        /* LOGO STYLE */
+        .brand-logo { width: 52px; height: 52px; border-radius: 14px; border: 1.5px solid var(--primary); object-fit: cover; }
+        .brand-container { display: flex; gap: 12px; align-items: center; }
+
         .brand-tag { color: var(--primary); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
         .brand-name { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
         
@@ -93,11 +98,14 @@
 
     <header class="app-header">
         <div class="header-top">
-            <div>
-                <p class="brand-tag">Elite Edition</p>
-                <h1 class="brand-name">Up-Nepa <span style="color:var(--primary)">Osun Elite</span></h1>
-                <div id="conn-ui" class="connection-status">
-                    <span class="dot dot-offline"></span> Offline
+            <div class="brand-container">
+                <img src="icon.png" class="brand-logo" alt="Logo">
+                <div>
+                    <p class="brand-tag">Elite Edition</p>
+                    <h1 class="brand-name">Up-Nepa <span style="color:var(--primary)">Osun Elite</span></h1>
+                    <div id="conn-ui" class="connection-status">
+                        <span class="dot dot-offline"></span> Offline
+                    </div>
                 </div>
             </div>
             <div id="user-count-ui" class="member-count">0 MEMBERS</div>
@@ -336,4 +344,5 @@
         initApp();
     </script>
 </body>
-</html>
+    </html>
+    
