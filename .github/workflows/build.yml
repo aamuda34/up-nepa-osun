@@ -18,7 +18,7 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install --legacy-peer-deps
-          npm install @capacitor/assets --save-dev
+          npm install @capacitor/android @capacitor/assets @capacitor/core @capacitor/cli --save-dev
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -26,13 +26,19 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
-      - name: Capacitor Sync & Icon Generation
+      - name: Capacitor Setup & Icon Generation
         run: |
-          # Sync the project
+          # 1. Initialize Capacitor with your specific App Name and ID
+          npx cap init "Up-Nepa Osun Elite" "com.aamuda.app" --web-dir www
+
+          # 2. Add the Android platform (this fixes the 'platform not added' error)
+          npx cap add android
+
+          # 3. Sync everything
           npx cap sync android
           
-          # This converts your logo into the various Android icon sizes
-          # Ensure icon.png is inside your 'www' folder as shown in your GitHub screenshot
+          # 4. Generate the purple lightning icons from your icon.png
+          # Ensure your icon is saved as 'www/icon.png'
           npx @capacitor/assets generate --android --iconSource www/icon.png
 
       - name: Build Android APK
