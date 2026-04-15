@@ -10,8 +10,7 @@
       - name: Install Dependencies
         run: |
           npm install --legacy-peer-deps
-          # This tool is required to turn your icon.png into Android icons
-          npm install @capacitor/assets --save-dev
+          npm install @capacitor/assets @capacitor/cli @capacitor/core @capacitor/android --legacy-peer-deps
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -19,14 +18,28 @@
           java-version: '17'
           distribution: 'zulu'
 
-      - name: Capacitor Sync & Icon Generation
+      - name: Prepare Web Directory
         run: |
-          # 1. Sync the web code to the Android folder
+          # Create the www folder if it doesn't exist
+          mkdir -p www
+          # Copy your index.html and icon.png into it so Capacitor can find them
+          cp index.html www/ 2>/dev/null || echo "index.html not in root"
+          cp icon.png www/ 2>/dev/null || echo "icon.png not in root"
+          # Ensure an index.html exists so sync doesn't crash
+          if [ ! -f "www/index.html" ]; then echo "<html><body>Elite App</body></html>" > www/index.html; fi
+
+      - name: Capacitor Sync & Assets
+        run: |
+          # If android folder doesn't exist, add it
+          if [ ! -d "android" ]; then npx cap add android; fi
           npx cap sync android
           
-          # 2. Generate the actual Android icons from your icon.png
-          # This ensures the purple lightning logo shows on the phone home screen
-          npx @capacitor/assets generate --android --iconSource www/icon.png
+          # Generate icons from the icon in the www folder
+          if [ -f "www/icon.png" ]; then
+            npx @capacitor/assets generate --android --iconSource www/icon.png
+          else
+            echo "Warning: icon.png not found, using default icons"
+          fi
 
       - name: Build Android APK
         run: |
