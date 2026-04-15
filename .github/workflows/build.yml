@@ -18,7 +18,10 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install
-          npx cap add android
+          npx cap add android || echo "Android already exists"
+
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Build APK
         run: |
