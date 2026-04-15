@@ -7,9 +7,9 @@
     <title>Up-Nepa Osun Elite</title>
     <meta name="description" content="Elite real-time electricity tracking for Osun.">
     
-    <link rel="manifest" href="/manifest.json?v=1.3">
-    <link rel="icon" type="image/png" href="/icon.png?v=1.3">
-    <link rel="apple-touch-icon" href="/icon.png?v=1.3">
+    <link rel="manifest" href="manifest.json?v=1.3">
+    <link rel="icon" type="image/png" href="icon.png?v=1.3">
+    <link rel="apple-touch-icon" href="icon.png?v=1.3">
     
     <meta name="apple-mobile-web-app-title" content="Up-Nepa Elite">
     <meta name="application-name" content="Up-Nepa Osun Elite">
@@ -285,7 +285,7 @@
             if (Notification.permission === 'granted') {
                 new Notification("Up-Nepa Elite Alert", {
                     body: `Status Update for ${streetName}: ${status}`,
-                    icon: "/icon.png"
+                    icon: "icon.png" // FIXED: Removed leading slash here
                 });
             }
         }
@@ -336,5 +336,5 @@
         initApp();
     </script>
 </body>
-    </html>
-            
+                </html>
+    
