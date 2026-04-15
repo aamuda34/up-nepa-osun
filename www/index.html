@@ -44,6 +44,8 @@
         .light-on { background: #03dac6; color: #000; }
         .light-off { background: #cf6679; color: #fff; }
         
+        .count-stats { display: flex; gap: 12px; margin-top: 5px; font-size: 0.75rem; font-weight: 800; }
+
         .chips-row { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .chip { background: #252528; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; color: #eee; border: 1px solid #333; cursor: pointer; white-space: nowrap; transition: 0.2s; }
         .chip.active { background: #bb86fc; color: #000; font-weight: 800; border-color: #bb86fc; }
@@ -104,7 +106,14 @@
     </footer>
 
     <script>
-        // --- SAFE LIVE INDICATOR SCRIPT ---
+        function showToast(msg) {
+            const t = document.getElementById('notif-toast');
+            if(!t) return;
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
         function updateConnectivity() {
             const label = document.getElementById('live-indicator');
             if (!label) return;
@@ -120,7 +129,6 @@
         window.addEventListener('offline', updateConnectivity);
         updateConnectivity();
 
-        // --- SUPABASE LOGIC ---
         const S_URL = 'https://tzsumiudcqxpyphhjymu.supabase.co';
         const S_KEY = 'sb_publishable_S2TrD434ZYpkkx7gU2wiiw_QrgOr0AV'; 
         const _client = supabase.createClient(S_URL, S_KEY);
@@ -195,16 +203,12 @@
                 const name = document.getElementById('auth-name').value;
                 const user = document.getElementById('auth-user').value;
                 if(!name || !user) { alert("Include Name & Username"); btn.disabled = false; btn.innerText = "Create Account"; return; }
-                
-                window.pendingEmail = email; // Store email for verification
-                
-                // Fixed: Use signUp instead of signInWithOtp for registration
+                window.pendingEmail = email; 
                 const { error } = await _client.auth.signUp({ 
                     email, 
                     password: pass,
                     options: { data: { full_name: name, username: user, banned: false } }
                 });
-                
                 if (error) { alert(error.message); btn.disabled = false; btn.innerText = "Create Account"; }
                 else renderAuthUI('verify');
             }
@@ -213,11 +217,7 @@
         async function completeVerification(btn) {
             btn.disabled = true;
             const token = document.getElementById('verify-code').value;
-            const { error } = await _client.auth.verifyOtp({ 
-                email: window.pendingEmail, 
-                token, 
-                type: 'signup' // Must match the signup method
-            });
+            const { error } = await _client.auth.verifyOtp({ email: window.pendingEmail, token, type: 'signup' });
             if (error) { alert("Invalid code."); btn.disabled = false; }
             else location.reload();
         }
@@ -237,8 +237,7 @@
             townSelect.innerHTML = '<option value="all">All Towns</option>';
             towns.forEach(t => {
                 const opt = document.createElement('option');
-                opt.value = t;
-                opt.innerText = t;
+                opt.value = t; opt.innerText = t;
                 townSelect.appendChild(opt);
             });
         }
@@ -248,8 +247,7 @@
             const streetQuery = document.getElementById('search-bar').value.toLowerCase();
             const filtered = allStreets.filter(s => {
                 const matchesTown = selectedTown === 'all' || s.town === selectedTown;
-                const matchesStreet = s.name.toLowerCase().includes(streetQuery);
-                return matchesTown && matchesStreet;
+                return matchesTown && s.name.toLowerCase().includes(streetQuery);
             });
             renderStreets(filtered);
         }
@@ -268,6 +266,11 @@
                     <h2 style="font-size:1.6rem; font-weight:800;">${s.name}</h2>
                     <p style="color:#666; font-size:0.75rem;">📍 ${s.town} • <span style="color:#bb86fc;">🕒 ${timeAgo(s.last_updated)}</span></p>
                     
+                    <div class="count-stats">
+                        <span style="color:#03dac6;">🟢 Restored: ${s.on_count || 0}</span>
+                        <span style="color:#cf6679;">🔴 Outages: ${s.off_count || 0}</span>
+                    </div>
+
                     <div class="chips-row">
                         <div class="chip" onclick="applyChip(this, ${s.id}, '⛈️ Weather Issue')">⛈️ Weather Issue</div>
                         <div class="chip" onclick="applyChip(this, ${s.id}, '⚡ Low Voltage')">⚡ Low Voltage</div>
@@ -276,13 +279,13 @@
                     </div>
 
                     <div class="follow-container">
-                        <div class="follow-btn ${isFollowing ? 'is-following' : ''}" onclick="toggleFollow(${s.id})">${isFollowing ? '⭐ FOLLOWING' : '☆ FOLLOW'}</div>
+                        <div class="follow-btn ${isFollowing ? 'is-following' : ''}" onclick="toggleFollow(${s.id}, '${s.name}')">${isFollowing ? '⭐ FOLLOWING' : '☆ FOLLOW'}</div>
                         <div class="follower-count">👥 ${s.confirmations || 0} Followers</div>
                     </div>
 
                     <div class="btn-grid">
-                        <button class="action-btn btn-restored" onclick="updateStatus(${s.id}, 'Light On', 'on_count', '${s.status}', this)">🟢 Restored</button>
-                        <button class="action-btn btn-outage" onclick="updateStatus(${s.id}, 'No Light', 'off_count', '${s.status}', this)">🔴 Outage</button>
+                        <button class="action-btn btn-restored" onclick="updateStatus(${s.id}, 'Light On', 'on_count', '${s.status}', this, '${s.name}')">🟢 Restored</button>
+                        <button class="action-btn btn-outage" onclick="updateStatus(${s.id}, 'No Light', 'off_count', '${s.status}', this, '${s.name}')">🔴 Outage</button>
                     </div>
 
                     <div id="posts-${s.id}">
@@ -291,32 +294,28 @@
 
                     <textarea id="cmt-${s.id}" class="ui-input" style="height:60px; margin-top:10px;" placeholder="Add detail..." maxlength="150"></textarea>
                     <button class="post-btn" onclick="addComment(${s.id}, this)">Post Update</button>
-                </div>
-                `;
+                </div>`;
             }).join('');
         }
 
         function applyChip(btn, id, text) {
-            if (!currentUser) {
-                return alert("🔒 Log in to select an issue.");
-            }
-
+            if (!currentUser) return alert("🔒 Log in to select an issue.");
             const input = document.getElementById(`cmt-${id}`);
             if(input) {
                 input.value = text;
-                const row = btn.parentElement;
-                const chips = row.querySelectorAll('.chip');
+                const chips = btn.parentElement.querySelectorAll('.chip');
                 chips.forEach(c => c.classList.remove('active'));
                 btn.classList.add('active');
             }
         }
 
-        async function updateStatus(id, status, col, current, btn) {
+        async function updateStatus(id, status, col, current, btn, streetName) {
             if (!currentUser) return alert("🔒 Log in to update status.");
             if (status === current) return;
             btn.disabled = true;
             await _client.from('areas').update({ status: status, last_updated: new Date().toISOString() }).eq('id', id);
             await _client.rpc('increment_count', { row_id: id, col_name: col });
+            if(followedIds.includes(id)) showToast(`Update: ${streetName} is now ${status}!`);
             loadApp();
         }
 
@@ -329,15 +328,17 @@
             loadApp();
         }
 
-        async function toggleFollow(id) {
+        async function toggleFollow(id, streetName) {
             if (!currentUser) return alert("🔒 Log in to follow.");
             const isFollowing = followedIds.includes(id);
             if (isFollowing) {
                 followedIds = followedIds.filter(i => i !== id);
                 await _client.rpc('toggle_follow', { row_id: id, is_following: false });
+                showToast(`Unfollowed ${streetName}`);
             } else {
                 followedIds.push(id);
                 await _client.rpc('toggle_follow', { row_id: id, is_following: true });
+                showToast(`Following ${streetName}! Notification Active.`);
             }
             localStorage.setItem('my_follows', JSON.stringify(followedIds));
             loadApp();
@@ -346,15 +347,4 @@
         async function handleSuggestion(btn) {
             if (!currentUser) return alert("🔒 Log in to suggest.");
             const name = document.getElementById('sug-name').value;
-            const town = document.getElementById('sug-town').value;
-            if(!name || !town) return;
-            btn.disabled = true;
-            await _client.from('areas').insert([{ name, town, approved: false }]);
-            alert("Suggested!");
-            btn.disabled = false;
-        }
-
-        initApp();
-    </script>
-</body>
-</html>
+           
