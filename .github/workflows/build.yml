@@ -28,18 +28,18 @@ jobs:
 
       - name: Initialize and Add Android
         run: |
-          # 1. Initialize the project with your Elite name
-          npx cap init "Up-Nepa Osun Elite" "com.aamuda.app" --web-dir www
+          # 1. Initialize with the updated Unique Name and App Name
+          npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir .
 
           # 2. Add and Sync the Android platform
           npx cap add android
           npx cap sync android
           
-          # 3. Generate the launcher icons (The Purple Lightning)
-          if [ -f "www/icon.png" ]; then
-            npx @capacitor/assets generate --android --assetPath www
+          # 3. Generate the launcher icons
+          if [ -f "icon.png" ]; then
+            npx @capacitor/assets generate --android --assetPath .
           else
-            echo "Error: www/icon.png not found!"
+            echo "Error: icon.png not found!"
             exit 1
           fi
 
@@ -53,5 +53,6 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-Elite-Debug
+          name: Up-Nepa-Osun-Debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
