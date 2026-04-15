@@ -17,7 +17,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Use --no-package-lock because your repo is missing the lock file
+          # Use --no-package-lock because your repo is missing the file
           npm install --no-package-lock 
           npm install @capacitor/android @capacitor/core @capacitor/cli
 
@@ -49,3 +49,4 @@ jobs:
         with:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
