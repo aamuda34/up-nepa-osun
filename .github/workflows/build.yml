@@ -13,17 +13,20 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '22' # Prevents Node 20 deprecation failures
 
       - name: Install Dependencies
         run: |
-          npm install --legacy-peer-deps
+          # --legacy-peer-deps fixes the ERESOLVE error seen in your logs
+          # --no-package-lock prevents the 254 error when the lock file is missing
+          npm install --legacy-peer-deps --no-package-lock
           npm install @capacitor/android @capacitor/core @capacitor/cli --legacy-peer-deps
 
-      - name: Create Build Assets
+      - name: Create Web Assets
         run: |
+          # Capacitor requires a www folder to sync successfully
           mkdir -p www
-          cp index.html www/index.html || true 
+          cp index.html www/index.html || true
           npm run build --if-present
 
       - name: Set up JDK 17
