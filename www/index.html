@@ -10,17 +10,22 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: #0a0a0b; color: #fdfdfd; padding: 16px; padding-bottom: 80px; }
         
-        #notif-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #bb86fc; color: #000; padding: 14px 20px; border-radius: 12px; font-weight: 800; z-index: 10000; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 90%; text-align: center; border: 2px solid #fff; }
-
+        /* Header & Counters */
         .header-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .member-count { background: rgba(187, 134, 252, 0.1); color: #bb86fc; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid #bb86fc; }
+        .connection-status { font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 5px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot-online { background: #03dac6; box-shadow: 0 0 8px #03dac6; }
+        .dot-offline { background: #cf6679; }
 
+        /* Ticker */
         .news-container { background: #161618; border-radius: 12px; padding: 10px; display: flex; align-items: center; margin-bottom: 20px; border: 1px solid #333; overflow: hidden; }
         .news-label { background: #03dac6; color: #000; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; flex-shrink: 0; }
         .ticker-wrapper { overflow: hidden; white-space: nowrap; flex-grow: 1; margin-left: 10px; }
         .news-ticker { display: inline-block; animation: scroll 20s linear infinite; font-size: 0.85rem; color: #bb86fc; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
+        /* General UI */
         .google-btn { width: 100%; padding: 16px; border-radius: 16px; background: #fff; color: #000; font-weight: 800; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
         .google-btn img { width: 20px; }
         .card-section { background: #161618; padding: 20px; border-radius: 24px; border: 1px solid #333; margin-bottom: 25px; }
@@ -31,48 +36,45 @@
         .search-input { background: #252528; border: 2px solid #444; border-radius: 14px; padding: 12px; font-size: 0.9rem; color: #fff; width: 100%; outline: none; }
         .town-dropdown { background: #bb86fc; color: #000; border: none; border-radius: 14px; padding: 12px; font-weight: 800; outline: none; }
 
+        /* Cards */
         .card { background: #161618; border: 1px solid #252528; border-radius: 28px; padding: 20px; margin-bottom: 20px; position: relative; }
         .status-badge { padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; position: absolute; top: 20px; right: 20px; }
         .light-on { background: #03dac6; color: #000; }
         .light-off { background: #cf6679; color: #fff; }
         
-        /* CHIPS */
         .chips-row { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .chip { background: #252528; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; color: #eee; border: 1px solid #333; cursor: pointer; white-space: nowrap; }
         .chip.active { background: #bb86fc; color: #000; font-weight: 800; }
 
-        .follow-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #252528; padding-bottom: 15px; }
-        .follow-btn { flex-grow: 1; padding: 10px; border-radius: 12px; background: #252528; border: 1px solid #444; color: #fff; font-weight: 800; margin-right: 10px; }
-        .is-following { background: #bb86fc; color: #000; }
-
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-        .action-btn { padding: 15px; border-radius: 14px; border: 1px solid transparent; font-weight: 800; cursor: pointer; text-align: center; }
+        .action-btn { padding: 15px; border-radius: 14px; border: 1px solid transparent; font-weight: 800; cursor: pointer; text-align: center; transition: 0.3s; }
+        .action-btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
         .btn-restored { background: rgba(3, 218, 198, 0.1); color: #03dac6; border-color: #03dac6; }
         .btn-outage { background: rgba(207, 102, 121, 0.1); color: #cf6679; border-color: #cf6679; }
         .counter-text { display: block; font-size: 0.65rem; margin-top: 4px; opacity: 0.8; }
 
-        /* COMMENTS */
         .post-display { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 3px solid #bb86fc; font-size: 0.85rem; }
         .user-tag { color: #bb86fc; font-weight: 800; font-size: 0.75rem; }
         .post-btn { width: 100%; background: #6200ee; color: white; padding: 16px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; }
 
-        .footer-support { text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid #222; }
+        footer { text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid #222; }
         .support-link { color: #bb86fc; font-weight: 800; text-decoration: none; margin: 0 10px; }
     </style>
 </head>
 <body>
 
-    <div id="notif-toast"></div>
-
     <div class="header-meta">
-        <h1 style="font-size: 1.8rem;">Up-Nepa Osun</h1>
+        <div>
+            <h1 style="font-size: 1.8rem;">Up-Nepa Osun</h1>
+            <div id="conn-ui" class="connection-status"><span class="dot dot-offline"></span> Offline</div>
+        </div>
         <div id="user-count-ui" class="member-count">0 Members</div>
     </div>
 
     <div class="news-container">
-        <span class="news-label">🟢  LIVE</span>
+        <span class="news-label">🟢  ELITE</span>
         <div class="ticker-wrapper">
-            <div class="news-ticker">Elite members keep the community updated. Only registered users can post updates. Support: WhatsApp/Gmail.</div>
+            <div class="news-ticker">Welcome to the Elite community. Real-time updates for Adeeke, Aiba, and more. Register to participate!</div>
         </div>
     </div>
 
@@ -83,13 +85,6 @@
         </button>
     </div>
 
-    <div class="card-section">
-        <h3 class="section-title">📍 Suggest New Street</h3>
-        <input type="text" id="sug-name" class="ui-input" placeholder="Street Name">
-        <input type="text" id="sug-town" class="ui-input" placeholder="Town">
-        <button class="post-btn" style="background:#03dac6; color:#000;" onclick="handleSuggestion(this)">Submit Street</button>
-    </div>
-
     <div class="filter-grid">
         <select id="town-select" class="town-dropdown" onchange="filterStreets()"><option value="all">All Towns</option></select>
         <input type="text" id="search-bar" class="search-input" placeholder="🔍 Find Street..." oninput="filterStreets()">
@@ -98,9 +93,7 @@
     <main id="street-container"></main>
 
     <footer class="footer-support">
-        <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">For support and enquiries:</p>
-        <a href="https://wa.me/2348062516110" target="_blank" class="support-link">WhatsApp</a>
-        <a href="mailto:aamuda34@gmail.com" class="support-link">Gmail</a>
+        <a href="https://wa.me/2348062516110" target="_blank" class="support-link">WhatsApp Support</a>
     </footer>
 
     <script>
@@ -109,7 +102,6 @@
         const _client = supabase.createClient(S_URL, S_KEY);
 
         let allStreets = [];
-        let followedIds = JSON.parse(localStorage.getItem('my_follows') || '[]');
         let currentUser = null;
 
         function timeAgo(dateString) {
@@ -117,29 +109,53 @@
             const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
             if (seconds < 60) return "Just now";
             const mins = Math.floor(seconds / 60);
-            if (mins < 60) return mins + " mins ago";
-            return Math.floor(mins / 60) + " hrs ago";
+            if (mins < 60) return mins + "m ago";
+            return Math.floor(mins / 60) + "h ago";
         }
 
         async function initApp() {
             const { data: { session } } = await _client.auth.getSession();
             currentUser = session?.user || null;
+            
             if (currentUser) {
-                document.getElementById('auth-box').innerHTML = `
-                    <p style="text-align:center; color:#bb86fc; font-weight:800;">Elite: ${currentUser.email}</p>
-                    <button class="post-btn" style="background:#cf6679; margin-top:10px; padding:8px;" onclick="_client.auth.signOut().then(()=>location.reload())">Sign Out</button>
-                `;
+                updateAuthUI();
+                await syncUserRecord();
             }
-            loadApp();
+            
+            loadData();
             subscribeToUpdates();
+            updateMemberCount();
         }
 
         async function loginGoogle() {
-            const { error } = await _client.auth.signInWithOAuth({ provider: 'google' });
+            const { error } = await _client.auth.signInWithOAuth({ 
+                provider: 'google',
+                options: { redirectTo: window.location.origin }
+            });
             if (error) alert(error.message);
         }
 
-        async function loadApp() {
+        async function syncUserRecord() {
+            // This increments members only once per unique user
+            const { data } = await _client.from('members').select('id').eq('email', currentUser.email).single();
+            if (!data) {
+                await _client.from('members').insert([{ email: currentUser.email }]);
+            }
+        }
+
+        async function updateMemberCount() {
+            const { count } = await _client.from('members').select('*', { count: 'exact', head: true });
+            document.getElementById('user-count-ui').innerText = `${count || 0} Members`;
+        }
+
+        function updateAuthUI() {
+            document.getElementById('auth-box').innerHTML = `
+                <p style="text-align:center; color:#bb86fc; font-weight:800; margin-bottom:10px;">Elite Account: ${currentUser.email.split('@')[0]}</p>
+                <button class="post-btn" style="background:#cf6679; padding:10px;" onclick="_client.auth.signOut().then(()=>location.reload())">Sign Out</button>
+            `;
+        }
+
+        async function loadData() {
             const { data, error } = await _client.from('areas').select('*, comments(*)').eq('approved', true).order('name');
             if (!error) { 
                 allStreets = data; 
@@ -169,11 +185,13 @@
         function renderStreets(data) {
             const container = document.getElementById('street-container');
             container.innerHTML = data.map(s => {
-                const isFollowing = followedIds.includes(s.id);
                 const comments = (s.comments || []).slice(-2).reverse();
+                // Logic: Disable Restored if Light is already ON. Disable Outage if Light is already OFF.
+                const isLightOn = s.status === 'Light On';
+                
                 return `
                 <div class="card">
-                    <span class="status-badge ${s.status === 'Light On' ? 'light-on' : 'light-off'}">${s.status || 'No Light'}</span>
+                    <span class="status-badge ${isLightOn ? 'light-on' : 'light-off'}">${s.status || 'No Light'}</span>
                     <h2 style="font-size:1.6rem; font-weight:800;">${s.name}</h2>
                     <p style="color:#666; font-size:0.75rem;">📍 ${s.town} • <span style="color:#bb86fc;">🕒 ${timeAgo(s.last_updated)}</span></p>
                     
@@ -183,16 +201,13 @@
                         <div class="chip" onclick="applyChip(this, ${s.id}, '🛠️ Maintenance')">🛠️ Maintenance</div>
                     </div>
 
-                    <div class="follow-container">
-                        <button class="follow-btn ${isFollowing ? 'is-following' : ''}" onclick="toggleFollow(${s.id}, '${s.name}')">
-                            ${isFollowing ? '⭐ FOLLOWING' : '☆ FOLLOW'}
-                        </button>
-                        <span style="font-size:0.75rem; color:#bb86fc; font-weight:800;">👥 ${s.confirmations || 0} Followers</span>
-                    </div>
-
                     <div class="btn-grid">
-                        <button class="action-btn btn-restored" onclick="updateStatus(${s.id}, 'Light On', 'on_count')">🟢 Restored<span class="counter-text">Total: ${s.on_count || 0}</span></button>
-                        <button class="action-btn btn-outage" onclick="updateStatus(${s.id}, 'No Light', 'off_count')">🔴 Outage<span class="counter-text">Total: ${s.off_count || 0}</span></button>
+                        <button class="action-btn btn-restored" ${isLightOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'Light On', 'on_count')">
+                            🟢 Restored<span class="counter-text">Total: ${s.on_count || 0}</span>
+                        </button>
+                        <button class="action-btn btn-outage" ${!isLightOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'No Light', 'off_count')">
+                            🔴 Outage<span class="counter-text">Total: ${s.off_count || 0}</span>
+                        </button>
                     </div>
 
                     <div id="posts-${s.id}">
@@ -208,17 +223,16 @@
 
         function applyChip(btn, id, text) {
             if (!currentUser) return alert("🔒 Login required.");
-            const input = document.getElementById(`cmt-${id}`);
-            input.value = text;
+            document.getElementById(`cmt-${id}`).value = text;
             btn.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
         }
 
         async function updateStatus(id, status, col) {
-            if (!currentUser) return alert("🔒 Login with Google required.");
+            if (!currentUser) return alert("🔒 Login required.");
             await _client.from('areas').update({ status, last_updated: new Date().toISOString() }).eq('id', id);
             await _client.rpc('increment_count', { row_id: id, col_name: col });
-            loadApp();
+            loadData();
         }
 
         async function addComment(id, btn) {
@@ -227,33 +241,25 @@
             if(!val) return;
             btn.disabled = true;
             await _client.from('comments').insert([{ area_id: id, content: val, username: currentUser.email.split('@')[0] }]);
-            loadApp();
-        }
-
-        async function toggleFollow(id, name) {
-            if (!currentUser) return alert("🔒 Login required.");
-            const isFollowing = followedIds.includes(id);
-            followedIds = isFollowing ? followedIds.filter(i => i !== id) : [...followedIds, id];
-            await _client.rpc('toggle_follow', { row_id: id, is_following: !isFollowing });
-            localStorage.setItem('my_follows', JSON.stringify(followedIds));
-            loadApp();
-        }
-
-        async function handleSuggestion(btn) {
-            if (!currentUser) return alert("🔒 Login required.");
-            const name = document.getElementById('sug-name').value;
-            const town = document.getElementById('sug-town').value;
-            if(!name || !town) return;
-            await _client.from('areas').insert([{ name, town, approved: false }]);
-            alert("Sent!");
-            loadApp();
+            loadData();
         }
 
         function subscribeToUpdates() {
-            _client.channel('updates').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'areas' }, () => loadApp()).subscribe();
+            const channel = _client.channel('db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, () => loadData())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => updateMemberCount())
+                .subscribe((status) => {
+                    const icon = document.getElementById('conn-ui');
+                    if (status === 'SUBSCRIBED') {
+                        icon.innerHTML = '<span class="dot dot-online"></span> Live';
+                    } else {
+                        icon.innerHTML = '<span class="dot dot-offline"></span> Reconnecting...';
+                    }
+                });
         }
 
         initApp();
     </script>
 </body>
-</html>
+            </html>
+    
