@@ -3,10 +3,6 @@ on:
   push:
     branches: [ "main" ]
 
-# Force the runner to use Node 24 as suggested by the GitHub warning
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,21 +14,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          # Note: No 'cache' line here. This prevents the "Lock file not found" error.
+          # CRITICAL: Ensure there is NO 'cache: npm' line here.
+          # If that line exists, the build will fail because you don't have a lock file.
+
+      - name: Debug - List Files
+        run: ls -R # This helps us see if package.json and the android folder are actually there
 
       - name: Install Dependencies
         run: |
-          # Clean install without checking for a lock file
-          npm install --legacy-peer-deps --no-package-lock
+          # If package.json is missing, this will fail. 
+          # We use --no-package-lock to prevent the runner from looking for one.
+          npm install --legacy-peer-deps --no-package-lock --no-audit
           npm install @capacitor/android @capacitor/core @capacitor/cli --legacy-peer-deps
-
-      - name: Create Required Folders
-        run: |
-          # Capacitor will fail if these aren't ready
-          mkdir -p www
-          if [ ! -f "www/index.html" ]; then
-            echo "<html><body>Fallback</body></html>" > www/index.html
-          fi
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -42,19 +35,21 @@ jobs:
 
       - name: Capacitor Sync
         run: |
-          # Force add and sync even if folders already exist
+          mkdir -p www
+          # Create a dummy index if one isn't found to prevent Capacitor sync failure
+          if [ ! -f "www/index.html" ]; then echo "<html></html>" > www/index.html; fi
+          
           npx cap add android || true
           npx cap sync android
 
       - name: Build Android APK
         run: |
-          # Ensure gradlew is executable before running
           if [ -d "android" ]; then
             cd android
             chmod +x gradlew
             ./gradlew assembleDebug
           else
-            echo "Android folder not found. Check if Capacitor Sync worked."
+            echo "ERROR: Android folder not found. Capacitor Sync likely failed."
             exit 1
           fi
 
