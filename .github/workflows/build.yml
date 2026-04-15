@@ -28,37 +28,35 @@ jobs:
 
       - name: Prepare Web Assets
         run: |
-          # 1. Create the 'www' folder Capacitor requires
           mkdir -p www
-          # 2. Copy your HTML and precious icon into it
-          cp index.html www/ 2>/dev/null || cp *.html www/ 2>/dev/null || true
-          cp icon.png www/ 2>/dev/null || cp icon.png . 2>/dev/null || true
+          find . -maxdepth 1 -name "*.html" -exec cp {} www/ \;
+          cp icon.png www/ 2>/dev/null || true
 
-      - name: Initialize and Add Android
+      - name: Initialize and Force Name
         run: |
-          # 1. Force initialize with your Unique Name
-          npx cap init "Up-Nepa Osun Elite" "com.aamuda.upnepa.osun" --web-dir www
+          # 1. Initialize with the Precious Name and Unique ID
+          npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir www
 
-          # 2. Add and Sync the Android platform
+          # 2. Add the platform
           npx cap add android
           
-          # 3. Generate your precious Purple Lightning icon
+          # 3. Apply your Purple Lightning icon
           if [ -f "icon.png" ]; then
             npx @capacitor/assets generate --android --assetPath .
           fi
 
-          # 4. FORCE the App Name into the Android manifest and strings
-          # This ensures it says "Up-Nepa Osun Elite" on your home screen
-          sed -i 's/app_name">.*</app_name">Up-Nepa Osun Elite</g' android/app/src/main/res/values/strings.xml
+          # 4. THE POWER RENAME: Force name into the Manifest AND the Strings
+          # This replaces "Capacitor" or "app-debug" with "Up-Nepa Osun" everywhere
+          sed -i 's/android:label=".*"/android:label="Up-Nepa Osun"/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/app_name">.*</app_name">Up-Nepa Osun</g' android/app/src/main/res/values/strings.xml
           
-          # 5. Final sync to lock everything in
+          # 5. Sync it all
           npx cap sync android
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          # Force Gradle to use Java 21 to match the source release
           ./gradlew assembleDebug -Dorg.gradle.java.home=$JAVA_HOME_21_X64
 
       - name: Upload APK Artifact
