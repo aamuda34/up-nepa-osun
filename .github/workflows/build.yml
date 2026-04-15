@@ -28,33 +28,31 @@ jobs:
 
       - name: Prepare Web Assets
         run: |
-          # Create the directory
           mkdir -p www
-          # List files to debug (visible in your GitHub logs)
-          ls -R
-          # Copy whatever html file exists to www/index.html
-          find . -maxdepth 1 -name "*.html" -exec cp {} www/index.html \;
-          # Copy icon if it exists
+          cp index.html www/ 2>/dev/null || cp *.html www/
           cp icon.png www/ 2>/dev/null || true
 
       - name: Initialize and Add Android
         run: |
-          # 1. Initialize using 'www'
+          # 1. Force the new unique name during initialization
           npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir www
 
-          # 2. Add and Sync
+          # 2. Add the platform
           npx cap add android
-          npx cap sync android
           
-          # 3. Generate icons from the root icon.png
+          # 3. Generate icons using the correct current syntax
           if [ -f "icon.png" ]; then
-            npx @capacitor/assets generate --android --assetPath .
+            npx @capacitor/assets generate --android
           fi
+          
+          # 4. Critical: Sync ensures the unique name is written to AndroidManifest.xml
+          npx cap sync android
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
+          # Ensure Gradle uses Java 21 to match your source release
           ./gradlew assembleDebug -Dorg.gradle.java.home=$JAVA_HOME_21_X64
 
       - name: Upload APK Artifact
