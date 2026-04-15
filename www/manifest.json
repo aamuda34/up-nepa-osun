@@ -1,12 +1,11 @@
 {
+  "short_name": "Up-Nepa Elite",
   "name": "Up-Nepa Osun Elite",
-  "short_name": "Elite Ripple",
   "icons": [
     {
       "src": "/icon.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icon.png",
@@ -15,7 +14,8 @@
     }
   ],
   "start_url": "/",
-  "display": "standalone",
   "background_color": "#0a0a0b",
-  "theme_color": "#bb86fc"
+  "display": "standalone",
+  "theme_color": "#0a0a0b",
+  "description": "Elite real-time electricity tracking for Osun."
 }
