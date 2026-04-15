@@ -28,35 +28,34 @@ jobs:
 
       - name: Prepare Web Assets
         run: |
-          # Create the directory Capacitor requires
+          # Create the folder Capacitor expects
           mkdir -p www
-          # Search for any .html files and copy them to www
-          # If index.html exists, it becomes the primary entry point
+          # Find and copy your HTML and your precious icon into that folder
           find . -maxdepth 1 -name "*.html" -exec cp {} www/ \;
-          # Ensure an icon exists for the build process
-          cp icon.png www/ 2>/dev/null || touch www/icon.png
+          cp icon.png www/ 2>/dev/null || cp icon.png . 2>/dev/null || true
 
       - name: Initialize and Add Android
         run: |
-          # 1. Initialize with the unique package name
+          # 1. Force the Unique Name 'com.aamuda.upnepa.osun'
           npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir www
 
           # 2. Add the Android platform
           npx cap add android
           
-          # 3. Generate icons
+          # 3. Apply your precious icon (Purple Lightning)
+          # We use the simple command to avoid the '--iconSource' error
           if [ -f "icon.png" ]; then
-            npx @capacitor/assets generate --android
+            npx @capacitor/assets generate --android --assetPath .
           fi
           
-          # 4. Sync ensures the unique name is written to the Android Manifest
+          # 4. Sync the name and assets into the Android code
           npx cap sync android
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          # Force the use of JDK 21 to prevent the 'invalid source release' error
+          # Ensure we use JDK 21 to avoid the 'source release' error
           ./gradlew assembleDebug -Dorg.gradle.java.home=$JAVA_HOME_21_X64
 
       - name: Upload APK Artifact
