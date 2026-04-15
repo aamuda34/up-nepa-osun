@@ -26,10 +26,18 @@ jobs:
           java-version: '21'
           distribution: 'zulu'
 
+      - name: Prepare Web Assets
+        run: |
+          # Create the www directory that Capacitor expects
+          mkdir -p www
+          # Copy your HTML and Icon into it (don't move them, just copy)
+          cp index.html www/ 2>/dev/null || cp *.html www/
+          cp icon.png www/ 2>/dev/null || true
+
       - name: Initialize and Add Android
         run: |
-          # 1. Initialize with the updated Unique Name and App Name
-          npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir .
+          # 1. Initialize using 'www' as the web directory
+          npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir www
 
           # 2. Add and Sync the Android platform
           npx cap add android
@@ -39,20 +47,18 @@ jobs:
           if [ -f "icon.png" ]; then
             npx @capacitor/assets generate --android --assetPath .
           else
-            echo "Error: icon.png not found!"
-            exit 1
+            echo "Warning: icon.png not found, skipping icon generation"
           fi
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          # Force Gradle to use Java 21 for this build
           ./gradlew assembleDebug -Dorg.gradle.java.home=$JAVA_HOME_21_X64
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-Debug
+          name: Up-Nepa-Osun-Elite-Debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           
