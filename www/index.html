@@ -36,7 +36,6 @@
         .app-header { margin-bottom: 20px; border-bottom: 1px solid #252528; padding-bottom: 15px; }
         .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
         
-        /* LOGO STYLE */
         .brand-logo { width: 52px; height: 52px; border-radius: 14px; border: 1.5px solid var(--primary); object-fit: cover; }
         .brand-container { display: flex; gap: 12px; align-items: center; }
 
@@ -56,8 +55,10 @@
         .news-ticker { display: inline-block; animation: scroll 20s linear infinite; font-size: 0.8rem; color: var(--primary); font-weight: 600; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
+        /* FIXED GOOGLE BUTTON ICON SIZE */
         .google-btn { width: 100%; padding: 16px; border-radius: 16px; background: #fff; color: #000; font-weight: 800; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
-        .google-btn img { width: 20px; }
+        .google-btn img { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+        
         .card-section { background: var(--card); padding: 20px; border-radius: 24px; border: 1px solid #333; margin-bottom: 25px; }
         .ui-input { width: 100%; padding: 14px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: white; border-radius: 12px; outline: none; }
 
@@ -70,6 +71,8 @@
         
         .follow-btn { position: absolute; top: 60px; right: 25px; background: transparent; border: none; color: var(--text-dim); cursor: pointer; }
         .follow-btn.active { color: var(--primary); }
+
+        .follower-stats { display: flex; align-items: center; gap: 4px; font-size: 0.65rem; color: var(--text-dim); margin-top: 4px; font-weight: 600; }
 
         .light-on { background: var(--success); color: #000; }
         .light-off { background: var(--danger); color: #fff; }
@@ -242,7 +245,12 @@
                     </button>
 
                     <h2 style="font-size:1.6rem; font-weight:800;">${s.name}</h2>
-                    <p style="color:var(--text-dim); font-size:0.75rem; margin-top:4px;">
+                    
+                    <div class="follower-stats">
+                        <i data-lucide="users"></i> ${s.follower_count || 0} Following this street
+                    </div>
+
+                    <p style="color:var(--text-dim); font-size:0.75rem; margin-top:8px;">
                         <i data-lucide="map-pin"></i> ${s.town} • <span style="color:var(--primary);">🕒 ${timeAgo(s.last_updated)}</span>
                     </p>
                     
@@ -275,18 +283,26 @@
             lucide.createIcons();
         }
 
-        function toggleFollow(id, btn) {
+        async function toggleFollow(id, btn) {
             if (!currentUser) return alert("🔒 Login required to follow streets.");
+            
+            let action = '';
             if (followedStreets.includes(id)) {
                 followedStreets = followedStreets.filter(sid => sid !== id);
                 btn.classList.remove('active');
+                action = 'decrement';
             } else {
                 followedStreets.push(id);
                 btn.classList.add('active');
+                action = 'increment';
                 if (Notification.permission !== 'granted') Notification.requestPermission();
             }
+
+            // Update Database Follower Count
+            await _client.rpc(action === 'increment' ? 'increment_count' : 'decrement_count', { row_id: id, col_name: 'follower_count' });
+
             localStorage.setItem('followed_streets', JSON.stringify(followedStreets));
-            renderStreets(allStreets);
+            loadData(); 
         }
 
         function triggerNotification(streetName, status) {
@@ -344,5 +360,5 @@
         initApp();
     </script>
 </body>
-    </html>
+                        </html>
     
