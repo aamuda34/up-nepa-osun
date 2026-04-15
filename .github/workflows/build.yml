@@ -28,31 +28,35 @@ jobs:
 
       - name: Prepare Web Assets
         run: |
+          # Create the directory Capacitor requires
           mkdir -p www
-          cp index.html www/ 2>/dev/null || cp *.html www/
-          cp icon.png www/ 2>/dev/null || true
+          # Search for any .html files and copy them to www
+          # If index.html exists, it becomes the primary entry point
+          find . -maxdepth 1 -name "*.html" -exec cp {} www/ \;
+          # Ensure an icon exists for the build process
+          cp icon.png www/ 2>/dev/null || touch www/icon.png
 
       - name: Initialize and Add Android
         run: |
-          # 1. Force the new unique name during initialization
+          # 1. Initialize with the unique package name
           npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir www
 
-          # 2. Add the platform
+          # 2. Add the Android platform
           npx cap add android
           
-          # 3. Generate icons using the correct current syntax
+          # 3. Generate icons
           if [ -f "icon.png" ]; then
             npx @capacitor/assets generate --android
           fi
           
-          # 4. Critical: Sync ensures the unique name is written to AndroidManifest.xml
+          # 4. Sync ensures the unique name is written to the Android Manifest
           npx cap sync android
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          # Ensure Gradle uses Java 21 to match your source release
+          # Force the use of JDK 21 to prevent the 'invalid source release' error
           ./gradlew assembleDebug -Dorg.gradle.java.home=$JAVA_HOME_21_X64
 
       - name: Upload APK Artifact
