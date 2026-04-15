@@ -21,14 +21,17 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # This ensures the build sees your files inside the 'www' folder
       - name: Build with Gradle
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
+        continue-on-error: false
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: app/build/outputs/apk/release/app-release.apk
+          # This search pattern will find the APK wherever it was created
+          path: "**/build/outputs/apk/release/*.apk"
           
