@@ -5,7 +5,6 @@ on:
     branches: [ "main" ]
 
 env:
-  # This fixes the "Process completed with exit code 1" deprecation error
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -19,17 +18,17 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22' # Using a stable even-numbered LTS
-          cache: 'npm'
+          node-version: '22'
+          # Removed the 'cache' option to prevent the "lock file not found" crash
 
       - name: Install Dependencies
         run: |
-          npm install
+          # This will create a lock file automatically if it's missing
+          npm install 
           npm install @capacitor/core @capacitor/cli @capacitor/android
 
       - name: Build Web Assets
         run: npm run build --if-present
-        # Ensure your index.html is in the 'www' folder as seen in your repo
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
