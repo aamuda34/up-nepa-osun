@@ -14,12 +14,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          # We have confirmed NO cache line is here. 
-          # This prevents the runner from looking for package-lock.json.
 
       - name: Force Install Dependencies
         run: |
-          # The --no-package-lock flag is the key here.
           npm install --legacy-peer-deps --no-package-lock
           npm install @capacitor/android @capacitor/core @capacitor/cli --legacy-peer-deps
 
@@ -29,10 +26,18 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
-      - name: Capacitor Sync
+      - name: Capacitor Init and Sync
         run: |
+          # Create web folder
           mkdir -p www
           if [ ! -f "www/index.html" ]; then echo "<html><body>Ready</body></html>" > www/index.html; fi
+          
+          # Initialize Capacitor if config is missing (using a placeholder ID and Name)
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
+            npx cap init "MyTrackingApp" "com.aamuda.app" --web-dir www
+          fi
+
+          # Add and Sync Android
           npx cap add android || true
           npx cap sync android
 
