@@ -16,54 +16,48 @@
         .member-count { background: rgba(187, 134, 252, 0.1); color: #bb86fc; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid #bb86fc; }
 
         .news-container { background: #161618; border-radius: 12px; padding: 10px; display: flex; align-items: center; margin-bottom: 20px; border: 1px solid #333; overflow: hidden; }
-        .news-label { background: #bb86fc; color: #000; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; flex-shrink: 0; transition: background 0.3s, color 0.3s; }
-        .is-offline { background: #cf6679 !important; color: #fff !important; }
-
+        .news-label { background: #03dac6; color: #000; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; flex-shrink: 0; }
         .ticker-wrapper { overflow: hidden; white-space: nowrap; flex-grow: 1; margin-left: 10px; }
         .news-ticker { display: inline-block; animation: scroll 20s linear infinite; font-size: 0.85rem; color: #bb86fc; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
+        .google-btn { width: 100%; padding: 16px; border-radius: 16px; background: #fff; color: #000; font-weight: 800; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
+        .google-btn img { width: 20px; }
         .card-section { background: #161618; padding: 20px; border-radius: 24px; border: 1px solid #333; margin-bottom: 25px; }
         .section-title { color: #bb86fc; margin-bottom: 12px; font-weight: 800; }
-        .ui-input { width: 100%; padding: 14px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: white; border-radius: 12px; outline: none; transition: border 0.3s; }
-        .ui-input:focus { border-color: #bb86fc; }
+        .ui-input { width: 100%; padding: 14px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: white; border-radius: 12px; outline: none; }
 
-        .auth-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .tab-btn { flex: 1; padding: 10px; border-radius: 10px; background: #252528; color: #888; border: none; font-weight: 800; cursor: pointer; }
-        .tab-btn.active { background: #bb86fc; color: #000; }
-        .auth-submit-btn { width: 100%; padding: 16px; border-radius: 16px; font-weight: 800; border: none; cursor: pointer; margin-top: 5px; }
-        .login-btn { background: #03dac6; color: #000; }
-        .signup-btn { background: #bb86fc; color: #000; }
-        
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; position: sticky; top: 10px; z-index: 100; }
-        .search-input { background: #252528; border: 2px solid #444; border-radius: 14px; padding: 12px; font-size: 0.9rem; color: #fff; width: 100%; outline: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .town-dropdown { background: #bb86fc; color: #000; border: none; border-radius: 14px; padding: 12px; font-weight: 800; font-size: 0.85rem; outline: none; cursor: pointer; }
+        .search-input { background: #252528; border: 2px solid #444; border-radius: 14px; padding: 12px; font-size: 0.9rem; color: #fff; width: 100%; outline: none; }
+        .town-dropdown { background: #bb86fc; color: #000; border: none; border-radius: 14px; padding: 12px; font-weight: 800; outline: none; }
 
         .card { background: #161618; border: 1px solid #252528; border-radius: 28px; padding: 20px; margin-bottom: 20px; position: relative; }
         .status-badge { padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; position: absolute; top: 20px; right: 20px; }
         .light-on { background: #03dac6; color: #000; }
         .light-off { background: #cf6679; color: #fff; }
         
-        .count-stats { display: flex; gap: 12px; margin-top: 5px; font-size: 0.75rem; font-weight: 800; }
-
+        /* CHIPS */
         .chips-row { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
-        .chip { background: #252528; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; color: #eee; border: 1px solid #333; cursor: pointer; white-space: nowrap; transition: 0.2s; }
-        .chip.active { background: #bb86fc; color: #000; font-weight: 800; border-color: #bb86fc; }
+        .chip { background: #252528; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; color: #eee; border: 1px solid #333; cursor: pointer; white-space: nowrap; }
+        .chip.active { background: #bb86fc; color: #000; font-weight: 800; }
 
         .follow-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #252528; padding-bottom: 15px; }
-        .follow-btn { padding: 8px 14px; border-radius: 10px; font-size: 0.75rem; border: 1px solid #444; cursor: pointer; font-weight: 800; }
+        .follow-btn { flex-grow: 1; padding: 10px; border-radius: 12px; background: #252528; border: 1px solid #444; color: #fff; font-weight: 800; margin-right: 10px; }
         .is-following { background: #bb86fc; color: #000; }
 
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
         .action-btn { padding: 15px; border-radius: 14px; border: 1px solid transparent; font-weight: 800; cursor: pointer; text-align: center; }
         .btn-restored { background: rgba(3, 218, 198, 0.1); color: #03dac6; border-color: #03dac6; }
         .btn-outage { background: rgba(207, 102, 121, 0.1); color: #cf6679; border-color: #cf6679; }
-        
+        .counter-text { display: block; font-size: 0.65rem; margin-top: 4px; opacity: 0.8; }
+
+        /* COMMENTS */
         .post-display { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 3px solid #bb86fc; font-size: 0.85rem; }
         .user-tag { color: #bb86fc; font-weight: 800; font-size: 0.75rem; }
         .post-btn { width: 100%; background: #6200ee; color: white; padding: 16px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; }
-        .footer-links { text-align: center; margin-top: 40px; border-top: 1px solid #222; padding: 20px; }
-        .contact-link { color: #bb86fc; font-weight: 800; text-decoration: none; margin: 0 15px; }
+
+        .footer-support { text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid #222; }
+        .support-link { color: #bb86fc; font-weight: 800; text-decoration: none; margin: 0 10px; }
     </style>
 </head>
 <body>
@@ -76,59 +70,40 @@
     </div>
 
     <div class="news-container">
-        <span id="live-indicator" class="news-label">LIVE</span>
+        <span class="news-label">🟢  LIVE</span>
         <div class="ticker-wrapper">
-            <div class="news-ticker">Select a town and search for your street. Elite members keep the community updated.</div>
+            <div class="news-ticker">Elite members keep the community updated. Only registered users can post updates. Support: WhatsApp/Gmail.</div>
         </div>
     </div>
 
-    <div id="auth-box" class="card-section"></div>
+    <div id="auth-box" class="card-section">
+        <button class="google-btn" onclick="loginGoogle()">
+            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png">
+            Continue with Google
+        </button>
+    </div>
 
     <div class="card-section">
         <h3 class="section-title">📍 Suggest New Street</h3>
         <input type="text" id="sug-name" class="ui-input" placeholder="Street Name">
         <input type="text" id="sug-town" class="ui-input" placeholder="Town">
-        <button id="btn-suggest" class="post-btn" style="background:#03dac6; color:#000;" onclick="handleSuggestion(this)">Submit Street</button>
+        <button class="post-btn" style="background:#03dac6; color:#000;" onclick="handleSuggestion(this)">Submit Street</button>
     </div>
 
     <div class="filter-grid">
-        <select id="town-select" class="town-dropdown" onchange="filterStreets()">
-            <option value="all">All Towns</option>
-        </select>
-        <input type="text" id="search-bar" class="search-input" placeholder="🔍 Street Name..." oninput="filterStreets()">
+        <select id="town-select" class="town-dropdown" onchange="filterStreets()"><option value="all">All Towns</option></select>
+        <input type="text" id="search-bar" class="search-input" placeholder="🔍 Find Street..." oninput="filterStreets()">
     </div>
 
     <main id="street-container"></main>
 
-    <footer class="footer-links">
-        <a href="https://wa.me/2348062516110" target="_blank" class="contact-link">WhatsApp</a>
-        <a href="mailto:aamuda34@gmail.com" class="contact-link">Gmail</a>
+    <footer class="footer-support">
+        <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">For support and enquiries:</p>
+        <a href="https://wa.me/2348062516110" target="_blank" class="support-link">WhatsApp</a>
+        <a href="mailto:aamuda34@gmail.com" class="support-link">Gmail</a>
     </footer>
 
     <script>
-        function showToast(msg) {
-            const t = document.getElementById('notif-toast');
-            if(!t) return;
-            t.innerText = msg;
-            t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, 3000);
-        }
-
-        function updateConnectivity() {
-            const label = document.getElementById('live-indicator');
-            if (!label) return;
-            if (navigator.onLine) {
-                label.innerText = "🟢 LIVE";
-                label.classList.remove('is-offline');
-            } else {
-                label.innerText = "🔴 OFFLINE";
-                label.classList.add('is-offline');
-            }
-        }
-        window.addEventListener('online', updateConnectivity);
-        window.addEventListener('offline', updateConnectivity);
-        updateConnectivity();
-
         const S_URL = 'https://tzsumiudcqxpyphhjymu.supabase.co';
         const S_KEY = 'sb_publishable_S2TrD434ZYpkkx7gU2wiiw_QrgOr0AV'; 
         const _client = supabase.createClient(S_URL, S_KEY);
@@ -136,7 +111,6 @@
         let allStreets = [];
         let followedIds = JSON.parse(localStorage.getItem('my_follows') || '[]');
         let currentUser = null;
-        let authMode = 'login';
 
         function timeAgo(dateString) {
             if (!dateString) return 'No data';
@@ -150,76 +124,19 @@
         async function initApp() {
             const { data: { session } } = await _client.auth.getSession();
             currentUser = session?.user || null;
-            renderAuthUI();
-            updateMemberCount();
-            loadApp();
-        }
-
-        async function updateMemberCount() {
-            const { data, error } = await _client.rpc('get_user_count');
-            if (!error) document.getElementById('user-count-ui').innerText = `${data} Members`;
-        }
-
-        function switchAuth(mode) {
-            authMode = mode;
-            renderAuthUI();
-        }
-
-        function renderAuthUI(step = 'main') {
-            const box = document.getElementById('auth-box');
             if (currentUser) {
-                const name = currentUser.user_metadata?.full_name || currentUser.user_metadata?.username || "Elite Member";
-                box.innerHTML = `<h3 class="section-title">Welcome, ${name}!</h3><button class="post-btn" style="background:#cf6679;" onclick="_client.auth.signOut().then(()=>location.reload())">Sign Out</button>`;
-                return;
+                document.getElementById('auth-box').innerHTML = `
+                    <p style="text-align:center; color:#bb86fc; font-weight:800;">Elite: ${currentUser.email}</p>
+                    <button class="post-btn" style="background:#cf6679; margin-top:10px; padding:8px;" onclick="_client.auth.signOut().then(()=>location.reload())">Sign Out</button>
+                `;
             }
-            if (step === 'verify') {
-                box.innerHTML = `<h3 class="section-title">Verify Code</h3><input type="text" id="verify-code" class="ui-input" placeholder="Enter 6-Digit Code"><button class="post-btn" onclick="completeVerification(this)">Complete</button>`;
-                return;
-            }
-            const isSignup = authMode === 'signup';
-            box.innerHTML = `
-                <div class="auth-tabs">
-                    <button class="tab-btn ${!isSignup ? 'active' : ''}" onclick="switchAuth('login')">Login</button>
-                    <button class="tab-btn ${isSignup ? 'active' : ''}" onclick="switchAuth('signup')">Register</button>
-                </div>
-                ${isSignup ? '<input type="text" id="auth-name" class="ui-input" placeholder="Full Name">' : ''}
-                ${isSignup ? '<input type="text" id="auth-user" class="ui-input" placeholder="Display Username">' : ''}
-                <input type="email" id="auth-email" class="ui-input" placeholder="Email Address">
-                <input type="password" id="auth-pass" class="ui-input" placeholder="Password">
-                <button class="auth-submit-btn ${isSignup ? 'signup-btn' : 'login-btn'}" onclick="handleAuth(this)">${isSignup ? 'Create Account' : 'Sign In'}</button>
-            `;
+            loadApp();
+            subscribeToUpdates();
         }
 
-        async function handleAuth(btn) {
-            btn.disabled = true; btn.innerText = "Connecting...";
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-pass').value;
-            
-            if (authMode === 'login') {
-                const { error } = await _client.auth.signInWithPassword({ email, password: pass });
-                if (error) { alert(error.message); btn.disabled = false; btn.innerText = "Sign In"; }
-                else location.reload();
-            } else {
-                const name = document.getElementById('auth-name').value;
-                const user = document.getElementById('auth-user').value;
-                if(!name || !user) { alert("Include Name & Username"); btn.disabled = false; btn.innerText = "Create Account"; return; }
-                window.pendingEmail = email; 
-                const { error } = await _client.auth.signUp({ 
-                    email, 
-                    password: pass,
-                    options: { data: { full_name: name, username: user, banned: false } }
-                });
-                if (error) { alert(error.message); btn.disabled = false; btn.innerText = "Create Account"; }
-                else renderAuthUI('verify');
-            }
-        }
-
-        async function completeVerification(btn) {
-            btn.disabled = true;
-            const token = document.getElementById('verify-code').value;
-            const { error } = await _client.auth.verifyOtp({ email: window.pendingEmail, token, type: 'signup' });
-            if (error) { alert("Invalid code."); btn.disabled = false; }
-            else location.reload();
+        async function loginGoogle() {
+            const { error } = await _client.auth.signInWithOAuth({ provider: 'google' });
+            if (error) alert(error.message);
         }
 
         async function loadApp() {
@@ -243,108 +160,100 @@
         }
 
         function filterStreets() {
-            const selectedTown = document.getElementById('town-select').value;
-            const streetQuery = document.getElementById('search-bar').value.toLowerCase();
-            const filtered = allStreets.filter(s => {
-                const matchesTown = selectedTown === 'all' || s.town === selectedTown;
-                return matchesTown && s.name.toLowerCase().includes(streetQuery);
-            });
+            const town = document.getElementById('town-select').value;
+            const query = document.getElementById('search-bar').value.toLowerCase();
+            const filtered = allStreets.filter(s => (town === 'all' || s.town === town) && s.name.toLowerCase().includes(query));
             renderStreets(filtered);
         }
 
         function renderStreets(data) {
             const container = document.getElementById('street-container');
-            if (data.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:20px; color:#555;">No streets found.</div>`;
-                return;
-            }
             container.innerHTML = data.map(s => {
                 const isFollowing = followedIds.includes(s.id);
+                const comments = (s.comments || []).slice(-2).reverse();
                 return `
                 <div class="card">
                     <span class="status-badge ${s.status === 'Light On' ? 'light-on' : 'light-off'}">${s.status || 'No Light'}</span>
                     <h2 style="font-size:1.6rem; font-weight:800;">${s.name}</h2>
                     <p style="color:#666; font-size:0.75rem;">📍 ${s.town} • <span style="color:#bb86fc;">🕒 ${timeAgo(s.last_updated)}</span></p>
                     
-                    <div class="count-stats">
-                        <span style="color:#03dac6;">🟢 Restored: ${s.on_count || 0}</span>
-                        <span style="color:#cf6679;">🔴 Outages: ${s.off_count || 0}</span>
-                    </div>
-
                     <div class="chips-row">
-                        <div class="chip" onclick="applyChip(this, ${s.id}, '⛈️ Weather Issue')">⛈️ Weather Issue</div>
+                        <div class="chip" onclick="applyChip(this, ${s.id}, '⛈️ Weather Issue')">⛈️ Weather</div>
                         <div class="chip" onclick="applyChip(this, ${s.id}, '⚡ Low Voltage')">⚡ Low Voltage</div>
-                        <div class="chip" onclick="applyChip(this, ${s.id}, '🔌 Phase Issue')">🔌 Phase Issue</div>
                         <div class="chip" onclick="applyChip(this, ${s.id}, '🛠️ Maintenance')">🛠️ Maintenance</div>
                     </div>
 
                     <div class="follow-container">
-                        <div class="follow-btn ${isFollowing ? 'is-following' : ''}" onclick="toggleFollow(${s.id}, '${s.name}')">${isFollowing ? '⭐ FOLLOWING' : '☆ FOLLOW'}</div>
-                        <div class="follower-count">👥 ${s.confirmations || 0} Followers</div>
+                        <button class="follow-btn ${isFollowing ? 'is-following' : ''}" onclick="toggleFollow(${s.id}, '${s.name}')">
+                            ${isFollowing ? '⭐ FOLLOWING' : '☆ FOLLOW'}
+                        </button>
+                        <span style="font-size:0.75rem; color:#bb86fc; font-weight:800;">👥 ${s.confirmations || 0} Followers</span>
                     </div>
 
                     <div class="btn-grid">
-                        <button class="action-btn btn-restored" onclick="updateStatus(${s.id}, 'Light On', 'on_count', '${s.status}', this, '${s.name}')">🟢 Restored</button>
-                        <button class="action-btn btn-outage" onclick="updateStatus(${s.id}, 'No Light', 'off_count', '${s.status}', this, '${s.name}')">🔴 Outage</button>
+                        <button class="action-btn btn-restored" onclick="updateStatus(${s.id}, 'Light On', 'on_count')">🟢 Restored<span class="counter-text">Total: ${s.on_count || 0}</span></button>
+                        <button class="action-btn btn-outage" onclick="updateStatus(${s.id}, 'No Light', 'off_count')">🔴 Outage<span class="counter-text">Total: ${s.off_count || 0}</span></button>
                     </div>
 
                     <div id="posts-${s.id}">
-                        ${(s.comments || []).slice(-3).reverse().map(c => `<div class="post-display"><span class="user-tag">${c.username}</span> • ${timeAgo(c.created_at)}<br>${c.content}</div>`).join('')}
+                        ${comments.map(c => `<div class="post-display"><span class="user-tag">${c.username || 'Elite'}</span> • ${timeAgo(c.created_at)}<br>${c.content}</div>`).join('')}
                     </div>
 
-                    <textarea id="cmt-${s.id}" class="ui-input" style="height:60px; margin-top:10px;" placeholder="Add detail..." maxlength="150"></textarea>
+                    <textarea id="cmt-${s.id}" class="ui-input" style="height:60px; margin-top:10px;" placeholder="Add detail..." maxlength="100"></textarea>
                     <button class="post-btn" onclick="addComment(${s.id}, this)">Post Update</button>
-                </div>`;
+                </div>
+                `;
             }).join('');
         }
 
         function applyChip(btn, id, text) {
-            if (!currentUser) return alert("🔒 Log in to select an issue.");
+            if (!currentUser) return alert("🔒 Login required.");
             const input = document.getElementById(`cmt-${id}`);
-            if(input) {
-                input.value = text;
-                const chips = btn.parentElement.querySelectorAll('.chip');
-                chips.forEach(c => c.classList.remove('active'));
-                btn.classList.add('active');
-            }
+            input.value = text;
+            btn.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
         }
 
-        async function updateStatus(id, status, col, current, btn, streetName) {
-            if (!currentUser) return alert("🔒 Log in to update status.");
-            if (status === current) return;
-            btn.disabled = true;
-            await _client.from('areas').update({ status: status, last_updated: new Date().toISOString() }).eq('id', id);
+        async function updateStatus(id, status, col) {
+            if (!currentUser) return alert("🔒 Login with Google required.");
+            await _client.from('areas').update({ status, last_updated: new Date().toISOString() }).eq('id', id);
             await _client.rpc('increment_count', { row_id: id, col_name: col });
-            if(followedIds.includes(id)) showToast(`Update: ${streetName} is now ${status}!`);
             loadApp();
         }
 
         async function addComment(id, btn) {
-            if (!currentUser) return alert("🔒 Log in to post.");
+            if (!currentUser) return alert("🔒 Login required.");
             const val = document.getElementById(`cmt-${id}`).value;
             if(!val) return;
             btn.disabled = true;
-            await _client.from('comments').insert([{ area_id: id, content: val, username: currentUser.user_metadata.username }]);
+            await _client.from('comments').insert([{ area_id: id, content: val, username: currentUser.email.split('@')[0] }]);
             loadApp();
         }
 
-        async function toggleFollow(id, streetName) {
-            if (!currentUser) return alert("🔒 Log in to follow.");
+        async function toggleFollow(id, name) {
+            if (!currentUser) return alert("🔒 Login required.");
             const isFollowing = followedIds.includes(id);
-            if (isFollowing) {
-                followedIds = followedIds.filter(i => i !== id);
-                await _client.rpc('toggle_follow', { row_id: id, is_following: false });
-                showToast(`Unfollowed ${streetName}`);
-            } else {
-                followedIds.push(id);
-                await _client.rpc('toggle_follow', { row_id: id, is_following: true });
-                showToast(`Following ${streetName}! Notification Active.`);
-            }
+            followedIds = isFollowing ? followedIds.filter(i => i !== id) : [...followedIds, id];
+            await _client.rpc('toggle_follow', { row_id: id, is_following: !isFollowing });
             localStorage.setItem('my_follows', JSON.stringify(followedIds));
             loadApp();
         }
 
         async function handleSuggestion(btn) {
-            if (!currentUser) return alert("🔒 Log in to suggest.");
+            if (!currentUser) return alert("🔒 Login required.");
             const name = document.getElementById('sug-name').value;
-           
+            const town = document.getElementById('sug-town').value;
+            if(!name || !town) return;
+            await _client.from('areas').insert([{ name, town, approved: false }]);
+            alert("Sent!");
+            loadApp();
+        }
+
+        function subscribeToUpdates() {
+            _client.channel('updates').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'areas' }, () => loadApp()).subscribe();
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
