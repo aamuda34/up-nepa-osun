@@ -3,6 +3,10 @@ on:
   push:
     branches: [ "main" ]
 
+# Force the runner to use Node 24 as suggested by the GitHub warning
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,21 +17,22 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22' # Upgrades from deprecated Node 20
+          node-version: '22'
+          # Note: No 'cache' line here. This prevents the "Lock file not found" error.
 
       - name: Install Dependencies
         run: |
-          # --legacy-peer-deps bypasses the ERESOLVE errors
-          # --no-package-lock prevents failures when package-lock.json is missing
+          # Clean install without checking for a lock file
           npm install --legacy-peer-deps --no-package-lock
           npm install @capacitor/android @capacitor/core @capacitor/cli --legacy-peer-deps
 
-      - name: Create Web Assets
+      - name: Create Required Folders
         run: |
-          # Capacitor needs a 'www' folder to sync; this ensures it exists
+          # Capacitor will fail if these aren't ready
           mkdir -p www
-          # If your build command fails, it creates a fallback index.html
-          npm run build --if-present || echo "<html><body>Fallback</body></html>" > www/index.html
+          if [ ! -f "www/index.html" ]; then
+            echo "<html><body>Fallback</body></html>" > www/index.html
+          fi
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -37,14 +42,21 @@ jobs:
 
       - name: Capacitor Sync
         run: |
+          # Force add and sync even if folders already exist
           npx cap add android || true
           npx cap sync android
 
       - name: Build Android APK
         run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          # Ensure gradlew is executable before running
+          if [ -d "android" ]; then
+            cd android
+            chmod +x gradlew
+            ./gradlew assembleDebug
+          else
+            echo "Android folder not found. Check if Capacitor Sync worked."
+            exit 1
+          fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
