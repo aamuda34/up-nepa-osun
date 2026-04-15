@@ -34,10 +34,10 @@ jobs:
 
       - name: Initialize and Add Android
         run: |
-          # 1. Initialize with the Precious Name and Unique ID
-          npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir www
+          # 1. Initialize with the Unique ID and the Elite Name
+          npx cap init "Up-Nepa Osun Elite" "com.aamuda.upnepa.osun" --web-dir www
 
-          # 2. Add and Sync the platform
+          # 2. Add the platform and sync
           npx cap add android
           npx cap sync android
           
@@ -46,17 +46,15 @@ jobs:
             npx @capacitor/assets generate --android --assetPath .
           fi
 
-          # 4. FORCE THE NAME: Manually overwrite the Android strings file
-          # This ensures the phone displays "Up-Nepa Osun"
-          sed -i 's/app_name">.*</app_name">Up-Nepa Osun</g' android/app/src/main/res/values/strings.xml
-          
-          # 5. Final sync to confirm changes
-          npx cap sync android
+          # 4. CRITICAL: Force the App Name into the Android system strings
+          # This ensures "Up-Nepa Osun Elite" shows on the phone screen
+          sed -i 's/app_name">.*</app_name">Up-Nepa Osun Elite</g' android/app/src/main/res/values/strings.xml
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
+          # Force the build to use Java 21 to prevent the 'invalid source release' error
           ./gradlew assembleDebug -Dorg.gradle.java.home=$JAVA_HOME_21_X64
 
       - name: Upload APK Artifact
