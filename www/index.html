@@ -95,7 +95,7 @@
         <div class="header-top">
             <div>
                 <p class="brand-tag">Elite Edition</p>
-                <h1 class="brand-name">Up-Nepa <span style="color:var(--primary)">Osun</span></h1>
+                <h1 class="brand-name">Up-Nepa <span style="color:var(--primary)">Osun Elite</span></h1>
                 <div id="conn-ui" class="connection-status">
                     <span class="dot dot-offline"></span> Offline
                 </div>
@@ -285,7 +285,7 @@
             if (Notification.permission === 'granted') {
                 new Notification("Up-Nepa Elite Alert", {
                     body: `Status Update for ${streetName}: ${status}`,
-                    icon: "icon.png" // FIXED: Removed leading slash here
+                    icon: "icon.png" 
                 });
             }
         }
@@ -336,5 +336,4 @@
         initApp();
     </script>
 </body>
-                </html>
-    
+</html>
