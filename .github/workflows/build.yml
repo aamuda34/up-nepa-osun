@@ -55,4 +55,3 @@ jobs:
         with:
           name: Up-Nepa-Osun-Elite-Debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
