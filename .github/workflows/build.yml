@@ -17,7 +17,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # The --no-package-lock flag is required because your repo is missing the file
+          # Use --no-package-lock because your repo is missing the lock file
           npm install --no-package-lock 
           npm install @capacitor/android @capacitor/core @capacitor/cli
 
