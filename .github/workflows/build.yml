@@ -2,7 +2,7 @@ name: Build Android APK
 on:
   push:
     branches:
-      - main  # Or whichever branch you are using
+      - main
 
 jobs:
   build:
@@ -17,20 +17,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Instead of the broken action, we use a reliable web-to-apk tool
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Build APK from Web Files
+      - name: Build APK (Automated)
         run: |
-          # This packages your index.html into a professional TWA (APK)
-          # Note: Replace with your actual site URL if hosted, 
-          # or use a local build command.
-          bubblewrap build --skipSigning
+          # We use 'yes' to bypass the manual JDK installation prompt seen in your log
+          yes | bubblewrap init --manifest=https://up-nepa-osun.vercel.app/manifest.json
+          bubblewrap build --skipSigning --yes
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
+          name: Up-Nepa-Osun-Release
           path: ./*.apk
           
