@@ -68,9 +68,6 @@
         .btn-up { background: var(--success); color: #000; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; }
         .btn-down { background: var(--danger); color: #fff; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; }
 
-        .comment-area { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 10px; margin-bottom: 10px; }
-        .comment-input { width: 100%; background: transparent; border: none; color: #fff; outline: none; font-size: 0.85rem; resize: none; }
-
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; width: 100%; max-width: 400px; text-align: center; }
         .social-btn { padding: 14px; border-radius: 14px; text-decoration: none; color: #fff; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
@@ -132,7 +129,6 @@
     <div id="suggest-modal" class="modal-overlay">
         <div class="modal-content">
             <h2 style="margin-bottom:15px;">Suggest a Street</h2>
-            <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px;">Submit the name of the street and town to be added to the grid.</p>
             <input type="text" id="suggest-name" class="minimal-input" placeholder="Street Name" style="margin-bottom:10px;">
             <input type="text" id="suggest-town" class="minimal-input" placeholder="Town" style="margin-bottom:15px;">
             <button class="btn-up" style="width:100%;" onclick="if(interactionGuard()) submitSuggestion()">Submit Request</button>
@@ -144,8 +140,6 @@
         <div class="modal-content">
             <h2 id="share-title" style="margin-bottom:15px; font-size:1rem;">Share Update</h2>
             <a id="share-wa" class="social-btn" style="background:#25D366;"><i data-lucide="message-circle"></i>WhatsApp</a>
-            <a id="share-fb" class="social-btn" style="background:#1877F2;"><i data-lucide="facebook"></i>Facebook</a>
-            <a id="share-tg" class="social-btn" style="background:#0088cc;"><i data-lucide="send"></i>Telegram</a>
             <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:20px; font-weight:700;">Cancel</button>
         </div>
     </div>
@@ -162,20 +156,24 @@
 
         let gridData = [], user = null, userSubs = [];
 
+        // UPDATED: startApp with session recovery
         async function startApp() {
             const { data: { session } } = await _client.auth.getSession();
             user = session?.user || null;
+
+            if (!user && window.location.hash) {
+                const { data } = await _client.auth.getSession();
+                if (data?.session) user = data.session.user;
+            }
+
             if (user) { renderAuth(); await fetchSubs(); }
             fetchGrid();
             syncRealtime();
         }
 
-        // FIXED LOGIN FUNCTION
         async function loginGoogle() { 
             const isApp = window.location.origin.includes('localhost') || window.localStorage.getItem('isCapacitor');
-            const redirectUrl = isApp 
-                ? 'com.upnepa.osun://login-callback' 
-                : window.location.href;
+            const redirectUrl = isApp ? 'com.upnepa.osun://login-callback' : window.location.href;
 
             await _client.auth.signInWithOAuth({ 
                 provider: 'google', 
@@ -194,19 +192,14 @@
         }
 
         function timeAgo(date) {
-            if (!date) return "No updates yet";
+            if (!date) return "No updates";
             const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-            let interval = seconds / 31536000;
-            if (interval > 1) return Math.floor(interval) + "y ago";
-            interval = seconds / 2592000;
-            if (interval > 1) return Math.floor(interval) + "mo ago";
-            interval = seconds / 86400;
-            if (interval > 1) return Math.floor(interval) + "d ago";
-            interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + "h ago";
-            interval = seconds / 60;
-            if (interval > 1) return Math.floor(interval) + "m ago";
-            return "Just now";
+            if (seconds < 60) return "Just now";
+            const m = Math.floor(seconds / 60);
+            if (m < 60) return m + "m ago";
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + "h ago";
+            return Math.floor(h / 24) + "d ago";
         }
 
         function handleSearch(val) {
@@ -227,7 +220,7 @@
         }
 
         function interactionGuard() {
-            if (!user) { showToast('Please Login First'); window.scrollTo({ top: 0, behavior: 'smooth' }); return false; }
+            if (!user) { showToast('Please Login First'); return false; }
             return true;
         }
 
@@ -236,7 +229,6 @@
             container.innerHTML = list.map(s => {
                 const isOn = s.status === 'Light On';
                 const subbed = userSubs.includes(s.id);
-                const followers = s.subscriptions?.[0]?.count || 0;
                 return `
                 <div class="pro-card ${isOn ? 'card-on' : ''}">
                     <div style="display:flex; justify-content:space-between">
@@ -248,16 +240,9 @@
                         </div>
                         <div style="display:flex; gap:8px;">
                             <div class="btn-circle ${subbed ? 'active' : ''}" onclick="if(interactionGuard()) toggleFav(${s.id})"><i data-lucide="bell" style="width:18px"></i></div>
-                            <div class="btn-circle" onclick="openShare('${s.name}', '${s.status}')"><i data-lucide="share-2" style="width:18px"></i></div>
                         </div>
                     </div>
-                    <div class="card-meta"><span><i data-lucide="users" style="width:12px; display:inline"></i> ${followers} Followers</span></div>
-                    <div class="chip-group">
-                        <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⛈️ Weather Issue')">⛈️ Weather</button>
-                        <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⚡ Low Voltage')">⚡ Voltage</button>
-                        <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '🔧 Phase Issue')">🔧 Phase</button>
-                    </div>
-                    <div class="btn-row">
+                    <div class="btn-row" style="margin-top:20px;">
                         <button class="btn-up" onclick="if(interactionGuard()) updateStatus(${s.id}, 'Light On')">RESTORED</button>
                         <button class="btn-down" onclick="if(interactionGuard()) updateStatus(${s.id}, 'No Light')">OUTAGE</button>
                     </div>
@@ -282,28 +267,17 @@
             fetchGrid();
         }
 
+        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
         function openSuggest() { document.getElementById('suggest-modal').style.display = 'flex'; }
+        function openSupport() { document.getElementById('support-modal').style.display = 'flex'; }
+
         async function submitSuggestion() {
             const name = document.getElementById('suggest-name').value;
             const town = document.getElementById('suggest-town').value;
-            if(!name || !town) return showToast('Fill all fields');
-            await _client.from('areas').insert([{ name, town, approved: false, status: 'Pending' }]);
-            showToast('Suggestion sent for approval!');
-            closeModals();
+            await _client.from('areas').insert([{ name, town, approved: false }]);
+            showToast('Sent for approval!'); closeModals();
         }
-
-        function openShare(name, status) {
-            const text = encodeURIComponent(`${name} update: ${status}. Check Up-Nepa Osun!`);
-            document.getElementById('share-wa').href = `https://wa.me/?text=${text}`;
-            document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
-            document.getElementById('share-tg').href = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${text}`;
-            document.getElementById('share-modal').style.display = 'flex';
-        }
-
-        function openSupport() { document.getElementById('support-modal').style.display = 'flex'; }
-        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
-        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
-        function setChip(id, txt) { document.querySelector(`#street-feed textarea`) ? null : null; showToast('Chip selected: ' + txt); }
 
         function syncRealtime() {
             const ch = _client.channel('presence').on('presence', { event: 'sync' }, () => {
@@ -311,7 +285,7 @@
             }).subscribe(async (s) => {
                 if(s === 'SUBSCRIBED') {
                     document.getElementById('status-dot').style.background = 'var(--success)';
-                 document.getElementById('status-text').innerText = 'Grid Live';
+                    document.getElementById('status-text').innerText = 'Grid Live';
                     await ch.track({ online_at: new Date().toISOString() });
                 }
             });
@@ -335,25 +309,19 @@
 
         startApp();
 
-        // ADDED DEEP LINK LISTENER FOR CAPACITOR
+        // UPDATED: Manual token extraction for deep linking
         if (window.Capacitor) {
             window.localStorage.setItem('isCapacitor', 'true');
             const { App } = window.Capacitor.Plugins;
-            App.addListener('appUrlOpen', ({ url }) => {
+            App.addListener('appUrlOpen', async ({ url }) => {
                 if (url.includes('login-callback')) {
-                    const params = new URL(url).hash.split('&').reduce((acc, curr) => {
-                        const [key, value] = curr.split('=');
-                        acc[key.replace('#', '')] = value;
-                        return acc;
-                    }, {});
-                    
-                    if (params.access_token) {
-                        _client.auth.setSession({
-                            access_token: params.access_token,
-                            refresh_token: params.refresh_token
-                        }).then(() => location.reload());
-                    }
-                }
+                    const scopeUrl = url.replace('com.upnepa.osun://login-callback', window.location.origin + window.location.pathname);
+                    const { data } = await _client.auth.setSession({
+                        access_token: new URL(scopeUrl).hash.split('access_token=')[1]?.split('&')[0],
+                        refresh_token: new URL(scopeUrl).hash.split('refresh_token=')[1]?.split('&')[0],
+                    });
+                    if (data?.session) location.reload();
+      }
             });
         }
     </script>
