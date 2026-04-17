@@ -25,12 +25,16 @@ jobs:
 
       - name: Build Branded APK
         run: |
-          # 1. Install branding and build tools
+          # 1. Install branding tools
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
           
-          # 2. Fix the Name & Directory Config
-          # This forces "Up-Nepa Osun" as the name and "www" as the web source
+          # 2. FIX: Move the icon from www to the ROOT so the tool can find it
+          if [ -f "www/icon.png" ]; then
+            cp www/icon.png ./icon.png
+          fi
+
+          # 3. Force the unique name in the config
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
@@ -40,34 +44,30 @@ jobs:
           }
           EOF
           
-          # 3. Fix the Icon Branding (Standard Way)
-          # The tool looks for an 'assets' folder, so we create it
-          mkdir -p assets
-          cp www/icon.png assets/icon.png
-          # Run generator (no extra flags needed now)
+          # 4. Generate ALL Android icons and splashes
+          # This replaces the blue 'X' with your unique icon
           npx @capacitor/assets generate --android
           
-          # 4. Clean Build of Android Platform
+          # 5. Build and Sync
           rm -rf android
           npx cap add android
           
-          # 5. Connect Firebase
+          # Copy google-services if it exists
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/
           fi
           
-          # 6. Build the APK
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
           
-          # Rename output for professional download
+          # Rename for the final download
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
         env:
           CI: true
 
-      - name: Upload Branded APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Up-Nepa-Osun-Branded
