@@ -16,24 +16,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build APK (Stable Method)
+      - name: Build APK (Direct Method)
         run: |
-          npm install -g @ionic/cli @capacitor/core @capacitor/cli
-          # This converts your web app into a native Android project automatically
-          npm install
-          npx cap init "Up-Nepa Osun" "com.upnepa.osun" --web-dir .
-          npx cap add android
-          npx cap copy
-          cd android && ./gradlew assembleDebug
+          npm install -g @bubblewrap/cli
+          # We force the web directory to the current folder correctly
+          yes | bubblewrap init --manifest="https://up-nepa-osun-1491a.firebaseapp.com/manifest.json"
+          yes | bubblewrap build --skipSigning
+        env:
+          CI: true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Up-Nepa-Osun-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: ./*.apk
           
