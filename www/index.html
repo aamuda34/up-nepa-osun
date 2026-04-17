@@ -168,7 +168,7 @@
         const _client = supabase.createClient(S_URL, S_KEY);
 
         let gridData = [], user = null, userSubs = [];
-        let localComments = {}; 
+        let allComments = []; 
 
         async function startApp() {
             const { data: { session } } = await _client.auth.getSession();
@@ -178,7 +178,8 @@
                 renderAuth(); 
                 await fetchSubs(); 
             }
-            fetchGrid();
+            await fetchGrid();
+            await fetchComments();
             syncRealtime();
         }
 
@@ -197,6 +198,11 @@
         async function fetchGrid() {
             const { data } = await _client.from('areas').select('*, subscriptions(count)').eq('approved', true).order('name');
             if (data) { gridData = data; buildTowns(data); filterGrid(); }
+        }
+
+        async function fetchComments() {
+            const { data } = await _client.from('comments').select('*').order('created_at', { ascending: false });
+            if (data) { allComments = data; filterGrid(); }
         }
 
         async function fetchSubs() {
@@ -251,10 +257,10 @@
                 const oCount = s.outage_count || 0;
                 const rCount = s.restore_count || 0;
                 
-                const commentsHTML = (localComments[s.id] || []).map(c => `
+                const commentsHTML = allComments.filter(c => c.area_id === s.id).map(c => `
                     <div class="comment-item">
-                        <div class="comment-user"><span>${c.user}</span> <span style="color:var(--text-dim)">${timeAgo(c.time)}</span></div>
-                        <div style="color:#fff;">${c.text}</div>
+                        <div class="comment-user"><span>${c.user_email.split('@')[0]}</span> <span style="color:var(--text-dim)">${timeAgo(c.created_at)}</span></div>
+                        <div style="color:#fff;">${c.content}</div>
                     </div>
                 `).join('');
 
@@ -287,17 +293,16 @@
                     </div>
 
                     <div class="btn-row">
-                        <button class="btn-up" ${isOn ? 'disabled style="opacity:0.5; cursor:not-allowed"' : ''} onclick="if(interactionGuard()) updateStatus(${s.id}, 'Light On')">RESTORED</button>
-                        <button class="btn-down" ${!isOn && s.status !== 'Pending' ? 'disabled style="opacity:0.5; cursor:not-allowed"' : ''} onclick="if(interactionGuard()) updateStatus(${s.id}, 'No Light')">OUTAGE</button>
+                        <button class="btn-up" onclick="if(interactionGuard()) updateStatus(${s.id}, 'Light On')">RESTORED</button>
+                        <button class="btn-down" onclick="if(interactionGuard()) updateStatus(${s.id}, 'No Light')">OUTAGE</button>
                     </div>
 
                     <div class="comment-section">
                         <div id="comment-list-${s.id}" style="max-height: 120px; overflow-y: auto;">
                             ${commentsHTML || '<p style="font-size:0.7rem; color:var(--text-dim); text-align:center;">No comments yet. Be the first!</p>'}
-                        </div>
+         </div>
                         <div class="comment-input-row">
-                            <input type="text" id="comment-input-${s.id}" 
-                            class="minimal-input" placeholder="Write a comment..." style="padding: 10px; font-size: 0.75rem;">
+                            <input type="text" id="comment-input-${s.id}" class="minimal-input" placeholder="Write a comment..." style="padding: 10px; font-size: 0.75rem;">
                             <button class="btn-post" onclick="if(interactionGuard()) postComment(${s.id})">Post</button>
                         </div>
                     </div>
@@ -310,7 +315,7 @@
             const street = gridData.find(s => s.id === id);
             if (!street) return;
 
-            // 1. Only allow state change (Outage to Restore or vice versa)
+            // Block if attempting to set current state
             if (street.status === status) {
                 showToast(`Already marked as ${status}`);
                 return;
@@ -320,7 +325,6 @@
             const todayStr = now.toISOString().split('T')[0];
             const lastUpdateStr = street.updated_at ? new Date(street.updated_at).toISOString().split('T')[0] : '';
 
-            // 2. Manage Counters (Reset at midnight)
             let newOutageCount = street.outage_count || 0;
             let newRestoreCount = street.restore_count || 0;
 
@@ -332,7 +336,6 @@
             if (status === 'Light On') newRestoreCount++;
             if (status === 'No Light') newOutageCount++;
 
-            // 3. Update Database
             const { error } = await _client.from('areas').update({ 
                 status: status, 
                 updated_at: now.toISOString(),
@@ -342,26 +345,39 @@
             
             if (!error) {
                 showToast(`Status Updated: ${status}`);
-                // Goal 1: Notifications only for followers
-                if (userSubs.includes(id)) {
-                    console.log("Notifying follower of update to:", street.name);
-                    // Mobile Push logic would go here
-                }
                 fetchGrid();
             }
         }
 
-        function setChip(id, txt) { updateStatus(id, txt); }
+        async function setChip(id, txt) { 
+            // Chips act as a detailed reason for the current status
+            const { error } = await _client.from('areas').update({ 
+                status: txt, 
+                updated_at: new Date().toISOString() 
+            }).eq('id', id);
+            
+            if (!error) {
+                showToast(`Logged: ${txt}`);
+                fetchGrid();
+            }
+        }
 
-        function postComment(id) {
+        async function postComment(id) {
             const input = document.getElementById(`comment-input-${id}`);
             const text = input.value.trim();
             if (!text) return;
-            if (!localComments[id]) localComments[id] = [];
-            localComments[id].unshift({ user: user.email.split('@')[0], text: text, time: new Date().toISOString() });
-            input.value = '';
-            showToast('Comment posted');
-            filterGrid(); 
+
+            const { error } = await _client.from('comments').insert([{ 
+                area_id: id, 
+                user_email: user.email, 
+                content: text 
+            }]);
+
+            if (!error) {
+                input.value = '';
+                showToast('Comment saved');
+                await fetchComments();
+            }
         }
 
         async function toggleFav(id) {
@@ -404,6 +420,11 @@
         function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
 
         function syncRealtime() {
+            _client.channel('areas_db_changes')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'areas' }, () => fetchGrid())
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, () => fetchComments())
+                .subscribe();
+
             const ch = _client.channel('presence').on('presence', { event: 'sync' }, () => {
                 const count = Object.keys(ch.presenceState()).length;
                 document.getElementById('member-count').innerText = `${count} ONLINE`;
@@ -433,35 +454,6 @@
         }
 
         startApp();
-
-        if (window.hasOwnProperty('Capacitor')) {
-            const { App } = Capacitor.Plugins;
-            App.addListener('appUrlOpen', async (data) => {
-                const url = new URL(data.url.replace('com.upnepa.osun://', 'https://placeholder.com/'));
-                const hash = url.hash.substring(1);
-                
-                if (hash) {
-                    const params = new URLSearchParams(hash);
-                    const accessToken = params.get('access_token');
-                    const refreshToken = params.get('refresh_token');
-
-                    if (accessToken && refreshToken) {
-                        const { data: sessionData, error } = await _client.auth.setSession({
-                            access_token: accessToken,
-                            refresh_token: refreshToken
-                        });
-
-                        if (!error && sessionData.user) {
-                            showToast("Welcome Back!");
-                            user = sessionData.user;
-                            renderAuth();
-                            await fetchSubs();
-                            filterGrid();
-                        }
-                    }
-                }
-            });
-        }
     </script>
 </body>
 </html>
