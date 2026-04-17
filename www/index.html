@@ -167,19 +167,21 @@
         let allComments = []; 
 
         async function startApp() {
-            // FIX 1: Robust Auth State Listener 
+            lucide.createIcons();
+
+            // 1. Setup Auth Listener
             _client.auth.onAuthStateChange((event, session) => {
                 user = session?.user || null;
                 renderAuth();
                 if (user) {
                     fetchSubs();
-                } else if (event === 'SIGNED_OUT') {
+                } else {
                     userSubs = [];
-                    filterGrid();
                 }
+                filterGrid();
             });
 
-            // Initial session check
+            // 2. Initial Data Pull
             const { data: { session } } = await _client.auth.getSession();
             user = session?.user || null;
             renderAuth();
@@ -190,25 +192,32 @@
             
             syncRealtime();
 
-            // Capacitor Deep Link Support
-            if (window.Capacitor && Capacitor.Plugins.App) {
-                Capacitor.Plugins.App.addListener('appUrlOpen', async (data) => {
+            // 3. CAPACITOR DEEP LINK FIX (Professional implementation)
+            if (window.Capacitor && window.Capacitor.Plugins.App) {
+                window.Capacitor.Plugins.App.addListener('appUrlOpen', async (data) => {
                     const url = new URL(data.url);
+                    // Extract tokens from com.upnepa.osun://login-callback#access_token=...
                     const fragment = url.hash.substring(1);
                     const params = new URLSearchParams(fragment);
                     const accessToken = params.get('access_token');
                     const refreshToken = params.get('refresh_token');
+
                     if (accessToken && refreshToken) {
-                        await _client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-                        showToast("Login Successful!");
+                        const { error } = await _client.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken
+                        });
+                        if (!error) {
+                            showToast("Logged in successfully!");
+                            window.location.reload();
+                        }
                     }
                 });
             }
         }
 
         async function loginGoogle() { 
-            const isNative = window.Capacitor && Capacitor.isNativePlatform();
-            // Critical: Ensure redirect URL is clean of current state
+            const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
             const redirectUrl = isNative 
                 ? 'com.upnepa.osun://login-callback' 
                 : window.location.origin + window.location.pathname;
@@ -242,7 +251,6 @@
             showToast("Logged out");
         }
 
-        // --- CORE DATA FETCHING ---
         async function fetchGrid() {
             const { data } = await _client.from('areas').select('*, subscriptions(count)').eq('approved', true).order('name');
             if (data) { gridData = data; buildTowns(data); filterGrid(); }
@@ -260,47 +268,42 @@
             filterGrid();
         }
 
-        // --- REALTIME SYNC (FIXED) ---
+        // REALTIME SYNC (FIXED "CONNECTING" STATUS)
         function syncRealtime() {
             const dot = document.getElementById('status-dot');
             const text = document.getElementById('status-text');
 
-            // 1. Data Subscriptions
-            _client.channel('db-changes')
+            // Listen for data updates
+            _client.channel('public-db')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, () => fetchGrid())
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => fetchComments())
                 .subscribe();
             
-            // 2. Presence & Global Status
-            const ch = _client.channel('global_presence');
+            // Presence Tracking
+            const presenceChannel = _client.channel('online-status');
             
-            ch.on('presence', { event: 'sync' }, () => {
-                const state = ch.presenceState();
+            presenceChannel.on('presence', { event: 'sync' }, () => {
+                const state = presenceChannel.presenceState();
                 let count = 0;
-                for (const id in state) count += state[id].length;
-                const badge = document.getElementById('member-count');
-                if (badge) badge.innerText = `${count} ONLINE`;
+                for (const key in state) count += state[key].length;
+                document.getElementById('member-count').innerText = `${count} ONLINE`;
+                
+                // Set UI to "Live" once sync is confirmed
+                if (dot) dot.style.background = 'var(--success)';
+                if (text) text.innerText = 'Grid Live';
             });
 
-            ch.subscribe(async (status) => {
+            presenceChannel.subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
-                    // Update UI ONLY when successfully connected
-                    if (dot) dot.style.background = 'var(--success)';
-                    if (text) text.innerText = 'Grid Live';
-                    
-                    try {
-                        const { data: { session } } = await _client.auth.getSession();
-                        await ch.track({ online_at: new Date().toISOString(), user: session?.user?.id || 'anon' });
-                    } catch (e) { console.error("Track error", e); }
-                } else {
-                    // Failures or timeouts
+                    await presenceChannel.track({ online_at: new Date().toISOString(), email: user?.email || 'anon' });
+                } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
                     if (dot) dot.style.background = 'var(--danger)';
                     if (text) text.innerText = 'Reconnecting...';
                 }
             });
         }
 
-        // --- UI HELPERS & INTERACTIONS ---
+        // --- UI HELPERS ---
         function timeAgo(date) {
             if (!date) return "No updates";
             const sec = Math.floor((new Date() - new Date(date)) / 1000);
@@ -378,8 +381,6 @@
 
         async function updateStatus(id, status) {
             const street = gridData.find(s => s.id === id);
-            if (street.status === status) return showToast("Status already set");
-            
             const now = new Date();
             const today = now.toISOString().split('T')[0];
             const lastUp = street.updated_at ? new Date(street.updated_at).toISOString().split('T')[0] : '';
@@ -389,8 +390,8 @@
             if (today !== lastUp) { oCount = 0; rCount = 0; }
             status === 'Light On' ? rCount++ : oCount++;
 
-            const { error } = await _client.from('areas').update({ status, updated_at: now.toISOString(), outage_count: oCount, restore_count: rCount }).eq('id', id);
-            if (!error) showToast("Grid Updated");
+            await _client.from('areas').update({ status, updated_at: now.toISOString(), outage_count: oCount, restore_count: rCount }).eq('id', id);
+            showToast("Grid Updated");
         }
 
         async function postComment(id) {
@@ -414,11 +415,19 @@
             filterGrid();
         }
 
-        // Standard helpers
+        async function submitSuggestion() {
+            const name = document.getElementById('suggest-name').value;
+            const town = document.getElementById('suggest-town').value;
+            if (!name || !town) return;
+            const { error } = await _client.from('areas').insert([{ name, town, approved: false, status: 'No Light' }]);
+            if (!error) { showToast("Suggestion Sent!"); closeModals(); }
+        }
+
         function buildTowns(data) {
             const list = [...new Set(data.map(i => i.town).filter(Boolean))].sort();
             document.getElementById('town-filter').innerHTML = '<option value="all">ALL TOWNS</option>' + list.map(t => `<option value="${t}">${t}</option>`).join('');
         }
+
         function handleSearch(val) {
             const box = document.getElementById('suggestion-box');
             if (!val) { box.style.display = 'none'; filterGrid(); return; }
@@ -428,21 +437,40 @@
             lucide.createIcons();
             filterGrid();
         }
-        function selectStreet(name) { document.getElementById('search-grid').value = name; document.getElementById('suggestion-box').style.display = 'none'; filterGrid(); }
-        function interactionGuard() { if (!user) { showToast('Please Login First'); window.scrollTo(0,0); return false; } return true; }
+
+        function selectStreet(name) { 
+            document.getElementById('search-grid').value = name; 
+            document.getElementById('suggestion-box').style.display = 'none'; 
+            filterGrid(); 
+        }
+
+        function interactionGuard() { 
+            if (!user) { 
+                showToast('Please Login First'); 
+                window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                return false; 
+            } 
+            return true; 
+        }
+
+        async function setChip(id, txt) { 
+            await _client.from('areas').update({ status: txt, updated_at: new Date().toISOString() }).eq('id', id); 
+            showToast("Log: " + txt); 
+        }
+
         function openSuggest() { document.getElementById('suggest-modal').style.display = 'flex'; }
         function openSupport() { document.getElementById('support-modal').style.display = 'flex'; }
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
         function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
-        async function setChip(id, txt) { await _client.from('areas').update({ status: txt, updated_at: new Date().toISOString() }).eq('id', id); showToast("Logged: " + txt); }
         
         function openShare(name, status) {
             const text = encodeURIComponent(`💡 Up-Nepa Osun: ${name} is ${status}.`);
-            const url = encodeURIComponent(window.location.origin + window.location.pathname);
+            const url = encodeURIComponent("https://up-nepa-osun.vercel.app/");
             document.getElementById('share-wa').href = `https://wa.me/?text=${text}%20${url}`;
             document.getElementById('share-modal').style.display = 'flex';
         }
 
+        // Initialize
         window.onload = startApp;
     </script>
 </body>
