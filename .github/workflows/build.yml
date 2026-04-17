@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK Final Fix
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java & Node
         uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -23,12 +23,12 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build Branded APK + Deep Link Fix
+      - name: Build Branded APK with Deep Links
         run: |
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets@latest
           
-          # Setup Icons
+          # Icon Setup
           mkdir -p assets
           cp www/icon.png assets/icon-only.png
           cp www/icon.png assets/icon-foreground.png
@@ -45,7 +45,7 @@ jobs:
           npx cap add android
           npx capacitor-assets generate --android
           
-          # CRITICAL: This links your Supabase dashboard to your actual Android app
+          # THE DEEP LINK INJECTION
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i '/<intent-filter>/i \
             <intent-filter>\
@@ -67,9 +67,9 @@ jobs:
         env:
           CI: true
 
-      - name: Upload Final Branded APK
+      - name: Upload Final APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-Fixed
+          name: Up-Nepa-Osun-Final-Checkmark
           path: android/app/build/outputs/apk/debug/Up-Nepa-Osun-Final.apk
           
