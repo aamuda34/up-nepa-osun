@@ -12,7 +12,6 @@
     <style>
         :root {
             --primary: #bb86fc;
-            --primary-soft: rgba(187, 134, 252, 0.1);
             --success: #03dac6;
             --danger: #ff5252;
             --bg: #050505;
@@ -21,106 +20,62 @@
             --border: #28282c;
             --text-main: #f5f5f7;
             --text-dim: #94949b;
-            --glass: rgba(255, 255, 255, 0.03);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
         body { background: var(--bg); color: var(--text-main); padding: 16px; padding-bottom: 120px; overflow-x: hidden; }
 
-        /* --- Custom Toast --- */
-        #toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -150%); background: var(--success); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 800; font-size: 0.8rem; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -150%); background: var(--primary); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 800; font-size: 0.8rem; z-index: 10000; transition: transform 0.4s; }
         #toast.show { transform: translate(-50%, 0); }
 
-        /* --- Header & Ticker (FIXED Z-INDEX) --- */
-        .global-ticker { background: linear-gradient(90deg, #1a1a1c, #0a0a0b); border-bottom: 1px solid var(--border); margin: -16px -16px 20px -16px; display: flex; align-items: center; height: 36px; overflow: hidden; position: relative; }
-        .ticker-badge { 
-            background: var(--primary); 
-            color: #000; 
-            font-size: 0.6rem; 
-            font-weight: 800; 
-            padding: 0 12px; 
-            height: 100%; 
-            display: flex; 
-            align-items: center; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            position: relative; 
-            z-index: 2; /* Keeps badge on top */
-            box-shadow: 5px 0 15px rgba(0,0,0,0.5); /* Prevents text bleeding into badge */
-        }
-        .ticker-content { 
-            flex: 1; 
-            white-space: nowrap; 
-            font-size: 0.8rem; 
-            color: var(--primary); 
-            font-weight: 600; 
-            position: relative; 
-            z-index: 1; /* Keeps text behind badge */
-            overflow: hidden;
-        }
-        .ticker-scroll { display: inline-block; padding-left: 100%; animation: ticker-move 25s linear infinite; }
+        /* Ticker - Set to stay on top */
+        .global-ticker { position: relative; z-index: 2001; background: #1a1a1c; border-bottom: 1px solid var(--border); margin: -16px -16px 20px -16px; display: flex; align-items: center; height: 36px; overflow: hidden; }
+        .ticker-badge { background: var(--primary); color: #000; font-size: 0.6rem; font-weight: 800; padding: 0 12px; height: 100%; display: flex; align-items: center; text-transform: uppercase; z-index: 2; }
+        .ticker-content { position: relative; flex: 1; overflow: hidden; z-index: 1; }
+        .ticker-scroll { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker-move 25s linear infinite; color: var(--primary); font-weight: 600; font-size: 0.8rem; }
         @keyframes ticker-move { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         .app-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .logo-wrap { display: flex; align-items: center; gap: 12px; }
-        .logo-img { width: 48px; height: 48px; border-radius: 14px; border: 2px solid var(--primary); background: var(--surface); display: flex; align-items: center; justify-content: center;}
-        .brand-text h1 { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px; }
-        .brand-text span { color: var(--primary); }
-        .grid-status { display: flex; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); }
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); }
-        .status-dot.active { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .logo-img { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--surface); }
         .badge-status { padding: 6px 12px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; background: var(--border); color: var(--primary); }
 
-        /* --- Actions --- */
-        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-        .action-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; text-decoration: none; display: flex; align-items: center; gap: 10px; }
-        .action-card span { font-size: 0.75rem; font-weight: 700; color: var(--text-main); }
+        .search-container { position: sticky; top: 10px; z-index: 1000; margin-bottom: 24px; }
+        .command-bar { background: rgba(18,18,20,0.95); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 18px; padding: 8px; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 8px; }
+        .minimal-input { background: var(--surface-light); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 12px; font-size: 0.85rem; width: 100%; outline: none; }
+        
+        #suggestion-box { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-top: 8px; max-height: 250px; overflow-y: auto; display: none; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .suggestion-item { padding: 14px; border-bottom: 1px solid var(--border); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 10px; }
 
-        .auth-banner { background: var(--primary-soft); border: 1px solid var(--primary); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 24px; }
-        .suggest-area { border: 2px dashed var(--border); border-radius: 20px; padding: 20px; margin-bottom: 24px; }
-        .minimal-input { background: var(--surface-light); border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 12px; font-size: 0.85rem; width: 100%; outline: none; }
+        .pro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; position: relative; border-left: 4px solid var(--danger); }
+        .card-on { border-left-color: var(--success); }
+        .street-name { font-size: 1.2rem; font-weight: 800; }
+        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-top: 8px; display: inline-block; border: 1px solid currentColor; }
+        .pill-on { color: var(--success); }
+        .pill-off { color: var(--danger); }
 
-        /* --- Professional Street Card --- */
-        .pro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; position: relative; transition: 0.3s; }
-        .pro-card::after { content: ''; position: absolute; left: 0; top: 20%; height: 60%; width: 4px; border-radius: 0 4px 4px 0; }
-        .card-on::after { background: var(--success); box-shadow: 0 0 10px var(--success); }
-        .card-off::after { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+        .time-ago { font-size: 0.6rem; color: var(--text-dim); margin-top: 4px; font-weight: 600; }
 
-        .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .street-name { font-size: 1.2rem; font-weight: 800; margin-bottom: 2px; }
-        .town-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; }
-
-        .card-meta { display: flex; gap: 12px; margin-bottom: 16px; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); }
-        .meta-item { display: flex; align-items: center; gap: 4px; background: var(--glass); padding: 4px 8px; border-radius: 6px; }
-
-        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-top: 8px; display: inline-block; }
-        .pill-on { background: rgba(3, 218, 198, 0.1); color: var(--success); border: 1px solid var(--success); }
-        .pill-off { background: rgba(255, 82, 82, 0.1); color: var(--danger); border: 1px solid var(--danger); }
-
-        .btn-circle { width: 38px; height: 38px; border-radius: 12px; background: var(--surface-light); border: 1px solid var(--border); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer;}
+        .card-meta { display: flex; gap: 12px; margin: 12px 0; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); }
+        .btn-circle { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-light); border: 1px solid var(--border); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .btn-circle.active { color: var(--primary); border-color: var(--primary); }
 
-        .chip-group { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 5px; }
-        .action-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 8px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: pointer;}
+        .chip-group { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
+        .action-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 8px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: pointer; }
 
         .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn-up { background: var(--success); color: #000; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer;}
-        .btn-down { background: var(--danger); color: #fff; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer;}
-        .btn-up:disabled, .btn-down:disabled { opacity: 0.1; filter: grayscale(1); cursor: not-allowed;}
+        .btn-up { background: var(--success); color: #000; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; }
+        .btn-down { background: var(--danger); color: #fff; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; }
 
         .comment-area { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 10px; margin-bottom: 10px; }
         .comment-input { width: 100%; background: transparent; border: none; color: #fff; outline: none; font-size: 0.85rem; resize: none; }
 
-        /* --- Nav Footer --- */
-        .nav-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.95); backdrop-filter: blur(15px); border-top: 1px solid var(--border); padding: 12px 20px 25px; display: flex; justify-content: space-around; z-index: 1000; }
-        .nav-link { text-decoration: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 800; }
-        .nav-link.active { color: var(--primary); }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; width: 100%; max-width: 400px; text-align: center; }
+        .social-btn { padding: 14px; border-radius: 14px; text-decoration: none; color: #fff; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
 
-        /* Search/Filter Bar */
-        .command-bar { position: sticky; top: 10px; z-index: 100; background: rgba(5,5,5,0.8); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 18px; padding: 8px; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 8px; margin-bottom: 24px; }
-        
-        .loading-state { text-align: center; padding: 40px; color: var(--text-dim); font-weight: 700; }
+        .nav-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.95); backdrop-filter: blur(15px); border-top: 1px solid var(--border); padding: 12px 20px 25px; display: flex; justify-content: space-around; z-index: 2000; }
+        .nav-link { text-decoration: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 800; cursor: pointer; }
+        .nav-link.active { color: var(--primary); }
     </style>
 </head>
 <body>
@@ -128,297 +83,245 @@
     <div id="toast">Notification</div>
 
     <div class="global-ticker">
-        <div class="ticker-badge">Flash</div>
-        <div class="ticker-content"><span id="ticker-text" class="ticker-scroll">Fetching latest Osun State Grid status... Stay tuned.</span></div>
+        <div class="ticker-badge">Live</div>
+        <div class="ticker-content"><span class="ticker-scroll">NEWS: Up-Nepa Osun is now live! Track your local grid status and transformer health in real-time.</span></div>
     </div>
 
     <nav class="app-nav">
-        <div class="logo-wrap">
+        <div style="display:flex; align-items:center; gap:12px;">
             <div class="logo-img"><i data-lucide="zap" style="color:var(--primary)"></i></div>
-            <div class="brand-text">
-                <h1>Up-Nepa <span>Osun</span></h1>
-                <div class="grid-status"><div id="status-dot" class="status-dot"></div> <span id="status-text">Connecting...</span></div>
+            <div>
+                <h1 style="font-size:1.1rem; font-weight:800;">Up-Nepa <span style="color:var(--primary)">Osun</span></h1>
+                <div style="display:flex; align-items:center; gap:4px; font-size:0.6rem; color:var(--text-dim);">
+                    <div id="status-dot" style="width:6px; height:6px; background:var(--danger); border-radius:50%"></div> <span id="status-text">Connecting...</span>
+                </div>
             </div>
         </div>
         <div id="member-count" class="badge-status">0 ONLINE</div>
     </nav>
 
-    <div class="quick-actions">
-        <a href="#" class="action-card"><i data-lucide="message-square" style="color:var(--primary)"></i> <span>Agent Support</span></a>
-        <a href="#" class="action-card"><i data-lucide="mail" style="color:var(--primary)"></i> <span>Email Help</span></a>
+    <div id="auth-section">
+        <button class="btn-up" style="width:100%; background:#fff; margin-bottom:24px; color:#000;" onclick="loginGoogle()">Sign in with Google</button>
     </div>
 
-    <div id="auth-section">
-        <div class="auth-banner">
-            <p style="font-size:0.85rem; font-weight:800; margin-bottom:12px;">Join the Network</p>
-            <button class="btn-up" style="width:100%; background:#fff" onclick="loginGoogle()">Sign in with Google</button>
+    <div class="search-container">
+        <div class="command-bar">
+            <select id="town-filter" class="minimal-input" style="background:var(--primary); color:#000; font-weight:800; border:none;" onchange="filterGrid()">
+                <option value="all">ALL TOWNS</option>
+            </select>
+            <input type="text" id="search-grid" class="minimal-input" placeholder="Search street..." oninput="handleSearch(this.value)">
+        </div>
+        <div id="suggestion-box"></div>
+    </div>
+
+    <main id="street-feed"></main>
+
+    <button onclick="openSuggest()" style="width:100%; background:var(--surface); border:1px dashed var(--primary); color:var(--primary); padding:15px; border-radius:15px; font-weight:800; margin-top:10px; cursor:pointer;">+ CAN'T FIND YOUR STREET? SUGGEST HERE</button>
+
+    <div id="support-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="margin-bottom:20px;">Support Center</h2>
+            <a href="https://wa.me/2348062516110" class="social-btn" style="background:#25D366;"><i data-lucide="message-circle"></i> WhatsApp Support</a>
+            <a href="mailto:aamuda34@gmail.com" class="social-btn" style="background:#fff; color:#000;"><i data-lucide="mail"></i> Gmail Support</a>
+            <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:20px; font-weight:700;">Close</button>
         </div>
     </div>
 
-    <div id="suggest-box" class="suggest-area">
-        <h3 style="font-size:0.9rem; margin-bottom:10px;">Missing your Street?</h3>
-        <input type="text" id="new-street" class="minimal-input" style="margin-bottom:12px;" placeholder="Street Name, Town">
-        <button id="suggest-btn" class="btn-down" style="width:100%; background:var(--surface-light); color:#fff" onclick="handleSuggestion()">Sign in to Request</button>
+    <div id="suggest-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="margin-bottom:15px;">Suggest a Street</h2>
+            <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px;">Submit the name of the street and town to be added to the grid.</p>
+            <input type="text" id="suggest-name" class="minimal-input" placeholder="Street Name" style="margin-bottom:10px;">
+            <input type="text" id="suggest-town" class="minimal-input" placeholder="Town" style="margin-bottom:15px;">
+            <button class="btn-up" style="width:100%;" onclick="if(interactionGuard()) submitSuggestion()">Submit Request</button>
+            <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:15px; font-weight:700;">Cancel</button>
+        </div>
     </div>
 
-    <div class="command-bar">
-        <select id="town-filter" class="minimal-input" style="background:var(--primary); color:#000; font-weight:800; border:none;" onchange="filterGrid()">
-            <option value="all">ALL TOWNS</option>
-        </select>
-        <input type="text" id="search-grid" class="minimal-input" placeholder="Find street..." oninput="filterGrid()">
+    <div id="share-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="share-title" style="margin-bottom:15px; font-size:1rem;">Share Update</h2>
+            <a id="share-wa" class="social-btn" style="background:#25D366;"><i data-lucide="message-circle"></i>WhatsApp</a>
+            <a id="share-fb" class="social-btn" style="background:#1877F2;"><i data-lucide="facebook"></i>Facebook</a>
+            <a id="share-tg" class="social-btn" style="background:#0088cc;"><i data-lucide="send"></i>Telegram</a>
+            <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:20px; font-weight:700;">Cancel</button>
+        </div>
     </div>
-
-    <main id="street-feed">
-        <div class="loading-state">Initializing Grid...</div>
-    </main>
 
     <footer class="nav-footer">
-        <a href="#" class="nav-link active"><i data-lucide="layout-grid"></i><span>Grid</span></a>
-        <a href="#" class="nav-link"><i data-lucide="shield-check"></i><span>Support</span></a>
+        <div class="nav-link active" onclick="location.reload()"><i data-lucide="layout-grid"></i><span>Grid</span></div>
+        <div class="nav-link" onclick="openSupport()"><i data-lucide="shield-check"></i><span>Support</span></div>
     </footer>
 
     <script>
         const S_URL = 'https://tzsumiudcqxpyphhjymu.supabase.co';
-        const S_KEY = 'sb_publishable_S2TrD434ZYpkkx7gU2wiiw_QrgOr0AV'; 
+        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6c3VtaXVkY3F4cHlwaGhqeW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDczMzUsImV4cCI6MjA5MTU4MzMzNX0.gDjhwcitscFZfVhWq1YIYdvrccX5rP-BGYNkqUm5v8Y'; 
         const _client = supabase.createClient(S_URL, S_KEY);
 
         let gridData = [], user = null, userSubs = [];
 
-        function showToast(msg, type = 'success') {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.background = type === 'success' ? 'var(--success)' : 'var(--danger)';
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
-
-        function timeAgo(date) {
-            if (!date) return "Unknown";
-            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-            if (seconds < 60) return "Just now";
-            let interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + "h ago";
-            interval = seconds / 60;
-            return Math.floor(interval) + "m ago";
-        }
-
-        // --- NEW: Deep Link Listener for the APK ---
-        window.addEventListener('appUrlOpen', (event) => {
-            const url = new URL(event.url);
-            const hash = url.hash; // Supabase returns the session here
-            
-            if (hash) {
-                // Tell Supabase to process the URL and log the user in
-                _client.auth.getSessionFromUrl({ url: event.url }).then(({ data, error }) => {
-                    if (data.session) {
-                        location.reload(); // Refresh to show logged-in interface
-                    }
-                });
-            }
-        });
-
         async function startApp() {
             const { data: { session } } = await _client.auth.getSession();
             user = session?.user || null;
-            if (user) {
-                renderAuth(); 
-                await fetchSubs();
-            }
+            if (user) { renderAuth(); await fetchSubs(); }
             fetchGrid();
             syncRealtime();
         }
 
-        // --- UPDATED: Tell Google to redirect to your custom APK scheme ---
         async function loginGoogle() { 
-            const { error } = await _client.auth.signInWithOAuth({ 
-                provider: 'google',
-                options: {
-                    redirectTo: 'com.upnepa.osun://login-callback'
-                }
-            }); 
-            
-            if(error) {
-                showToast("Login Error: " + error.message, "error");
-            }
+            await _client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } }); 
+        }
+
+        async function fetchGrid() {
+            const { data } = await _client.from('areas').select('*, subscriptions(count)').eq('approved', true).order('name');
+            if (data) { gridData = data; buildTowns(data); filterGrid(); }
         }
 
         async function fetchSubs() {
-            if (!user) return;
             const { data } = await _client.from('subscriptions').select('area_id').eq('user_id', user.id);
             if (data) userSubs = data.map(i => i.area_id);
         }
 
-        async function fetchGrid() {
-            const { data, error } = await _client
-                .from('areas')
-                .select('*, subscriptions(count)')
-                .eq('approved', true)
-                .order('name');
-                
-            if (data) { 
-                gridData = data; 
-                buildTowns(data); 
-                filterGrid(); 
-            } else if (error) {
-                console.error("Supabase Error:", error);
-            }
+        function timeAgo(date) {
+            if (!date) return "No updates yet";
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + "y ago";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + "mo ago";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + "d ago";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + "h ago";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + "m ago";
+            return "Just now";
+        }
+
+        function handleSearch(val) {
+            const box = document.getElementById('suggestion-box');
+            if (!val) { box.style.display = 'none'; filterGrid(); return; }
+            const matches = gridData.filter(s => s.name.toLowerCase().includes(val.toLowerCase())).slice(0, 6);
+            if (matches.length > 0) {
+                box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectStreet('${m.name}')"><i data-lucide="map-pin" style="width:14px"></i>${m.name}</div>`).join('');
+                box.style.display = 'block'; lucide.createIcons();
+            } else { box.style.display = 'none'; }
+            filterGrid();
+        }
+
+        function selectStreet(name) {
+            document.getElementById('search-grid').value = name;
+            document.getElementById('suggestion-box').style.display = 'none';
+            filterGrid();
+        }
+
+        function interactionGuard() {
+            if (!user) { showToast('Please Login First'); window.scrollTo({ top: 0, behavior: 'smooth' }); return false; }
+            return true;
         }
 
         function renderGrid(list) {
             const container = document.getElementById('street-feed');
-            if (list.length === 0) {
-                container.innerHTML = '<div class="loading-state">No streets found matching your search.</div>';
-                return;
-            }
-            const guest = !user;
             container.innerHTML = list.map(s => {
                 const isOn = s.status === 'Light On';
                 const subbed = userSubs.includes(s.id);
-                const timeStr = s.updated_at || s.created_at; 
                 const followers = s.subscriptions?.[0]?.count || 0;
-                
                 return `
-                <div class="pro-card ${isOn ? 'card-on' : 'card-off'}">
-                    <div class="card-header">
+                <div class="pro-card ${isOn ? 'card-on' : ''}">
+                    <div style="display:flex; justify-content:space-between">
                         <div>
-                            <p class="town-label">${s.town || 'Osun'}</p>
+                            <p style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase;">${s.town}</p>
                             <h2 class="street-name">${s.name}</h2>
-                            <div class="status-pill ${isOn ? 'pill-on' : 'pill-off'}">${s.status || 'No Light'}</div>
+                            <div class="status-pill ${isOn ? 'pill-on' : 'pill-off'}">${s.status || 'Offline'}</div>
+                            <div class="time-ago">Last updated: ${timeAgo(s.updated_at)}</div>
                         </div>
                         <div style="display:flex; gap:8px;">
-                            <div class="btn-circle ${subbed ? 'active' : ''}" onclick="toggleFav(${s.id})"><i data-lucide="bell" style="width:16px"></i></div>
-                            <div class="btn-circle" onclick="showToast('Share Link Copied!')"><i data-lucide="share-2" style="width:16px"></i></div>
+                            <div class="btn-circle ${subbed ? 'active' : ''}" onclick="if(interactionGuard()) toggleFav(${s.id})"><i data-lucide="bell" style="width:18px"></i></div>
+                            <div class="btn-circle" onclick="openShare('${s.name}', '${s.status}')"><i data-lucide="share-2" style="width:18px"></i></div>
                         </div>
                     </div>
-
-                    <div class="card-meta">
-                        <div class="meta-item"><i data-lucide="clock" style="width:12px"></i> ${timeAgo(timeStr)}</div>
-                        <div class="meta-item"><i data-lucide="users" style="width:12px"></i> ${followers} Followers</div>
-                    </div>
-
+                    <div class="card-meta"><span><i data-lucide="users" style="width:12px; display:inline"></i> ${followers} Followers</span></div>
                     <div class="chip-group">
-                        <button class="action-chip" onclick="setChip(${s.id}, '⛈️ Weather Issue')">⛈️ Weather</button>
-                        <button class="action-chip" onclick="setChip(${s.id}, '⚡ Low Voltage')">⚡ Voltage</button>
-                        <button class="action-chip" onclick="setChip(${s.id}, '🔧 Phase Issue')">🔧 Phase Issue</button>
-                        <button class="action-chip" onclick="setChip(${s.id}, '🔌 Transformer Fault')">🔌 Transformer</button>
+                        <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⛈️ Weather Issue')">⛈️ Weather</button>
+                        <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⚡ Low Voltage')">⚡ Voltage</button>
+                        <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '🔧 Phase Issue')">🔧 Phase</button>
                     </div>
-
                     <div class="btn-row">
-                        <button class="btn-up" ${guest || isOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'Light On')">RESTORED</button>
-                        <button class="btn-down" ${guest || !isOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'No Light')">OUTAGE</button>
+                        <button class="btn-up" onclick="if(interactionGuard()) updateStatus(${s.id}, 'Light On')">RESTORED</button>
+                        <button class="btn-down" onclick="if(interactionGuard()) updateStatus(${s.id}, 'No Light')">OUTAGE</button>
                     </div>
-
-                    <div class="comment-area">
-                        <textarea id="msg-${s.id}" class="comment-input" rows="1" placeholder="${guest ? 'Sign in to post...' : 'Add details...'}" ${guest ? 'disabled' : ''}></textarea>
-                    </div>
-                    <button class="btn-up" style="width:100%; padding:10px; font-size:0.7rem; background:var(--surface-light); color:#fff; border: 1px solid var(--border);" ${guest ? 'disabled' : ''} onclick="postComment(${s.id})">Publish Update</button>
                 </div>`;
             }).join('');
             lucide.createIcons();
         }
 
         async function updateStatus(id, status) {
-            await _client.from('areas')
-                .update({ status: status, updated_at: new Date().toISOString() })
-                .eq('id', id);
-            
-            showToast('Grid Updated!');
-            fetchGrid();
+            await _client.from('areas').update({ status: status, updated_at: new Date().toISOString() }).eq('id', id);
+            showToast('Updated!'); fetchGrid();
         }
 
         async function toggleFav(id) {
-            if (!user) return showToast('Please sign in to follow areas', 'error');
-
             if (userSubs.includes(id)) {
                 await _client.from('subscriptions').delete().eq('user_id', user.id).eq('area_id', id);
                 userSubs = userSubs.filter(x => x !== id);
-                showToast('Removed from Alerts');
             } else {
                 await _client.from('subscriptions').insert([{ user_id: user.id, area_id: id }]);
                 userSubs.push(id);
-                showToast('Added to Alerts', 'success');
             }
-            
             fetchGrid();
         }
 
-        function setChip(id, txt) { 
-            if(user) document.getElementById(`msg-${id}`).value = txt; 
-            else showToast('Sign in first', 'error'); 
+        function openSuggest() { document.getElementById('suggest-modal').style.display = 'flex'; }
+        async function submitSuggestion() {
+            const name = document.getElementById('suggest-name').value;
+            const town = document.getElementById('suggest-town').value;
+            if(!name || !town) return showToast('Fill all fields');
+            await _client.from('areas').insert([{ name, town, approved: false, status: 'Pending' }]);
+            showToast('Suggestion sent for approval!');
+            closeModals();
         }
 
-        async function postComment(id) {
-            const val = document.getElementById(`msg-${id}`).value; 
-            if(!val) return;
-            
-            await _client.from('comments').insert([{ 
-                area_id: id, 
-                content: val, 
-                username: user.email.split('@')[0],
-                type: 'general',
-                confirmations: 0
-            }]);
-            
-            document.getElementById(`msg-${id}`).value = '';
-            showToast('Comment Posted!');
+        function openShare(name, status) {
+            const text = encodeURIComponent(`${name} update: ${status}. Check Up-Nepa Osun!`);
+            document.getElementById('share-wa').href = `https://wa.me/?text=${text}`;
+            document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+            document.getElementById('share-tg').href = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${text}`;
+            document.getElementById('share-modal').style.display = 'flex';
         }
 
-        async function handleSuggestion() {
-            if(!user) { showToast('Please sign in first', 'error'); return; }
-            const name = document.getElementById('new-street').value.trim();
-            if(name) { 
-                await _client.from('areas').insert([{ name: name, approved: false, status: 'No Light' }]); 
-                showToast("Request sent for review!");
-                document.getElementById('new-street').value = '';} else {
-                showToast("Please enter a street name", "error");
-            }
+        function openSupport() { document.getElementById('support-modal').style.display = 'flex'; }
+        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+        function setChip(id, txt) { document.querySelector(`#street-feed textarea`) ? null : null; showToast('Chip selected: ' + txt); }
+
+        function syncRealtime() {
+            const ch = _client.channel('presence').on('presence', { event: 'sync' }, () => {
+                document.getElementById('member-count').innerText = `${Object.keys(ch.presenceState()).length} ONLINE`;
+            }).subscribe(async (s) => {
+                if(s === 'SUBSCRIBED') {
+                    document.getElementById('status-dot').style.background = 'var(--success)';
+                 document.getElementById('status-text').innerText = 'Grid Live';
+                    await ch.track({ online_at: new Date().toISOString() });
+                }
+            });
         }
 
         function buildTowns(data) {
             const list = [...new Set(data.map(i => i.town).filter(Boolean))].sort();
-            const select = document.getElementById('town-filter');
-            select.innerHTML = '<option value="all">ALL TOWNS</option>' + list.map(t => `<option value="${t}">${t}</option>`).join('');
+            document.getElementById('town-filter').innerHTML = '<option value="all">ALL TOWNS</option>' + list.map(t => `<option value="${t}">${t}</option>`).join('');
         }
 
         function filterGrid() {
             const town = document.getElementById('town-filter').value;
             const query = document.getElementById('search-grid').value.toLowerCase();
-            const filtered = gridData.filter(s => 
-                (town === 'all' || s.town === town) && 
-                s.name.toLowerCase().includes(query)
-            );
+            const filtered = gridData.filter(s => (town === 'all' || s.town === town) && s.name.toLowerCase().includes(query));
             renderGrid(filtered);
         }
 
-        function syncRealtime() {
-            const chan = _client.channel('public-grid');
-            chan.on('presence', { event: 'sync' }, () => {
-                document.getElementById('member-count').innerText = `${Object.keys(chan.presenceState()).length} ONLINE`;
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, () => fetchGrid())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'subscriptions' }, () => fetchGrid())
-            .subscribe(async (status) => {
-                if(status === 'SUBSCRIBED') {
-                    document.getElementById('status-dot').classList.add('active');
-                    document.getElementById('status-text').innerText = 'Grid Live';
-                    await chan.track({ online_at: new Date().toISOString() });
-                }
-            });
-        }
-
         function renderAuth() {
-            const name = user.email.split('@')[0];
-            document.getElementById('auth-section').innerHTML = `
-            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-                <div><p style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase;">Account</p><p style="color:var(--primary); font-weight:800;">${name}</p></div>
-                <button onclick="_client.auth.signOut().then(()=>location.reload())" style="background:none; border:1px solid var(--danger); color:var(--danger); padding:6px 12px; border-radius:8px; font-size:0.6rem; font-weight:800; cursor:pointer;">SIGN OUT</button>
-            </div>`;
-            document.getElementById('suggest-btn').innerText = "Request Addition";
-            document.getElementById('suggest-btn').style.background = "var(--primary)";
-            document.getElementById('suggest-btn').style.color = "#000";
+            document.getElementById('auth-section').innerHTML = `<div style="padding:12px; font-size:0.7rem; color:var(--primary); font-weight:800;">USER: ${user.email.split('@')[0]} <span onclick="_client.auth.signOut().then(()=>location.reload())" style="color:var(--danger); margin-left:15px;">LOGOUT</span></div>`;
         }
 
-        lucide.createIcons();
         startApp();
     </script>
 </body>
