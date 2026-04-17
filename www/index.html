@@ -7,6 +7,9 @@
     
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@capacitor/core@latest/dist/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@capacitor/app@latest/dist/index.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
@@ -28,7 +31,6 @@
         #toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -150%); background: var(--primary); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 800; font-size: 0.8rem; z-index: 10000; transition: transform 0.4s; }
         #toast.show { transform: translate(-50%, 0); }
 
-        /* Ticker - Set to stay on top */
         .global-ticker { position: relative; z-index: 2001; background: #1a1a1c; border-bottom: 1px solid var(--border); margin: -16px -16px 20px -16px; display: flex; align-items: center; height: 36px; overflow: hidden; }
         .ticker-badge { background: var(--primary); color: #000; font-size: 0.6rem; font-weight: 800; padding: 0 12px; height: 100%; display: flex; align-items: center; text-transform: uppercase; z-index: 2; }
         .ticker-content { position: relative; flex: 1; overflow: hidden; z-index: 1; }
@@ -168,8 +170,17 @@
             syncRealtime();
         }
 
+        // FIXED LOGIN FUNCTION
         async function loginGoogle() { 
-            await _client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: com.upnepa.osun://login-callback } }); 
+            const isApp = window.location.origin.includes('localhost') || window.localStorage.getItem('isCapacitor');
+            const redirectUrl = isApp 
+                ? 'com.upnepa.osun://login-callback' 
+                : window.location.href;
+
+            await _client.auth.signInWithOAuth({ 
+                provider: 'google', 
+                options: { redirectTo: redirectUrl } 
+            }); 
         }
 
         async function fetchGrid() {
@@ -323,6 +334,28 @@
         }
 
         startApp();
+
+        // ADDED DEEP LINK LISTENER FOR CAPACITOR
+        if (window.Capacitor) {
+            window.localStorage.setItem('isCapacitor', 'true');
+            const { App } = window.Capacitor.Plugins;
+            App.addListener('appUrlOpen', ({ url }) => {
+                if (url.includes('login-callback')) {
+                    const params = new URL(url).hash.split('&').reduce((acc, curr) => {
+                        const [key, value] = curr.split('=');
+                        acc[key.replace('#', '')] = value;
+                        return acc;
+                    }, {});
+                    
+                    if (params.access_token) {
+                        _client.auth.setSession({
+                            access_token: params.access_token,
+                            refresh_token: params.refresh_token
+                        }).then(() => location.reload());
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
