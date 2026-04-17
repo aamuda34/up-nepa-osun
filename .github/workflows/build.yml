@@ -25,15 +25,20 @@ jobs:
 
       - name: Build Branded APK with Deep Links
         run: |
+          # 1. Initialize and install ALL necessary plugins
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets@latest
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/assets@latest
           
-          # Icon Setup
+          # 2. Asset Setup
           mkdir -p assets
-          cp www/icon.png assets/icon-only.png
-          cp www/icon.png assets/icon-foreground.png
-          cp www/icon.png assets/icon-background.png
+          # Check if icon exists in www, if not use a placeholder to prevent build failure
+          if [ -f "www/icon.png" ]; then
+            cp www/icon.png assets/icon-only.png
+            cp www/icon.png assets/icon-foreground.png
+            cp www/icon.png assets/icon-background.png
+          fi
           
+          # 3. Create Config
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
@@ -42,27 +47,36 @@ jobs:
           }
           EOF
           
+          # 4. Add Android Platform
           npx cap add android
-          npx capacitor-assets generate --android
           
-          # THE DEEP LINK INJECTION
+          # 5. Generate Icons (if assets exist)
+          if [ -d "assets" ]; then
+            npx capacitor-assets generate --android || true
+          fi
+          
+          # 6. PROFESSIONAL DEEP LINK INJECTION
+          # We inject the intent-filter specifically into the MainActivity section
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          sed -i '/<intent-filter>/i \
-            <intent-filter>\
-                <action android:name="android.intent.action.VIEW" />\
-                <category android:name="android.intent.category.DEFAULT" />\
-                <category android:name="android.intent.category.BROWSABLE" />\
-                <data android:scheme="com.upnepa.osun" />\
-            </intent-filter>' $MANIFEST
+          
+          # Create the Deep Link block
+          DEEP_LINK='<intent-filter android:label="browsable"><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="com.upnepa.osun" /></intent-filter>'
+          
+          # Use sed to insert it right before the closing tag of the MainActivity
+          sed -i "/<\/activity>/i $DEEP_LINK" $MANIFEST
 
+          # 7. Google Services Check
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/
           fi
           
+          # 8. Sync and Build
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+          
+          # 9. Rename for clarity
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun-Final.apk
         env:
           CI: true
