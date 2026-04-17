@@ -1,8 +1,7 @@
 name: Build Android APK
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
@@ -17,18 +16,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Bubblewrap CLI
+      - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Build APK (Automated)
+      - name: Initialize and Build
         run: |
-          # We use 'yes' to bypass the manual JDK installation prompt seen in your log
-          yes | bubblewrap init --manifest=https://up-nepa-osun.vercel.app/manifest.json
-          bubblewrap build --skipSigning --yes
+          # Create a basic manifest so it doesn't prompt for 'y/n'
+          bubblewrap init --manifest="https://your-site-url.com/manifest.json" --no-prompt
+          bubblewrap build --skipSigning
+        env:
+          # This prevents the CLI from hanging on questions
+          CI: true 
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-Release
+          name: app-release
           path: ./*.apk
-          
