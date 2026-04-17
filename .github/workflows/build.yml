@@ -1,67 +1,22 @@
 name: Build Android APK
-on:
-  push:
-    branches: [ "main" ]
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - name: set up JDK 17
+        uses: actions/setup-java@v3
         with:
-          node-version: '22'
-
-      - name: Install Dependencies
-        run: |
-          npm install --legacy-peer-deps
-          npm install @capacitor/android @capacitor/assets @capacitor/core @capacitor/cli --save-dev
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+          java-version: '17'
+          distribution: 'temurin'
+      
+      # This is a community action that wraps your HTML into an APK
+      - name: Build APK
+        uses: jasonraimondi/html-to-apk-action@v1
         with:
-          java-version: '21'
-          distribution: 'zulu'
-
-      - name: Prepare Web Assets
-        run: |
-          mkdir -p www
-          find . -maxdepth 1 -name "*.html" -exec cp {} www/ \;
-          cp icon.png www/ 2>/dev/null || true
-
-      - name: Initialize and Hard-Code Name
-        run: |
-          # 1. Standard Init
-          npx cap init "Up-Nepa Osun" "com.aamuda.upnepa.osun" --web-dir www
-          npx cap add android
-          
-          # 2. Icon Generation
-          if [ -f "icon.png" ]; then
-            npx @capacitor/assets generate --android --assetPath .
-          fi
-
-          # 3. FORCE internal strings in multiple locations
-          # This replaces any instance of 'Capacitor' or 'app' with your precious name
-          find android/app/src/main/res/values -name "strings.xml" -exec sed -i 's/app_name">.*</app_name">Up-Nepa Osun</g' {} +
-          sed -i 's/android:label=".*"/android:label="Up-Nepa Osun"/g' android/app/src/main/AndroidManifest.xml
-          
-          npx cap sync android
-
-      - name: Build Android APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug -Dorg.gradle.java.home=$JAVA_HOME_21_X64
-          
-          # 4. RENAME the actual APK file so it isn't 'app-debug.apk'
-          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Up-Nepa-Osun-Elite
-          path: android/app/build/outputs/apk/debug/Up-Nepa-Osun.apk
+          app-name: "Up-Nepa Osun"
+          app-id: "com.upnepa.osun"
+          url: "https://your-website-url.com" # Use your live link or a placeholder
           
