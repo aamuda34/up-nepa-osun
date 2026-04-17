@@ -1,11 +1,37 @@
-      - name: Build Branded APK with Deep Links
+name: Build Android APK Final Fix
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Branded APK
         run: |
-          # 1. Initialize and force install compatible versions
+          # 1. Fresh Init
           npm init -y
-          # Using --legacy-peer-deps to bypass version conflicts once and for all
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/app@latest @capacitor/assets@latest --legacy-peer-deps
           
-          # 2. Asset Setup
+          # 2. Force install specific compatible versions to avoid conflict
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/app@6 @capacitor/assets@latest --legacy-peer-deps
+          
+          # 3. Setup Assets
           mkdir -p assets
           if [ -f "www/icon.png" ]; then
             cp www/icon.png assets/icon-only.png
@@ -13,7 +39,7 @@
             cp www/icon.png assets/icon-background.png
           fi
           
-          # 3. Create Config
+          # 4. Generate Config
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
@@ -22,27 +48,24 @@
           }
           EOF
           
-          # 4. Add Android Platform
+          # 5. Native Setup
           npx cap add android
-          
-          # 5. Generate Icons
           if [ -d "assets" ]; then
             npx capacitor-assets generate --android || true
           fi
           
-          # 6. Deep Link Injection (Modified for high reliability)
+          # 6. Critical Deep Link Injection
+          # This injects the intent-filter that tells Android to open your app after Google Login
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           DEEP_LINK='<intent-filter android:label="browsable"><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="com.upnepa.osun" /></intent-filter>'
-          
-          # Ensure we place it inside the Activity tag correctly
           sed -i "/<\/activity>/i $DEEP_LINK" $MANIFEST
 
-          # 7. Google Services
+          # 7. Add Firebase Config
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/
           fi
           
-          # 8. Final Sync and Gradle Build
+          # 8. Sync and Compile
           npx cap sync android --legacy-peer-deps
           cd android
           chmod +x gradlew
@@ -51,4 +74,10 @@
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun-Final.apk
         env:
           CI: true
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Up-Nepa-Osun-Final-APK
+          path: android/app/build/outputs/apk/debug/Up-Nepa-Osun-Final.apk
           
