@@ -23,17 +23,20 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Force Custom Icon Injection
+      - name: Build Branded APK
         run: |
-          # 1. Install standard tools
+          # 1. Setup required structure
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          # We use a specific version of assets to avoid "unknown option" errors
+          npm install @capacitor/assets@latest
           
-          # 2. Setup the required structure for the asset tool
-          mkdir -p resources
-          cp www/icon.png resources/icon.png
+          mkdir -p assets
+          cp www/icon.png assets/icon-only.png
+          cp www/icon.png assets/icon-foreground.png
+          cp www/icon.png assets/icon-background.png
           
-          # 3. Create config
+          # 2. Create standard config
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
@@ -42,30 +45,30 @@ jobs:
           }
           EOF
           
-          # 4. Initialize Android
+          # 3. Add platform and GENERATE
           npx cap add android
           
-          # 5. THE CRITICAL FIX: Generate and OVERWRITE all default icons
-          # This forces the tool to replace every blue logo with your icon.png
-          npx @capacitor/assets generate --android --iconSource resources/icon.png
+          # Using the command that matches the latest Capacitor Assets version
+          npx capacitor-assets generate --android
           
-          # 6. Move firebase config
+          # 4. Inject Firebase
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/
           fi
           
-          # 7. Build
+          # 5. Build Final
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+          
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
         env:
           CI: true
 
-      - name: Upload Final Branded APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-Professional
+          name: Up-Nepa-Osun-Final
           path: android/app/build/outputs/apk/debug/Up-Nepa-Osun.apk
           
