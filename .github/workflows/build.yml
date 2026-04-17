@@ -29,7 +29,11 @@ jobs:
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
           
-          # 2. Force create the correct config at the ROOT (Fixes the generic "App" name)
+          # 2. Structure web files
+          mkdir -p www
+          rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
+          
+          # 3. FIX: Create the config at the ROOT (Sets the "Up-Nepa Osun" name)
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
@@ -39,26 +43,30 @@ jobs:
           }
           EOF
           
-          # 3. Generate the Custom Icons from your www/icon.png
-          # This replaces the blue Capacitor logo with your unique icon
-          npx @capacitor/assets generate --android --iconSource www/icon.png
+          # 4. FIX: Correct Icon Generation (Fixes the unknown option error)
+          # The tool automatically looks for icons in an "assets" folder
+          mkdir -p assets
+          if [ -f "www/icon.png" ]; then
+            cp www/icon.png assets/icon.png
+          fi
+          npx @capacitor/assets generate --android
           
-          # 4. Fresh Platform Setup
+          # 5. Fresh Platform Setup
           rm -rf android
           npx cap add android
           
-          # 5. Move google-services.json to the required Android location
+          # 6. Fix Firebase Location
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/
           fi
           
-          # 6. Final Sync and Compile
+          # 7. Final Sync and Compile
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
           
-          # Rename the output for a professional look
+          # Rename output for a professional look
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
         env:
           CI: true
