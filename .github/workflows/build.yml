@@ -23,13 +23,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build Professional APK
+      - name: Force Custom Icon Injection
         run: |
-          # 1. Install official Capacitor branding tools
+          # 1. Install standard tools
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
           
-          # 2. Force the correct App Name and ID
+          # 2. Setup the required structure for the asset tool
+          mkdir -p resources
+          cp www/icon.png resources/icon.png
+          
+          # 3. Create config
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
@@ -38,30 +42,28 @@ jobs:
           }
           EOF
           
-          # 3. Create the Android Project
+          # 4. Initialize Android
           npx cap add android
           
-          # 4. FIXED ICON STEP: Use the standard asset generation
-          # This replaces the default blue logo with your custom icon
-          npx capacitor-assets generate --android
+          # 5. THE CRITICAL FIX: Generate and OVERWRITE all default icons
+          # This forces the tool to replace every blue logo with your icon.png
+          npx @capacitor/assets generate --android --iconSource resources/icon.png
           
-          # 5. Move google-services.json to the required internal folder
-          if [ -f "google-services.json" ]; then
-            cp google-services.json android/app/
+          # 6. Move firebase config
+          if [ -f "www/google-services.json" ]; then
+            cp www/google-services.json android/app/
           fi
           
-          # 6. Final Sync and Compile
+          # 7. Build
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-          
-          # Rename the final file for your download
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
         env:
           CI: true
 
-      - name: Upload Branded APK
+      - name: Upload Final Branded APK
         uses: actions/upload-artifact@v4
         with:
           name: Up-Nepa-Osun-Professional
