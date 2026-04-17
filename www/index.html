@@ -69,7 +69,6 @@
         .btn-up { background: var(--success); color: #000; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; }
         .btn-down { background: var(--danger); color: #fff; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; }
 
-        /* Comments Styling */
         .comment-section { margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }
         .comment-item { font-size: 0.75rem; background: var(--surface-light); padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px; }
         .comment-user { color: var(--primary); font-weight: 800; font-size: 0.65rem; display: flex; justify-content: space-between; align-items: center; }
@@ -169,28 +168,30 @@
         const _client = supabase.createClient(S_URL, S_KEY);
 
         let gridData = [], user = null, userSubs = [];
-        let localComments = {}; // Store local session comments to display instantly
+        let localComments = {}; 
 
         async function startApp() {
-            // 1. Check existing session
             const { data: { session } } = await _client.auth.getSession();
             user = session?.user || null;
 
-            // 2. Check Deep Link hash for Capacitor Mobile returning from Google
-            if (!user && window.location.hash) {
-                const { data } = await _client.auth.getSession();
-                if (data?.session) user = data.session.user;
+            if (user) { 
+                renderAuth(); 
+                await fetchSubs(); 
             }
-
-            if (user) { renderAuth(); await fetchSubs(); }
             fetchGrid();
             syncRealtime();
         }
 
         async function loginGoogle() { 
-            const isApp = window.location.origin.includes('localhost') || window.localStorage.getItem('isCapacitor');
-            const redirectUrl = isApp ? 'com.upnepa.osun://login-callback' : window.location.href;
-            await _client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectUrl } }); 
+            const isNative = window.hasOwnProperty('Capacitor') && Capacitor.isNativePlatform();
+            const redirectUrl = isNative 
+                ? 'com.upnepa.osun://login-callback' 
+                : window.location.origin;
+
+            await _client.auth.signInWithOAuth({ 
+                provider: 'google', 
+                options: { redirectTo: redirectUrl } 
+            });
         }
 
         async function fetchGrid() {
@@ -237,7 +238,7 @@
         }
 
         function interactionGuard() {
-            if (!user) { showToast('Please Login First to perform this action'); window.scrollTo({ top: 0, behavior: 'smooth' }); return false; }
+            if (!user) { showToast('Please Login First'); window.scrollTo({ top: 0, behavior: 'smooth' }); return false; }
             return true;
         }
 
@@ -248,7 +249,6 @@
                 const subbed = userSubs.includes(s.id);
                 const followers = s.subscriptions?.[0]?.count || 0;
                 
-                // Get comments logic
                 const commentsHTML = (localComments[s.id] || []).map(c => `
                     <div class="comment-item">
                         <div class="comment-user"><span>${c.user}</span> <span style="color:var(--text-dim)">${timeAgo(c.time)}</span></div>
@@ -301,40 +301,21 @@
 
         async function updateStatus(id, status) {
             await _client.from('areas').update({ status: status, updated_at: new Date().toISOString() }).eq('id', id);
-            // Notification pushes exact status
             showToast(`Status Updated: ${status}`); 
             fetchGrid();
         }
 
-        function setChip(id, txt) { 
-            // Update the grid status directly based on the chip selected
-            updateStatus(id, txt); 
-        }
+        function setChip(id, txt) { updateStatus(id, txt); }
 
-        // Handle Comments logic locally
         function postComment(id) {
             const input = document.getElementById(`comment-input-${id}`);
             const text = input.value.trim();
             if (!text) return;
-
             if (!localComments[id]) localComments[id] = [];
-            
-            // Add to top of local array
-            localComments[id].unshift({
-                user: user.email.split('@')[0],
-                text: text,
-                time: new Date().toISOString()
-            });
-
+            localComments[id].unshift({ user: user.email.split('@')[0], text: text, time: new Date().toISOString() });
             input.value = '';
             showToast('Comment posted');
-            
-            // Re-render to show comment immediately
             filterGrid(); 
-            
-            // NOTE: To persist comments across user sessions globally, create a 'comments' table in Supabase 
-            // and uncomment/modify this code below:
-            // _client.from('comments').insert([{ area_id: id, user_id: user.id, content: text }]);
         }
 
         async function toggleFav(id) {
@@ -364,12 +345,10 @@
         function openShare(name, status) {
             const text = encodeURIComponent(`💡 Grid Update: ${name} is currently ${status}.\n\nTrack live updates on Up-Nepa Osun!`);
             const url = encodeURIComponent(window.location.href);
-
             document.getElementById('share-wa').href = `https://wa.me/?text=${text} ${url}`;
             document.getElementById('share-x').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
             document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
             document.getElementById('share-tg').href = `https://t.me/share/url?url=${url}&text=${text}`;
-            
             document.getElementById('share-title').innerText = `Share ${name}`;
             document.getElementById('share-modal').style.display = 'flex';
         }
@@ -380,7 +359,8 @@
 
         function syncRealtime() {
             const ch = _client.channel('presence').on('presence', { event: 'sync' }, () => {
-                document.getElementById('member-count').innerText = `${Object.keys(ch.presenceState()).length} ONLINE`;
+                const count = Object.keys(ch.presenceState()).length;
+                document.getElementById('member-count').innerText = `${count} ONLINE`;
             }).subscribe(async (s) => {
                 if(s === 'SUBSCRIBED') {
                     document.getElementById('status-dot').style.background = 'var(--success)';
@@ -409,26 +389,32 @@
         startApp();
 
         // ----------------------------------------------------
-        // CAPACITOR DEEP LINK HANDLER - DO NOT REMOVE
-        // This is what returns the user back to the app on Android/iOS
+        // CAPACITOR DEEP LINK HANDLER
         // ----------------------------------------------------
-        if (window.Capacitor) {
-            window.localStorage.setItem('isCapacitor', 'true');
-            const { App } = window.Capacitor.Plugins;
-            
-            App.addListener('appUrlOpen', async ({ url }) => {
-                if (url.includes('login-callback')) {
-                    const scopeUrl = url.replace('com.upnepa.osun://login-callback', window.location.origin + window.location.pathname);
-                    const hash = new URL(scopeUrl).hash;
-                    
-                    if (hash) {
-                        const { data, error } = await _client.auth.setSession({
-                            access_token: hash.split('access_token=')[1]?.split('&')[0],
-                            refresh_token: hash.split('refresh_token=')[1]?.split('&')[0],
+        if (window.hasOwnProperty('Capacitor')) {
+            const { App } = Capacitor.Plugins;
+            App.addListener('appUrlOpen', async (data) => {
+                // Parse tokens from the custom scheme URL hash
+                const url = new URL(data.url.replace('com.upnepa.osun://', 'https://placeholder.com/'));
+                const hash = url.hash.substring(1);
+                
+                if (hash) {
+                    const params = new URLSearchParams(hash);
+                    const accessToken = params.get('access_token');
+                    const refreshToken = params.get('refresh_token');
+
+                    if (accessToken && refreshToken) {
+                        const { data: sessionData, error } = await _client.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken
                         });
 
-                        if (data?.session) {
-                            location.reload(); 
+                        if (!error && sessionData.user) {
+                            showToast("Welcome Back!");
+                            user = sessionData.user;
+                            renderAuth();
+                            await fetchSubs();
+                            filterGrid();
                         }
                     }
                 }
