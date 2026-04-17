@@ -169,7 +169,7 @@
         }
 
         async function loginGoogle() { 
-            await _client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } }); 
+            await _client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: com.upnepa.osun://login-callback } }); 
         }
 
         async function fetchGrid() {
