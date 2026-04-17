@@ -11,23 +11,30 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Bubblewrap
+      - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
       - name: Initialize and Build APK
         run: |
-          # The 'yes' command automatically answers 'y' to all prompts 
-          # like the JDK installation question seen in your logs.
-          yes | bubblewrap init --manifest=manifest.json || true
+          # This creates the necessary 'twa-manifest.json' automatically
+          # Replace 'up-nepa-osun-1491a.firebaseapp.com' with your actual site URL if different
+          yes | bubblewrap init --manifest="https://up-nepa-osun-1491a.firebaseapp.com/manifest.json"
+          
+          # This command builds the APK without asking for manual input
           yes | bubblewrap build --skipSigning
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Up-Nepa-Osun-Release
