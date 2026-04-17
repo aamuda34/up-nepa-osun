@@ -25,13 +25,13 @@ jobs:
 
       - name: Build Branded APK
         run: |
-          # 1. Fresh Init
+          # 1. Fresh Project Init
           npm init -y
           
-          # 2. Force install specific compatible versions to avoid conflict
+          # 2. INSTALLATION (This is where legacy-peer-deps belongs)
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/app@6 @capacitor/assets@latest --legacy-peer-deps
           
-          # 3. Setup Assets
+          # 3. Assets Preparation
           mkdir -p assets
           if [ -f "www/icon.png" ]; then
             cp www/icon.png assets/icon-only.png
@@ -39,7 +39,7 @@ jobs:
             cp www/icon.png assets/icon-background.png
           fi
           
-          # 4. Generate Config
+          # 4. Capacitor Config
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
@@ -48,25 +48,22 @@ jobs:
           }
           EOF
           
-          # 5. Native Setup
+          # 5. Native Project Generation
           npx cap add android
           if [ -d "assets" ]; then
             npx capacitor-assets generate --android || true
           fi
           
-          # 6. Critical Deep Link Injection
-          # This injects the intent-filter that tells Android to open your app after Google Login
+          # 6. LOGIN FIX: Intent Filter Injection
+          # This tells Android to return to your app after the Google account is selected
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           DEEP_LINK='<intent-filter android:label="browsable"><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="com.upnepa.osun" /></intent-filter>'
           sed -i "/<\/activity>/i $DEEP_LINK" $MANIFEST
 
-          # 7. Add Firebase Config
-          if [ -f "www/google-services.json" ]; then
-            cp www/google-services.json android/app/
-          fi
+          # 7. Sync Assets
+          npx cap sync android
           
-          # 8. Sync and Compile
-          npx cap sync android --legacy-peer-deps
+          # 8. Compile APK
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
