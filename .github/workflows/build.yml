@@ -10,13 +10,28 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # This uses a pre-made Android environment so we don't hit SDK errors
-      - name: Build with Mobile-First Action
-        uses: gear-app/github-action-html-to-apk@v1
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
         with:
-          app-name: "Up-Nepa Osun"
-          url: "https://up-nepa-osun-1491a.firebaseapp.com"
-          icon-path: "./icon.png" # Make sure you have an icon.png or remove this line
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install and Build
+        run: |
+          npm install -g @bubblewrap/cli
+          # Use official environment variables for SDK and JDK
+          mkdir -p ~/.bubblewrap
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
+          
+          # This command builds the APK using your existing manifest
+          yes | bubblewrap build --skipSigning
+        env:
+          CI: true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
