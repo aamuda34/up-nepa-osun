@@ -21,21 +21,19 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install and Build
+      - name: Build APK (Stable Method)
         run: |
-          npm install -g @bubblewrap/cli
-          # Use official environment variables for SDK and JDK
-          mkdir -p ~/.bubblewrap
-          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
-          
-          # This command builds the APK using your existing manifest
-          yes | bubblewrap build --skipSigning
-        env:
-          CI: true
+          npm install -g @ionic/cli @capacitor/core @capacitor/cli
+          # This converts your web app into a native Android project automatically
+          npm install
+          npx cap init "Up-Nepa Osun" "com.upnepa.osun" --web-dir .
+          npx cap add android
+          npx cap copy
+          cd android && ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Up-Nepa-Osun-APK
-          path: ./*.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           
