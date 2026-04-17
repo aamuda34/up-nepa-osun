@@ -171,18 +171,7 @@
         let allComments = []; 
 
         async function startApp() {
-            // FIX 1: Listen for auth state changes to ensure user persists
-            _client.auth.onAuthStateChange(async (event, session) => {
-                user = session?.user || null;
-                if (user) { 
-                    renderAuth(); 
-                    await fetchSubs(); 
-                    filterGrid(); // Re-render to show subbed status
-                } else {
-                    renderLoginBtn();
-                }
-            });
-
+            // Check session
             const { data: { session } } = await _client.auth.getSession();
             user = session?.user || null;
 
@@ -190,16 +179,35 @@
                 renderAuth(); 
                 await fetchSubs(); 
             }
+
+            // Load Data
             await fetchGrid();
             await fetchComments();
             syncRealtime();
-        }
 
-        function renderLoginBtn() {
-            document.getElementById('auth-section').innerHTML = `
-                <button class="btn-up" style="width:100%; background:#fff; margin-bottom:24px; color:#000;" onclick="loginGoogle()">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" style="vertical-align:middle; margin-right:8px;"> Sign in with Google
-                </button>`;
+            // CAPACITOR NATIVE REDIRECT HANDLER (For Successful App Login)
+            if (window.hasOwnProperty('Capacitor')) {
+                const { App } = Capacitor.Plugins;
+                App.addListener('appUrlOpen', async (data) => {
+                    const url = new URL(data.url.replace('com.upnepa.osun://', 'https://placeholder.com/'));
+                    const hash = url.hash.substring(1);
+                    if (hash) {
+                        const params = new URLSearchParams(hash);
+                        const accessToken = params.get('access_token');
+                        const refreshToken = params.get('refresh_token');
+                        if (accessToken && refreshToken) {
+                            const { data: sessionData, error } = await _client.auth.setSession({
+                                access_token: accessToken,
+                                refresh_token: refreshToken
+                            });
+                            if (!error && sessionData.user) {
+                                showToast("Welcome Back!");
+                                location.reload(); // Refresh to apply user state
+                            }
+                        }
+                    }
+                });
+            }
         }
 
         async function loginGoogle() { 
@@ -302,11 +310,12 @@
                         <span><i data-lucide="users" style="width:12px; display:inline"></i> ${followers} Followers</span>
                         <span style="color:var(--success)">● ${rCount} Up Today</span>
                         <span style="color:var(--danger)">● ${oCount} Out Today</span>
-                    </div>
+     </div>
                     
                     <div class="chip-group">
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⛈️ Weather Issue')">⛈️ Weather</button>
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⚡ Low Voltage')">⚡ Voltage</button>
+                        <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '🔧 Phase Issue')">🔧 Phase</button>
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '🔊 Transformer Sound')">🔊 Transformer</button>
                     </div>
 
@@ -318,7 +327,7 @@
                     <div class="comment-section">
                         <div id="comment-list-${s.id}" style="max-height: 120px; overflow-y: auto;">
                             ${commentsHTML || '<p style="font-size:0.7rem; color:var(--text-dim); text-align:center;">No comments yet. Be the first!</p>'}
-         </div>
+                        </div>
                         <div class="comment-input-row">
                             <input type="text" id="comment-input-${s.id}" class="minimal-input" placeholder="Write a comment..." style="padding: 10px; font-size: 0.75rem;">
                             <button class="btn-post" onclick="if(interactionGuard()) postComment(${s.id})">Post</button>
@@ -332,11 +341,7 @@
         async function updateStatus(id, status) {
             const street = gridData.find(s => s.id === id);
             if (!street) return;
-
-            if (street.status === status) {
-                showToast(`Already marked as ${status}`);
-                return;
-            }
+            if (street.status === status) { showToast(`Already marked as ${status}`); return; }
 
             const now = new Date();
             const todayStr = now.toISOString().split('T')[0];
@@ -344,56 +349,25 @@
 
             let newOutageCount = street.outage_count || 0;
             let newRestoreCount = street.restore_count || 0;
-
-            if (todayStr !== lastUpdateStr) {
-                newOutageCount = 0;
-                newRestoreCount = 0;
-            }
-
+            if (todayStr !== lastUpdateStr) { newOutageCount = 0; newRestoreCount = 0; }
             if (status === 'Light On') newRestoreCount++;
             if (status === 'No Light') newOutageCount++;
 
-            const { error } = await _client.from('areas').update({ 
-                status: status, 
-                updated_at: now.toISOString(),
-                outage_count: newOutageCount,
-                restore_count: newRestoreCount 
-            }).eq('id', id);
-            
-            if (!error) {
-                showToast(`Status Updated: ${status}`);
-                fetchGrid();
-            }
+            const { error } = await _client.from('areas').update({ status: status, updated_at: now.toISOString(), outage_count: newOutageCount, restore_count: newRestoreCount }).eq('id', id);
+            if (!error) { showToast(`Status Updated: ${status}`); fetchGrid(); }
         }
 
         async function setChip(id, txt) { 
-            const { error } = await _client.from('areas').update({ 
-                status: txt, 
-                updated_at: new Date().toISOString() 
-            }).eq('id', id);
-            
-            if (!error) {
-                showToast(`Logged: ${txt}`);
-                fetchGrid();
-            }
+            const { error } = await _client.from('areas').update({ status: txt, updated_at: new Date().toISOString() }).eq('id', id);
+            if (!error) { showToast(`Logged: ${txt}`); fetchGrid(); }
         }
 
         async function postComment(id) {
             const input = document.getElementById(`comment-input-${id}`);
             const text = input.value.trim();
             if (!text) return;
-
-            const { error } = await _client.from('comments').insert([{ 
-                area_id: id, 
-                user_email: user.email, 
-                content: text 
-            }]);
-
-            if (!error) {
-                input.value = '';
-                showToast('Comment saved');
-                await fetchComments();
-            }
+            const { error } = await _client.from('comments').insert([{ area_id: id, user_email: user.email, content: text }]);
+            if (!error) { input.value = ''; showToast('Comment saved'); await fetchComments(); }
         }
 
         async function toggleFav(id) {
@@ -410,7 +384,6 @@
         }
 
         function openSuggest() { document.getElementById('suggest-modal').style.display = 'flex'; }
-        
         async function submitSuggestion() {
             const name = document.getElementById('suggest-name').value;
             const town = document.getElementById('suggest-town').value;
@@ -436,28 +409,15 @@
         function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
 
         function syncRealtime() {
-            _client.channel('areas_db_changes')
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'areas' }, () => fetchGrid())
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, () => fetchComments())
-                .subscribe();
-
-            // FIX 2: Simplified presence tracking to force the green "Live" status more reliably
-            const ch = _client.channel('presence-grid');
-            ch.on('presence', { event: 'sync' }, () => {
-                const count = Object.keys(ch.presenceState()).length || 1;
+            _client.channel('db_sync').on('postgres_changes', { event: '*', schema: 'public' }, () => { fetchGrid(); fetchComments(); }).subscribe();
+            const ch = _client.channel('presence').on('presence', { event: 'sync' }, () => {
+                const count = Object.keys(ch.presenceState()).length;
                 document.getElementById('member-count').innerText = `${count} ONLINE`;
-                
-                // Set green status if we are connected to the channel
-                document.getElementById('status-dot').style.background = 'var(--success)';
-                document.getElementById('status-text').innerText = 'Grid Live';
-            })
-            .on('presence', { event: 'join' }, () => {
-                document.getElementById('status-dot').style.background = 'var(--success)';
-                document.getElementById('status-text').innerText = 'Grid Live';
-            })
-            .subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') {
-                    await ch.track({ user: user?.id || 'anon', online_at: new Date().toISOString() });
+            }).subscribe(async (s) => {
+                if(s === 'SUBSCRIBED') {
+                    document.getElementById('status-dot').style.background = 'var(--success)';
+                    document.getElementById('status-text').innerText = 'Grid Live';
+                    await ch.track({ online_at: new Date().toISOString() });
                 }
             });
         }
