@@ -171,6 +171,18 @@
         let allComments = []; 
 
         async function startApp() {
+            // FIX 1: Listen for auth state changes to ensure user persists
+            _client.auth.onAuthStateChange(async (event, session) => {
+                user = session?.user || null;
+                if (user) { 
+                    renderAuth(); 
+                    await fetchSubs(); 
+                    filterGrid(); // Re-render to show subbed status
+                } else {
+                    renderLoginBtn();
+                }
+            });
+
             const { data: { session } } = await _client.auth.getSession();
             user = session?.user || null;
 
@@ -181,6 +193,13 @@
             await fetchGrid();
             await fetchComments();
             syncRealtime();
+        }
+
+        function renderLoginBtn() {
+            document.getElementById('auth-section').innerHTML = `
+                <button class="btn-up" style="width:100%; background:#fff; margin-bottom:24px; color:#000;" onclick="loginGoogle()">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" style="vertical-align:middle; margin-right:8px;"> Sign in with Google
+                </button>`;
         }
 
         async function loginGoogle() { 
@@ -288,7 +307,6 @@
                     <div class="chip-group">
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⛈️ Weather Issue')">⛈️ Weather</button>
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⚡ Low Voltage')">⚡ Voltage</button>
-                        <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '🔧 Phase Issue')">🔧 Phase</button>
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '🔊 Transformer Sound')">🔊 Transformer</button>
                     </div>
 
@@ -315,7 +333,6 @@
             const street = gridData.find(s => s.id === id);
             if (!street) return;
 
-            // Block if attempting to set current state
             if (street.status === status) {
                 showToast(`Already marked as ${status}`);
                 return;
@@ -350,7 +367,6 @@
         }
 
         async function setChip(id, txt) { 
-            // Chips act as a detailed reason for the current status
             const { error } = await _client.from('areas').update({ 
                 status: txt, 
                 updated_at: new Date().toISOString() 
@@ -425,14 +441,23 @@
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, () => fetchComments())
                 .subscribe();
 
-            const ch = _client.channel('presence').on('presence', { event: 'sync' }, () => {
-                const count = Object.keys(ch.presenceState()).length;
+            // FIX 2: Simplified presence tracking to force the green "Live" status more reliably
+            const ch = _client.channel('presence-grid');
+            ch.on('presence', { event: 'sync' }, () => {
+                const count = Object.keys(ch.presenceState()).length || 1;
                 document.getElementById('member-count').innerText = `${count} ONLINE`;
-            }).subscribe(async (s) => {
-                if(s === 'SUBSCRIBED') {
-                    document.getElementById('status-dot').style.background = 'var(--success)';
-                    document.getElementById('status-text').innerText = 'Grid Live';
-                    await ch.track({ online_at: new Date().toISOString() });
+                
+                // Set green status if we are connected to the channel
+                document.getElementById('status-dot').style.background = 'var(--success)';
+                document.getElementById('status-text').innerText = 'Grid Live';
+            })
+            .on('presence', { event: 'join' }, () => {
+                document.getElementById('status-dot').style.background = 'var(--success)';
+                document.getElementById('status-text').innerText = 'Grid Live';
+            })
+            .subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    await ch.track({ user: user?.id || 'anon', online_at: new Date().toISOString() });
                 }
             });
         }
