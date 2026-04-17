@@ -23,12 +23,12 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build Branded APK with Deep Linking
+      - name: Build Branded APK + Deep Link Fix
         run: |
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets@latest
           
-          # Setup Icon Assets
+          # Setup Icons
           mkdir -p assets
           cp www/icon.png assets/icon-only.png
           cp www/icon.png assets/icon-foreground.png
@@ -45,8 +45,7 @@ jobs:
           npx cap add android
           npx capacitor-assets generate --android
           
-          # --- THE FIX: INJECT DEEP LINK SUPPORT ---
-          # This tells Android to jump back to the app after browser login
+          # CRITICAL: This links your Supabase dashboard to your actual Android app
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i '/<intent-filter>/i \
             <intent-filter>\
@@ -64,12 +63,13 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun-Final.apk
         env:
           CI: true
 
-      - name: Upload APK
+      - name: Upload Final Branded APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-Fixed-Auth
-          path: android/app/build/outputs/apk/debug/Up-Nepa-Osun.apk
+          name: Up-Nepa-Osun-Fixed
+          path: android/app/build/outputs/apk/debug/Up-Nepa-Osun-Final.apk
+          
