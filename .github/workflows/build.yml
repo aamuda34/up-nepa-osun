@@ -23,43 +23,46 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build Branded APK with Custom Icon
+      - name: Build Branded APK
         run: |
-          # 1. Install necessary branding tools
+          # 1. Install branding and build tools
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
           
-          # 2. Setup the config at the ROOT
+          # 2. Fix the Name & Directory Config
+          # This forces "Up-Nepa Osun" as the name and "www" as the web source
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
             "appName": "Up-Nepa Osun",
-            "webDir": "www"
+            "webDir": "www",
+            "bundledWebRuntime": false
           }
           EOF
           
-          # 3. Fresh Platform Setup
+          # 3. Fix the Icon Branding (Standard Way)
+          # The tool looks for an 'assets' folder, so we create it
+          mkdir -p assets
+          cp www/icon.png assets/icon.png
+          # Run generator (no extra flags needed now)
+          npx @capacitor/assets generate --android
+          
+          # 4. Clean Build of Android Platform
           rm -rf android
           npx cap add android
           
-          # 4. GENERATE ICON (Must run AFTER 'cap add android')
-          # This specifically targets your file in the www folder and overwrites the default logos
-          if [ -f "www/icon.png" ]; then
-            npx @capacitor/assets generate --android --iconSource www/icon.png
-          fi
-          
-          # 5. Move google-services.json to the required Android location
+          # 5. Connect Firebase
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/
           fi
           
-          # 6. Final Sync and Compile
+          # 6. Build the APK
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
           
-          # Rename for the final download
+          # Rename output for professional download
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
         env:
           CI: true
