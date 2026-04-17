@@ -248,6 +248,8 @@
                 const isOn = s.status === 'Light On';
                 const subbed = userSubs.includes(s.id);
                 const followers = s.subscriptions?.[0]?.count || 0;
+                const oCount = s.outage_count || 0;
+                const rCount = s.restore_count || 0;
                 
                 const commentsHTML = (localComments[s.id] || []).map(c => `
                     <div class="comment-item">
@@ -271,7 +273,11 @@
                         </div>
                     </div>
                     
-                    <div class="card-meta"><span><i data-lucide="users" style="width:12px; display:inline"></i> ${followers} Followers</span></div>
+                    <div class="card-meta">
+                        <span><i data-lucide="users" style="width:12px; display:inline"></i> ${followers} Followers</span>
+                        <span style="color:var(--success)">● ${rCount} Up Today</span>
+                        <span style="color:var(--danger)">● ${oCount} Out Today</span>
+                    </div>
                     
                     <div class="chip-group">
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⛈️ Weather Issue')">⛈️ Weather</button>
@@ -281,8 +287,8 @@
                     </div>
 
                     <div class="btn-row">
-                        <button class="btn-up" onclick="if(interactionGuard()) updateStatus(${s.id}, 'Light On')">RESTORED</button>
-                        <button class="btn-down" onclick="if(interactionGuard()) updateStatus(${s.id}, 'No Light')">OUTAGE</button>
+                        <button class="btn-up" ${isOn ? 'disabled style="opacity:0.5; cursor:not-allowed"' : ''} onclick="if(interactionGuard()) updateStatus(${s.id}, 'Light On')">RESTORED</button>
+                        <button class="btn-down" ${!isOn && s.status !== 'Pending' ? 'disabled style="opacity:0.5; cursor:not-allowed"' : ''} onclick="if(interactionGuard()) updateStatus(${s.id}, 'No Light')">OUTAGE</button>
                     </div>
 
                     <div class="comment-section">
@@ -290,7 +296,8 @@
                             ${commentsHTML || '<p style="font-size:0.7rem; color:var(--text-dim); text-align:center;">No comments yet. Be the first!</p>'}
                         </div>
                         <div class="comment-input-row">
-                            <input type="text" id="comment-input-${s.id}" class="minimal-input" placeholder="Write a comment..." style="padding: 10px; font-size: 0.75rem;">
+                            <input type="text" id="comment-input-${s.id}" 
+                            class="minimal-input" placeholder="Write a comment..." style="padding: 10px; font-size: 0.75rem;">
                             <button class="btn-post" onclick="if(interactionGuard()) postComment(${s.id})">Post</button>
                         </div>
                     </div>
@@ -300,9 +307,48 @@
         }
 
         async function updateStatus(id, status) {
-            await _client.from('areas').update({ status: status, updated_at: new Date().toISOString() }).eq('id', id);
-            showToast(`Status Updated: ${status}`); 
-            fetchGrid();
+            const street = gridData.find(s => s.id === id);
+            if (!street) return;
+
+            // 1. Only allow state change (Outage to Restore or vice versa)
+            if (street.status === status) {
+                showToast(`Already marked as ${status}`);
+                return;
+            }
+
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const lastUpdateStr = street.updated_at ? new Date(street.updated_at).toISOString().split('T')[0] : '';
+
+            // 2. Manage Counters (Reset at midnight)
+            let newOutageCount = street.outage_count || 0;
+            let newRestoreCount = street.restore_count || 0;
+
+            if (todayStr !== lastUpdateStr) {
+                newOutageCount = 0;
+                newRestoreCount = 0;
+            }
+
+            if (status === 'Light On') newRestoreCount++;
+            if (status === 'No Light') newOutageCount++;
+
+            // 3. Update Database
+            const { error } = await _client.from('areas').update({ 
+                status: status, 
+                updated_at: now.toISOString(),
+                outage_count: newOutageCount,
+                restore_count: newRestoreCount 
+            }).eq('id', id);
+            
+            if (!error) {
+                showToast(`Status Updated: ${status}`);
+                // Goal 1: Notifications only for followers
+                if (userSubs.includes(id)) {
+                    console.log("Notifying follower of update to:", street.name);
+                    // Mobile Push logic would go here
+                }
+                fetchGrid();
+            }
         }
 
         function setChip(id, txt) { updateStatus(id, txt); }
@@ -388,13 +434,9 @@
 
         startApp();
 
-        // ----------------------------------------------------
-        // CAPACITOR DEEP LINK HANDLER
-        // ----------------------------------------------------
         if (window.hasOwnProperty('Capacitor')) {
             const { App } = Capacitor.Plugins;
             App.addListener('appUrlOpen', async (data) => {
-                // Parse tokens from the custom scheme URL hash
                 const url = new URL(data.url.replace('com.upnepa.osun://', 'https://placeholder.com/'));
                 const hash = url.hash.substring(1);
                 
