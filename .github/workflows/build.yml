@@ -6,32 +6,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Using a specialized container prevents all interactive hangs
+    container: node:20-bullseye 
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build APK
+      - name: Install System Dependencies
         run: |
+          apt-get update && apt-get install -y openjdk-17-jdk-headless
           npm install -g @bubblewrap/cli
-          # Use 'yes' to handle all prompts and build into the current directory
-          yes | bubblewrap build --skipSigning
 
-      - name: Upload APK
+      - name: Generate APK
+        run: |
+          # The --confirm flag forces Bubblewrap to stop asking questions
+          bubblewrap build --skipSigning --confirm
+        env:
+          # Automatically tells the builder where Java is located
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+
+      - name: Upload Finished APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-APK
-          # We search everywhere in the folder for any .apk file
-          path: "**/*.apk"
-          if-no-files-found: error
+          name: Up-Nepa-Osun-Final
+          path: ./*.apk
           
