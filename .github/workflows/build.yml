@@ -21,18 +21,21 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build APK
+      - name: Build APK (Non-Interactive)
         run: |
           npm install -g @bubblewrap/cli
-          # This tells Bubblewrap exactly where the Java we just installed is located
-          export JAVA_HOME=$JAVA_HOME
+          # We pre-configure the paths so it doesn't ask any questions
+          mkdir -p ~/.bubblewrap
+          echo '{"jdkPath":"/usr/lib/jvm/temurin-17-jdk-amd64","androidSdkPath":"/usr/local/lib/android/sdk"}' > ~/.bubblewrap/config.json
           
-          # We use 'yes n' because it should NOT install its own JDK, it should use ours
-          yes n | bubblewrap build --skipSigning || true
+          # Run build directly
+          bubblewrap build --skipSigning
+        env:
+          CI: true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-Final
+          name: Up-Nepa-Osun-APK
           path: ./*.apk
           
