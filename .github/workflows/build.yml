@@ -23,25 +23,29 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Prepare Files and Build APK
+      - name: Prepare Workspace and Build
         run: |
+          # 1. Setup Capacitor Environment
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
           
-          # FIX: Create the 'www' folder Capacitor is looking for
+          # 2. Structure web files
           mkdir -p www
+          rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
           
-          # Copy your HTML, JSON, and assets into the 'www' folder safely
-          rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' ./ www/
-          
-          # Initialize Capacitor pointing specifically to the new 'www' folder
+          # 3. Initialize with your Unique Name and App ID
           npx cap init "Up-Nepa Osun" "com.upnepa.osun" --web-dir www
           
-          # Add Android and sync (This will now succeed without the ENOENT error)
+          # 4. Add Android platform
           npx cap add android
-          npx cap sync android
           
-          # Build the APK natively
+          # 5. GENERATE ICON (Make sure 'icon.png' exists in your main folder)
+          if [ -f "icon.png" ]; then
+            npx capacitor-assets generate --android
+          fi
+          
+          # 6. Final Sync and Build
+          npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
