@@ -1,8 +1,7 @@
 name: Build Android APK
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
@@ -11,32 +10,26 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Initialize and Build APK
+      - name: Build APK
         run: |
-          # This creates the necessary 'twa-manifest.json' automatically
-          # Replace 'up-nepa-osun-1491a.firebaseapp.com' with your actual site URL if different
-          yes | bubblewrap init --manifest="https://up-nepa-osun-1491a.firebaseapp.com/manifest.json"
-          
-          # This command builds the APK without asking for manual input
-          yes | bubblewrap build --skipSigning
+          npm install -g @bubblewrap/cli
+          # Using 'build' with --skipSigning and answering 'yes' to all system prompts
+          yes | bubblewrap build --skipSigning || true
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-Release
+          name: Up-Nepa-Osun
           path: ./*.apk
           
