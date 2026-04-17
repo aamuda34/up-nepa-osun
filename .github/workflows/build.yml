@@ -25,10 +25,10 @@ jobs:
 
       - name: Build Branded APK
         run: |
-          # Use specific v6 versions to prevent the ERESOLVE error
+          # Clean install and force specific v6 versions
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/app@6 @capacitor/browser@6 @capacitor/status-bar@6
           
-          # Continue with assets and build
+          # Prepare assets
           mkdir -p assets
           if [ -f "www/icon.png" ]; then
             cp www/icon.png assets/icon-only.png
@@ -36,7 +36,7 @@ jobs:
             cp www/icon.png assets/icon-background.png
           fi
 
-          # Create Capacitor Config
+          # Create Capacitor Config dynamically
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
@@ -50,7 +50,15 @@ jobs:
           }
           EOF
 
-          npx cap add android
+          # Sync and Build Android project
+          npx cap add android || true
           npx cap sync android
           cd android && ./gradlew assembleDebug
+
+      - name: Upload APK for Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: Up-Nepa-Osun-Standalone-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
           
