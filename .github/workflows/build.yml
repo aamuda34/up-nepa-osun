@@ -24,12 +24,14 @@ jobs:
       - name: Build APK
         run: |
           npm install -g @bubblewrap/cli
-          # Using 'build' with --skipSigning and answering 'yes' to all system prompts
-          yes | bubblewrap build --skipSigning || true
+          # Use 'yes' to handle all prompts and build into the current directory
+          yes | bubblewrap build --skipSigning
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun
-          path: ./*.apk
+          name: Up-Nepa-Osun-APK
+          # We search everywhere in the folder for any .apk file
+          path: "**/*.apk"
+          if-no-files-found: error
           
