@@ -23,51 +23,47 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build Branded APK
+      - name: Fix Unique Icon and Build
         run: |
           # 1. Install branding tools
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
           
-          # 2. FIX: Move the icon from www to the ROOT so the tool can find it
-          if [ -f "www/icon.png" ]; then
-            cp www/icon.png ./icon.png
-          fi
-
-          # 3. Force the unique name in the config
+          # 2. Setup folder and config
+          mkdir -p www
+          rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
+          
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
             "appName": "Up-Nepa Osun",
-            "webDir": "www",
-            "bundledWebRuntime": false
+            "webDir": "www"
           }
           EOF
           
-          # 4. Generate ALL Android icons and splashes
-          # This replaces the blue 'X' with your unique icon
-          npx @capacitor/assets generate --android
-          
-          # 5. Build and Sync
-          rm -rf android
+          # 3. Create Android platform FIRST
           npx cap add android
           
-          # Copy google-services if it exists
+          # 4. GENERATE ICON (Injecting into the android folder we just made)
+          # We use your icon.png located in the www folder
+          npx @capacitor/assets generate --android --iconSource www/icon.png
+          
+          # 5. Move google-services.json to the correct internal path
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/
           fi
           
+          # 6. Final Sync and Build
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
           
-          # Rename for the final download
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
         env:
           CI: true
 
-      - name: Upload APK
+      - name: Upload Final Branded APK
         uses: actions/upload-artifact@v4
         with:
           name: Up-Nepa-Osun-Branded
