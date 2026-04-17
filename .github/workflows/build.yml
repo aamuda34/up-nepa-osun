@@ -1,35 +1,49 @@
-name: Build Android APK
+name: Build Up-Nepa Osun APK
+
 on:
   push:
-    branches: [main]
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Build APK
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          node-version: '18'
 
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
-
-      - name: Initialize and Build
+      - name: Initialize App Engine (Capacitor)
         run: |
-          # Create a basic manifest so it doesn't prompt for 'y/n'
-          bubblewrap init --manifest="https://your-site-url.com/manifest.json" --no-prompt
-          bubblewrap build --skipSigning
-        env:
-          # This prevents the CLI from hanging on questions
-          CI: true 
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "Up-Nepa Osun" com.upnepa.osun --web-dir .
+          npx cap add android
+          
+      - name: Link Firebase Bridge
+        run: |
+          cp google-services.json android/app/ || echo "Waiting for google-services.json"
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Set up Java Builder
+        uses: actions/setup-java@v3
         with:
-          name: app-release
-          path: ./*.apk
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Compile Android APK
+        working-directory: ./android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload Final APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Up-Nepa-Osun-App
+          path: android/app/build/outputs/apk/debug/app-debug.apk
