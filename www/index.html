@@ -3,140 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <title>Up-Nepa Osun</title>
-    <meta name="description" content="Elite real-time electricity tracking for Osun.">
     
-    <link rel="manifest" href="manifest.json?v=1.4">
-    <link rel="icon" type="image/png" href="icon.png?v=1.4">
-    <link rel="apple-touch-icon" href="icon.png?v=1.4">
-    
-    <meta name="apple-mobile-web-app-title" content="Up-Nepa Osun">
-    <meta name="application-name" content="Up-Nepa Osun">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0a0a0b">
-
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --primary: #bb86fc;
+            --primary-soft: rgba(187, 134, 252, 0.1);
             --success: #03dac6;
-            --danger: #cf6679;
-            --bg: #0a0a0b;
-            --card: #161618;
-            --text-dim: #888;
+            --danger: #ff5252;
+            --bg: #050505;
+            --surface: #121214;
+            --surface-light: #1e1e22;
+            --border: #28282c;
+            --text-main: #f5f5f7;
+            --text-dim: #94949b;
+            --glass: rgba(255, 255, 255, 0.03);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #fdfdfd; padding: 16px; padding-bottom: 80px; }
         
-        .app-header { margin-bottom: 20px; border-bottom: 1px solid #252528; padding-bottom: 15px; }
-        .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        body { background: var(--bg); color: var(--text-main); padding: 16px; padding-bottom: 120px; overflow-x: hidden; }
+
+        /* --- Custom Toast --- */
+        #toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -150%); background: var(--success); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 800; font-size: 0.8rem; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #toast.show { transform: translate(-50%, 0); }
+
+        /* --- Header & Ticker (FIXED Z-INDEX) --- */
+        .global-ticker { background: linear-gradient(90deg, #1a1a1c, #0a0a0b); border-bottom: 1px solid var(--border); margin: -16px -16px 20px -16px; display: flex; align-items: center; height: 36px; overflow: hidden; position: relative; }
+        .ticker-badge { 
+            background: var(--primary); 
+            color: #000; 
+            font-size: 0.6rem; 
+            font-weight: 800; 
+            padding: 0 12px; 
+            height: 100%; 
+            display: flex; 
+            align-items: center; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            position: relative; 
+            z-index: 2; /* Keeps badge on top */
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5); /* Prevents text bleeding into badge */
+        }
+        .ticker-content { 
+            flex: 1; 
+            white-space: nowrap; 
+            font-size: 0.8rem; 
+            color: var(--primary); 
+            font-weight: 600; 
+            position: relative; 
+            z-index: 1; /* Keeps text behind badge */
+            overflow: hidden;
+        }
+        .ticker-scroll { display: inline-block; padding-left: 100%; animation: ticker-move 25s linear infinite; }
+        @keyframes ticker-move { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        .app-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .logo-wrap { display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 48px; height: 48px; border-radius: 14px; border: 2px solid var(--primary); background: var(--surface); display: flex; align-items: center; justify-content: center;}
+        .brand-text h1 { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px; }
+        .brand-text span { color: var(--primary); }
+        .grid-status { display: flex; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); }
+        .status-dot.active { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .badge-status { padding: 6px 12px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; background: var(--border); color: var(--primary); }
+
+        /* --- Actions --- */
+        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+        .action-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .action-card span { font-size: 0.75rem; font-weight: 700; color: var(--text-main); }
+
+        .auth-banner { background: var(--primary-soft); border: 1px solid var(--primary); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 24px; }
+        .suggest-area { border: 2px dashed var(--border); border-radius: 20px; padding: 20px; margin-bottom: 24px; }
+        .minimal-input { background: var(--surface-light); border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 12px; font-size: 0.85rem; width: 100%; outline: none; }
+
+        /* --- Professional Street Card --- */
+        .pro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; position: relative; transition: 0.3s; }
+        .pro-card::after { content: ''; position: absolute; left: 0; top: 20%; height: 60%; width: 4px; border-radius: 0 4px 4px 0; }
+        .card-on::after { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        .card-off::after { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .street-name { font-size: 1.2rem; font-weight: 800; margin-bottom: 2px; }
+        .town-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; }
+
+        .card-meta { display: flex; gap: 12px; margin-bottom: 16px; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); }
+        .meta-item { display: flex; align-items: center; gap: 4px; background: var(--glass); padding: 4px 8px; border-radius: 6px; }
+
+        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-top: 8px; display: inline-block; }
+        .pill-on { background: rgba(3, 218, 198, 0.1); color: var(--success); border: 1px solid var(--success); }
+        .pill-off { background: rgba(255, 82, 82, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+
+        .btn-circle { width: 38px; height: 38px; border-radius: 12px; background: var(--surface-light); border: 1px solid var(--border); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer;}
+        .btn-circle.active { color: var(--primary); border-color: var(--primary); }
+
+        .chip-group { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 5px; }
+        .action-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 8px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: pointer;}
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn-up { background: var(--success); color: #000; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer;}
+        .btn-down { background: var(--danger); color: #fff; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer;}
+        .btn-up:disabled, .btn-down:disabled { opacity: 0.1; filter: grayscale(1); cursor: not-allowed;}
+
+        .comment-area { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 10px; margin-bottom: 10px; }
+        .comment-input { width: 100%; background: transparent; border: none; color: #fff; outline: none; font-size: 0.85rem; resize: none; }
+
+        /* --- Nav Footer --- */
+        .nav-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.95); backdrop-filter: blur(15px); border-top: 1px solid var(--border); padding: 12px 20px 25px; display: flex; justify-content: space-around; z-index: 1000; }
+        .nav-link { text-decoration: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 800; }
+        .nav-link.active { color: var(--primary); }
+
+        /* Search/Filter Bar */
+        .command-bar { position: sticky; top: 10px; z-index: 100; background: rgba(5,5,5,0.8); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 18px; padding: 8px; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 8px; margin-bottom: 24px; }
         
-        .brand-logo { width: 52px; height: 52px; border-radius: 14px; border: 1.5px solid var(--primary); object-fit: cover; }
-        .brand-container { display: flex; gap: 12px; align-items: center; }
-
-        .brand-tag { color: var(--primary); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
-        .brand-name { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
-        
-        .member-count { background: rgba(187, 134, 252, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; border: 1px solid var(--primary); }
-        
-        .connection-status { font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--text-dim); }
-        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; transition: 0.3s; }
-        .dot-online { background: var(--success); box-shadow: 0 0 10px var(--success); }
-        .dot-offline { background: var(--danger); }
-
-        .news-container { background: var(--card); border-radius: 14px; padding: 10px; display: flex; align-items: center; margin-bottom: 20px; border: 1px solid #333; overflow: hidden; }
-        .news-label { background: var(--success); color: #000; padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.65rem; flex-shrink: 0; }
-        .ticker-wrapper { overflow: hidden; white-space: nowrap; flex-grow: 1; margin-left: 10px; }
-        .news-ticker { display: inline-block; animation: scroll 20s linear infinite; font-size: 0.8rem; color: var(--primary); font-weight: 600; }
-        @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-
-        .google-btn { width: 100%; padding: 16px; border-radius: 16px; background: #fff; color: #000; font-weight: 800; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
-        .google-btn img { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
-
-        .card-section { background: var(--card); padding: 20px; border-radius: 24px; border: 1px solid #333; margin-bottom: 25px; }
-        .ui-input { width: 100%; padding: 14px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: white; border-radius: 12px; outline: none; }
-
-        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; position: sticky; top: 10px; z-index: 100; }
-        .search-input { background: #252528; border: 2px solid #444; border-radius: 14px; padding: 12px; font-size: 0.9rem; color: #fff; width: 100%; outline: none; }
-        .town-dropdown { background: var(--primary); color: #000; border: none; border-radius: 14px; padding: 12px; font-weight: 800; outline: none; }
-
-        .card { background: var(--card); border: 1px solid #252528; border-radius: 28px; padding: 20px; margin-bottom: 20px; position: relative; }
-        .status-badge { padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; position: absolute; top: 20px; right: 20px; text-transform: uppercase; }
-        
-        .follow-btn { position: absolute; top: 60px; right: 25px; background: transparent; border: none; color: var(--text-dim); cursor: pointer; }
-        .follow-btn.active { color: var(--primary); }
-
-        .follower-stats { display: flex; align-items: center; gap: 4px; font-size: 0.65rem; color: var(--text-dim); margin-top: 4px; font-weight: 600; }
-
-        .light-on { background: var(--success); color: #000; }
-        .light-off { background: var(--danger); color: #fff; }
-        
-        .chips-row { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
-        .chip { background: #252528; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; color: #eee; border: 1px solid #333; cursor: pointer; white-space: nowrap; }
-        .chip.active { background: var(--primary); color: #000; font-weight: 800; }
-
-        .lucide { width: 16px; height: 16px; vertical-align: middle; margin-right: 4px; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-        .action-btn { padding: 15px; border-radius: 14px; border: 1px solid transparent; font-weight: 800; cursor: pointer; text-align: center; transition: 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .action-btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
-        .btn-restored { background: rgba(3, 218, 198, 0.1); color: var(--success); border-color: var(--success); }
-        .btn-outage { background: rgba(207, 102, 121, 0.1); color: var(--danger); border-color: var(--danger); }
-        .counter-text { display: block; font-size: 0.65rem; margin-top: 4px; opacity: 0.8; font-weight: 400; }
-
-        .post-display { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--primary); font-size: 0.85rem; }
-        .user-tag { color: var(--primary); font-weight: 800; font-size: 0.75rem; }
-        .post-btn { width: 100%; background: #6200ee; color: white; padding: 16px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; }
-
-        footer { text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid #222; }
-        .support-link { color: var(--primary); font-weight: 800; text-decoration: none; margin: 0 10px; }
+        .loading-state { text-align: center; padding: 40px; color: var(--text-dim); font-weight: 700; }
     </style>
 </head>
 <body>
 
-    <header class="app-header">
-        <div class="header-top">
-            <div class="brand-container">
-                <img src="icon.png" class="brand-logo" alt="Logo">
-                <div>
-                    <p class="brand-tag">Elite Edition</p>
-                    <h1 class="brand-name">Up-Nepa <span style="color:var(--primary)">Osun</span></h1>
-                    <div id="conn-ui" class="connection-status">
-                        <span class="dot dot-offline"></span> Offline
-                    </div>
-                </div>
+    <div id="toast">Notification</div>
+
+    <div class="global-ticker">
+        <div class="ticker-badge">Flash</div>
+        <div class="ticker-content"><span id="ticker-text" class="ticker-scroll">Fetching latest Osun State Grid status... Stay tuned.</span></div>
+    </div>
+
+    <nav class="app-nav">
+        <div class="logo-wrap">
+            <div class="logo-img"><i data-lucide="zap" style="color:var(--primary)"></i></div>
+            <div class="brand-text">
+                <h1>Up-Nepa <span>Osun</span></h1>
+                <div class="grid-status"><div id="status-dot" class="status-dot"></div> <span id="status-text">Connecting...</span></div>
             </div>
-            <div id="user-count-ui" class="member-count">0 MEMBERS</div>
         </div>
-    </header>
+        <div id="member-count" class="badge-status">0 ONLINE</div>
+    </nav>
 
-    <div class="news-container">
-        <span class="news-label">ELITE</span>
-        <div class="ticker-wrapper">
-            <div class="news-ticker">Welcome to the Elite community. Real-time updates for Adeeke, Aiba, and more. Follow your street for alerts!</div>
+    <div class="quick-actions">
+        <a href="#" class="action-card"><i data-lucide="message-square" style="color:var(--primary)"></i> <span>Agent Support</span></a>
+        <a href="#" class="action-card"><i data-lucide="mail" style="color:var(--primary)"></i> <span>Email Help</span></a>
+    </div>
+
+    <div id="auth-section">
+        <div class="auth-banner">
+            <p style="font-size:0.85rem; font-weight:800; margin-bottom:12px;">Join the Network</p>
+            <button class="btn-up" style="width:100%; background:#fff" onclick="loginGoogle()">Sign in with Google</button>
         </div>
     </div>
 
-    <div id="auth-box" class="card-section">
-        <button class="google-btn" onclick="loginGoogle()">
-            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google">
-            Continue with Google
-        </button>
+    <div id="suggest-box" class="suggest-area">
+        <h3 style="font-size:0.9rem; margin-bottom:10px;">Missing your Street?</h3>
+        <input type="text" id="new-street" class="minimal-input" style="margin-bottom:12px;" placeholder="Street Name, Town">
+        <button id="suggest-btn" class="btn-down" style="width:100%; background:var(--surface-light); color:#fff" onclick="handleSuggestion()">Sign in to Request</button>
     </div>
 
-    <div class="filter-grid">
-        <select id="town-select" class="town-dropdown" onchange="filterStreets()"><option value="all">All Towns</option></select>
-        <input type="text" id="search-bar" class="search-input" placeholder="🔍 Find Street..." oninput="filterStreets()">
+    <div class="command-bar">
+        <select id="town-filter" class="minimal-input" style="background:var(--primary); color:#000; font-weight:800; border:none;" onchange="filterGrid()">
+            <option value="all">ALL TOWNS</option>
+        </select>
+        <input type="text" id="search-grid" class="minimal-input" placeholder="Find street..." oninput="filterGrid()">
     </div>
 
-    <main id="street-container"></main>
+    <main id="street-feed">
+        <div class="loading-state">Initializing Grid...</div>
+    </main>
 
-    <footer class="footer-support">
-        <a href="https://wa.me/2348062516110" target="_blank" class="support-link">WhatsApp Support</a>
+    <footer class="nav-footer">
+        <a href="#" class="nav-link active"><i data-lucide="layout-grid"></i><span>Grid</span></a>
+        <a href="#" class="nav-link"><i data-lucide="shield-check"></i><span>Support</span></a>
     </footer>
 
     <script>
@@ -144,218 +182,244 @@
         const S_KEY = 'sb_publishable_S2TrD434ZYpkkx7gU2wiiw_QrgOr0AV'; 
         const _client = supabase.createClient(S_URL, S_KEY);
 
-        let allStreets = [];
-        let currentUser = null;
-        let followedStreets = JSON.parse(localStorage.getItem('followed_streets') || '[]');
+        let gridData = [], user = null, userSubs = [];
 
-        function timeAgo(dateString) {
-            if (!dateString) return 'No data';
-            const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.background = type === 'success' ? 'var(--success)' : 'var(--danger)';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function timeAgo(date) {
+            if (!date) return "Unknown";
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
             if (seconds < 60) return "Just now";
-            const mins = Math.floor(seconds / 60);
-            if (mins < 60) return mins + "m ago";
-            return Math.floor(mins / 60) + "h ago";
+            let interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + "h ago";
+            interval = seconds / 60;
+            return Math.floor(interval) + "m ago";
         }
 
-        async function initApp() {
-            const { data: { session } } = await _client.auth.getSession();
-            currentUser = session?.user || null;
+        // --- NEW: Deep Link Listener for the APK ---
+        window.addEventListener('appUrlOpen', (event) => {
+            const url = new URL(event.url);
+            const hash = url.hash; // Supabase returns the session here
             
-            if (currentUser) {
-                updateAuthUI();
-                await syncUserRecord();
-                if (Notification.permission === 'default') {
-                    Notification.requestPermission();
-                }
+            if (hash) {
+                // Tell Supabase to process the URL and log the user in
+                _client.auth.getSessionFromUrl({ url: event.url }).then(({ data, error }) => {
+                    if (data.session) {
+                        location.reload(); // Refresh to show logged-in interface
+                    }
+                });
             }
-            
-            loadData();
-            subscribeToUpdates();
-            updateMemberCount();
+        });
+
+        async function startApp() {
+            const { data: { session } } = await _client.auth.getSession();
+            user = session?.user || null;
+            if (user) {
+                renderAuth(); 
+                await fetchSubs();
+            }
+            fetchGrid();
+            syncRealtime();
         }
 
-        async function loginGoogle() {
+        // --- UPDATED: Tell Google to redirect to your custom APK scheme ---
+        async function loginGoogle() { 
             const { error } = await _client.auth.signInWithOAuth({ 
                 provider: 'google',
-                options: { redirectTo: window.location.origin }
-            });
-            if (error) alert(error.message);
-        }
-
-        async function syncUserRecord() {
-            const { data } = await _client.from('members').select('id').eq('email', currentUser.email).single();
-            if (!data) {
-                await _client.from('members').insert([{ email: currentUser.email }]);
+                options: {
+                    redirectTo: 'com.upnepa.osun://login-callback'
+                }
+            }); 
+            
+            if(error) {
+                showToast("Login Error: " + error.message, "error");
             }
         }
 
-        async function updateMemberCount() {
-            const { count } = await _client.from('members').select('*', { count: 'exact', head: true });
-            document.getElementById('user-count-ui').innerText = `${count || 0} Members`;
+        async function fetchSubs() {
+            if (!user) return;
+            const { data } = await _client.from('subscriptions').select('area_id').eq('user_id', user.id);
+            if (data) userSubs = data.map(i => i.area_id);
         }
 
-        function updateAuthUI() {
-            document.getElementById('auth-box').innerHTML = `
-                <p style="text-align:center; color:#bb86fc; font-weight:800; margin-bottom:10px;">Elite Account: ${currentUser.email.split('@')[0]}</p>
-                <button class="post-btn" style="background:#cf6679; padding:10px;" onclick="_client.auth.signOut().then(()=>location.reload())">Sign Out</button>
-            `;
-        }
-
-        async function loadData() {
-            const { data, error } = await _client.from('areas').select('*, comments(*)').eq('approved', true).order('name');
-            if (!error) { 
-                allStreets = data; 
-                populateTowns(data);
-                filterStreets(); 
+        async function fetchGrid() {
+            const { data, error } = await _client
+                .from('areas')
+                .select('*, subscriptions(count)')
+                .eq('approved', true)
+                .order('name');
+                
+            if (data) { 
+                gridData = data; 
+                buildTowns(data); 
+                filterGrid(); 
+            } else if (error) {
+                console.error("Supabase Error:", error);
             }
         }
 
-        function populateTowns(data) {
-            const townSelect = document.getElementById('town-select');
-            const towns = [...new Set(data.map(s => s.town))].sort();
-            townSelect.innerHTML = '<option value="all">All Towns</option>';
-            towns.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t; opt.innerText = t;
-                townSelect.appendChild(opt);
-            });
-        }
-
-        function filterStreets() {
-            const town = document.getElementById('town-select').value;
-            const query = document.getElementById('search-bar').value.toLowerCase();
-            const filtered = allStreets.filter(s => (town === 'all' || s.town === town) && s.name.toLowerCase().includes(query));
-            renderStreets(filtered);
-        }
-
-        function renderStreets(data) {
-            const container = document.getElementById('street-container');
-            container.innerHTML = data.map(s => {
-                const comments = (s.comments || []).slice(-2).reverse();
-                const isLightOn = s.status === 'Light On';
-                const isFollowed = followedStreets.includes(s.id);
+        function renderGrid(list) {
+            const container = document.getElementById('street-feed');
+            if (list.length === 0) {
+                container.innerHTML = '<div class="loading-state">No streets found matching your search.</div>';
+                return;
+            }
+            const guest = !user;
+            container.innerHTML = list.map(s => {
+                const isOn = s.status === 'Light On';
+                const subbed = userSubs.includes(s.id);
+                const timeStr = s.updated_at || s.created_at; 
+                const followers = s.subscriptions?.[0]?.count || 0;
                 
                 return `
-                <div class="card">
-                    <span class="status-badge ${isLightOn ? 'light-on' : 'light-off'}">${s.status || 'No Light'}</span>
-                    
-                    <button class="follow-btn ${isFollowed ? 'active' : ''}" onclick="toggleFollow(${s.id}, this)">
-                        <i data-lucide="${isFollowed ? 'bell-ring' : 'bell'}"></i>
-                    </button>
-
-                    <h2 style="font-size:1.6rem; font-weight:800;">${s.name}</h2>
-                    
-                    <div class="follower-stats">
-                        <i data-lucide="users"></i> ${s.follower_count || 0} Following this street
+                <div class="pro-card ${isOn ? 'card-on' : 'card-off'}">
+                    <div class="card-header">
+                        <div>
+                            <p class="town-label">${s.town || 'Osun'}</p>
+                            <h2 class="street-name">${s.name}</h2>
+                            <div class="status-pill ${isOn ? 'pill-on' : 'pill-off'}">${s.status || 'No Light'}</div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <div class="btn-circle ${subbed ? 'active' : ''}" onclick="toggleFav(${s.id})"><i data-lucide="bell" style="width:16px"></i></div>
+                            <div class="btn-circle" onclick="showToast('Share Link Copied!')"><i data-lucide="share-2" style="width:16px"></i></div>
+                        </div>
                     </div>
 
-                    <p style="color:var(--text-dim); font-size:0.75rem; margin-top:8px;">
-                        <i data-lucide="map-pin"></i> ${s.town} • <span style="color:var(--primary);">🕒 ${timeAgo(s.last_updated)}</span>
-                    </p>
-                    
-                    <div class="chips-row">
-                        <div class="chip" onclick="applyChip(this, ${s.id}, '⛈️ Weather Issue')">⛈️ Weather</div>
-                        <div class="chip" onclick="applyChip(this, ${s.id}, '⚡ Low Voltage')">⚡ Low Voltage</div>
-                        <div class="chip" onclick="applyChip(this, ${s.id}, '🛠️ Maintenance')">🛠️ Maintenance</div>
+                    <div class="card-meta">
+                        <div class="meta-item"><i data-lucide="clock" style="width:12px"></i> ${timeAgo(timeStr)}</div>
+                        <div class="meta-item"><i data-lucide="users" style="width:12px"></i> ${followers} Followers</div>
                     </div>
 
-                    <div class="btn-grid">
-                        <button class="action-btn btn-restored" ${isLightOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'Light On', 'on_count')">
-                            <div><i data-lucide="sun"></i> Restored</div>
-                            <span class="counter-text">Total: ${s.on_count || 0}</span>
-                        </button>
-                        <button class="action-btn btn-outage" ${!isLightOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'No Light', 'off_count')">
-                            <div><i data-lucide="moon"></i> Outage</div>
-                            <span class="counter-text">Total: ${s.off_count || 0}</span>
-                        </button>
+                    <div class="chip-group">
+                        <button class="action-chip" onclick="setChip(${s.id}, '⛈️ Weather Issue')">⛈️ Weather</button>
+                        <button class="action-chip" onclick="setChip(${s.id}, '⚡ Low Voltage')">⚡ Voltage</button>
+                        <button class="action-chip" onclick="setChip(${s.id}, '🔧 Phase Issue')">🔧 Phase Issue</button>
+                        <button class="action-chip" onclick="setChip(${s.id}, '🔌 Transformer Fault')">🔌 Transformer</button>
                     </div>
 
-                    <div id="posts-${s.id}">
-                        ${comments.map(c => `<div class="post-display"><span class="user-tag">${c.username || 'Elite'}</span> • ${timeAgo(c.created_at)}<br>${c.content}</div>`).join('')}
+                    <div class="btn-row">
+                        <button class="btn-up" ${guest || isOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'Light On')">RESTORED</button>
+                        <button class="btn-down" ${guest || !isOn ? 'disabled' : ''} onclick="updateStatus(${s.id}, 'No Light')">OUTAGE</button>
                     </div>
 
-                    <textarea id="cmt-${s.id}" class="ui-input" style="height:60px; margin-top:10px;" placeholder="Add detail..." maxlength="100"></textarea>
-                    <button class="post-btn" onclick="addComment(${s.id}, this)">Post Update</button>
-                </div>
-                `;
+                    <div class="comment-area">
+                        <textarea id="msg-${s.id}" class="comment-input" rows="1" placeholder="${guest ? 'Sign in to post...' : 'Add details...'}" ${guest ? 'disabled' : ''}></textarea>
+                    </div>
+                    <button class="btn-up" style="width:100%; padding:10px; font-size:0.7rem; background:var(--surface-light); color:#fff; border: 1px solid var(--border);" ${guest ? 'disabled' : ''} onclick="postComment(${s.id})">Publish Update</button>
+                </div>`;
             }).join('');
             lucide.createIcons();
         }
 
-        async function toggleFollow(id, btn) {
-            if (!currentUser) return alert("🔒 Login required to follow streets.");
+        async function updateStatus(id, status) {
+            await _client.from('areas')
+                .update({ status: status, updated_at: new Date().toISOString() })
+                .eq('id', id);
             
-            let action = '';
-            if (followedStreets.includes(id)) {
-                followedStreets = followedStreets.filter(sid => sid !== id);
-                btn.classList.remove('active');
-                action = 'decrement';
+            showToast('Grid Updated!');
+            fetchGrid();
+        }
+
+        async function toggleFav(id) {
+            if (!user) return showToast('Please sign in to follow areas', 'error');
+
+            if (userSubs.includes(id)) {
+                await _client.from('subscriptions').delete().eq('user_id', user.id).eq('area_id', id);
+                userSubs = userSubs.filter(x => x !== id);
+                showToast('Removed from Alerts');
             } else {
-                followedStreets.push(id);
-                btn.classList.add('active');
-                action = 'increment';
-                if (Notification.permission !== 'granted') Notification.requestPermission();
+                await _client.from('subscriptions').insert([{ user_id: user.id, area_id: id }]);
+                userSubs.push(id);
+                showToast('Added to Alerts', 'success');
             }
-
-            await _client.rpc(action === 'increment' ? 'increment_count' : 'decrement_count', { row_id: id, col_name: 'follower_count' });
-
-            localStorage.setItem('followed_streets', JSON.stringify(followedStreets));
-            loadData(); 
+            
+            fetchGrid();
         }
 
-        function triggerNotification(streetName, status) {
-            if (Notification.permission === 'granted') {
-                new Notification("Up-Nepa Elite Alert", {
-                    body: `Status Update for ${streetName}: ${status}`,
-                    icon: "icon.png" 
-                });
-            }
+        function setChip(id, txt) { 
+            if(user) document.getElementById(`msg-${id}`).value = txt; 
+            else showToast('Sign in first', 'error'); 
         }
 
-        function applyChip(btn, id, text) {
-            if (!currentUser) return alert("🔒 Login required.");
-            document.getElementById(`cmt-${id}`).value = text;
-            btn.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
-        async function updateStatus(id, status, col) {
-            if (!currentUser) return alert("🔒 Login required.");
-            await _client.from('areas').update({ status, last_updated: new Date().toISOString() }).eq('id', id);
-            await _client.rpc('increment_count', { row_id: id, col_name: col });
-            loadData();
-        }
-
-        async function addComment(id, btn) {
-            if (!currentUser) return alert("🔒 Login required.");
-            const val = document.getElementById(`cmt-${id}`).value;
+        async function postComment(id) {
+            const val = document.getElementById(`msg-${id}`).value; 
             if(!val) return;
-            btn.disabled = true;
-            await _client.from('comments').insert([{ area_id: id, content: val, username: currentUser.email.split('@')[0] }]);
-            loadData();
+            
+            await _client.from('comments').insert([{ 
+                area_id: id, 
+                content: val, 
+                username: user.email.split('@')[0],
+                type: 'general',
+                confirmations: 0
+            }]);
+            
+            document.getElementById(`msg-${id}`).value = '';
+            showToast('Comment Posted!');
         }
 
-        function subscribeToUpdates() {
-            const channel = _client.channel('db-changes')
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'areas' }, (payload) => {
-                    const updated = payload.new;
-                    if (followedStreets.includes(updated.id) && payload.old.status !== updated.status) {
-                        triggerNotification(updated.name, updated.status);
-                    }
-                    loadData();
-                })
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => updateMemberCount())
-                .subscribe((status) => {
-                    const icon = document.getElementById('conn-ui');
-                    if (status === 'SUBSCRIBED') {
-                        icon.innerHTML = '<span class="dot dot-online"></span> Live';
-                    } else {
-                        icon.innerHTML = '<span class="dot dot-offline"></span> Reconnecting...';
-                    }
-                });
+        async function handleSuggestion() {
+            if(!user) { showToast('Please sign in first', 'error'); return; }
+            const name = document.getElementById('new-street').value.trim();
+            if(name) { 
+                await _client.from('areas').insert([{ name: name, approved: false, status: 'No Light' }]); 
+                showToast("Request sent for review!");
+                document.getElementById('new-street').value = '';} else {
+                showToast("Please enter a street name", "error");
+            }
         }
 
-        initApp();
+        function buildTowns(data) {
+            const list = [...new Set(data.map(i => i.town).filter(Boolean))].sort();
+            const select = document.getElementById('town-filter');
+            select.innerHTML = '<option value="all">ALL TOWNS</option>' + list.map(t => `<option value="${t}">${t}</option>`).join('');
+        }
+
+        function filterGrid() {
+            const town = document.getElementById('town-filter').value;
+            const query = document.getElementById('search-grid').value.toLowerCase();
+            const filtered = gridData.filter(s => 
+                (town === 'all' || s.town === town) && 
+                s.name.toLowerCase().includes(query)
+            );
+            renderGrid(filtered);
+        }
+
+        function syncRealtime() {
+            const chan = _client.channel('public-grid');
+            chan.on('presence', { event: 'sync' }, () => {
+                document.getElementById('member-count').innerText = `${Object.keys(chan.presenceState()).length} ONLINE`;
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, () => fetchGrid())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'subscriptions' }, () => fetchGrid())
+            .subscribe(async (status) => {
+                if(status === 'SUBSCRIBED') {
+                    document.getElementById('status-dot').classList.add('active');
+                    document.getElementById('status-text').innerText = 'Grid Live';
+                    await chan.track({ online_at: new Date().toISOString() });
+                }
+            });
+        }
+
+        function renderAuth() {
+            const name = user.email.split('@')[0];
+            document.getElementById('auth-section').innerHTML = `
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <div><p style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase;">Account</p><p style="color:var(--primary); font-weight:800;">${name}</p></div>
+                <button onclick="_client.auth.signOut().then(()=>location.reload())" style="background:none; border:1px solid var(--danger); color:var(--danger); padding:6px 12px; border-radius:8px; font-size:0.6rem; font-weight:800; cursor:pointer;">SIGN OUT</button>
+            </div>`;
+            document.getElementById('suggest-btn').innerText = "Request Addition";
+            document.getElementById('suggest-btn').style.background = "var(--primary)";
+            document.getElementById('suggest-btn').style.color = "#000";
+        }
+
+        lucide.createIcons();
+        startApp();
     </script>
 </body>
 </html>
