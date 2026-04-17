@@ -23,38 +23,49 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Prepare Workspace and Build
+      - name: Build Branded APK
         run: |
-          # 1. Setup Capacitor Environment
+          # 1. Install necessary branding tools
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
           
-          # 2. Structure web files
-          mkdir -p www
-          rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
+          # 2. Force create the correct config at the ROOT (Fixes the generic "App" name)
+          cat <<EOF > capacitor.config.json
+          {
+            "appId": "com.upnepa.osun",
+            "appName": "Up-Nepa Osun",
+            "webDir": "www",
+            "bundledWebRuntime": false
+          }
+          EOF
           
-          # 3. Initialize with your Unique Name and App ID
-          npx cap init "Up-Nepa Osun" "com.upnepa.osun" --web-dir www
+          # 3. Generate the Custom Icons from your www/icon.png
+          # This replaces the blue Capacitor logo with your unique icon
+          npx @capacitor/assets generate --android --iconSource www/icon.png
           
-          # 4. Add Android platform
+          # 4. Fresh Platform Setup
+          rm -rf android
           npx cap add android
           
-          # 5. GENERATE ICON (Make sure 'icon.png' exists in your main folder)
-          if [ -f "icon.png" ]; then
-            npx capacitor-assets generate --android
+          # 5. Move google-services.json to the required Android location
+          if [ -f "www/google-services.json" ]; then
+            cp www/google-services.json android/app/
           fi
           
-          # 6. Final Sync and Build
+          # 6. Final Sync and Compile
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+          
+          # Rename the output for a professional look
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
         env:
           CI: true
 
-      - name: Upload APK
+      - name: Upload Branded APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-Release
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: Up-Nepa-Osun-Branded
+          path: android/app/build/outputs/apk/debug/Up-Nepa-Osun.apk
           
