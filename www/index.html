@@ -106,11 +106,7 @@
         <div id="member-count" class="badge-status">0 ONLINE</div>
     </nav>
 
-    <div id="auth-section">
-        <button class="btn-up" style="width:100%; background:#fff; margin-bottom:24px; color:#000;" onclick="loginGoogle()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" style="vertical-align:middle; margin-right:8px;"> Sign in with Google
-        </button>
-    </div>
+    <div id="auth-section"></div>
 
     <div class="search-container">
         <div class="command-bar">
@@ -171,58 +167,82 @@
         let allComments = []; 
 
         async function startApp() {
-            // FIX 1: Robust session checking
-            const { data: { session }, error: sessionError } = await _client.auth.getSession();
-            user = session?.user || null;
+            // FIX 1: Robust Auth State Listener 
+            _client.auth.onAuthStateChange((event, session) => {
+                user = session?.user || null;
+                renderAuth();
+                if (user) {
+                    fetchSubs();
+                } else if (event === 'SIGNED_OUT') {
+                    userSubs = [];
+                    filterGrid();
+                }
+            });
 
-            if (user) { 
-                renderAuth(); 
-                await fetchSubs(); 
-            }
+            // Initial session check
+            const { data: { session } } = await _client.auth.getSession();
+            user = session?.user || null;
+            renderAuth();
 
             await fetchGrid();
             await fetchComments();
+            if (user) await fetchSubs();
+            
             syncRealtime();
 
-            // Capacitor handle for redirect
-            if (window.hasOwnProperty('Capacitor')) {
-                const { App } = Capacitor.Plugins;
-                App.addListener('appUrlOpen', async (data) => {
-                    const url = new URL(data.url.replace('com.upnepa.osun://', 'https://placeholder.com/'));
-                    const hash = url.hash.substring(1);
-                    if (hash) {
-                        const params = new URLSearchParams(hash);
-                        const accessToken = params.get('access_token');
-                        const refreshToken = params.get('refresh_token');
-                        if (accessToken && refreshToken) {
-                            const { data: sessionData, error } = await _client.auth.setSession({
-                                access_token: accessToken,
-                                refresh_token: refreshToken
-                            });
-                            if (!error && sessionData.user) {
-                                user = sessionData.user;
-                                renderAuth();
-                                await fetchSubs();
-                                showToast("Login Successful!");
-                            }
-                        }
+            // Capacitor Deep Link Support
+            if (window.Capacitor && Capacitor.Plugins.App) {
+                Capacitor.Plugins.App.addListener('appUrlOpen', async (data) => {
+                    const url = new URL(data.url);
+                    const fragment = url.hash.substring(1);
+                    const params = new URLSearchParams(fragment);
+                    const accessToken = params.get('access_token');
+                    const refreshToken = params.get('refresh_token');
+                    if (accessToken && refreshToken) {
+                        await _client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+                        showToast("Login Successful!");
                     }
                 });
             }
         }
 
         async function loginGoogle() { 
-            const isNative = window.hasOwnProperty('Capacitor') && Capacitor.isNativePlatform();
+            const isNative = window.Capacitor && Capacitor.isNativePlatform();
+            // Critical: Ensure redirect URL is clean of current state
             const redirectUrl = isNative 
                 ? 'com.upnepa.osun://login-callback' 
-                : window.location.origin;
+                : window.location.origin + window.location.pathname;
 
-            await _client.auth.signInWithOAuth({ 
+            const { error } = await _client.auth.signInWithOAuth({ 
                 provider: 'google', 
                 options: { redirectTo: redirectUrl } 
             });
+            if (error) showToast("Login failed: " + error.message);
         }
 
+        function renderAuth() {
+            const authSection = document.getElementById('auth-section');
+            if (!authSection) return;
+            if (user) {
+                authSection.innerHTML = `
+                    <div style="padding:12px; font-size:0.75rem; color:var(--primary); font-weight:800; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>USER: ${user.email.split('@')[0].toUpperCase()}</span> 
+                        <button onclick="logoutUser()" style="background:var(--danger); color:#fff; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">LOGOUT</button>
+                    </div>`;
+            } else {
+                authSection.innerHTML = `
+                    <button class="btn-up" style="width:100%; background:#fff; margin-bottom:24px; color:#000; display:flex; align-items:center; justify-content:center; gap:10px;" onclick="loginGoogle()">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Sign in with Google
+                    </button>`;
+            }
+        }
+
+        async function logoutUser() {
+            await _client.auth.signOut();
+            showToast("Logged out");
+        }
+
+        // --- CORE DATA FETCHING ---
         async function fetchGrid() {
             const { data } = await _client.from('areas').select('*, subscriptions(count)').eq('approved', true).order('name');
             if (data) { gridData = data; buildTowns(data); filterGrid(); }
@@ -237,44 +257,66 @@
             if (!user) return;
             const { data } = await _client.from('subscriptions').select('area_id').eq('user_id', user.id);
             if (data) userSubs = data.map(i => i.area_id);
+            filterGrid();
         }
 
+        // --- REALTIME SYNC (FIXED) ---
+        function syncRealtime() {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+
+            // 1. Data Subscriptions
+            _client.channel('db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, () => fetchGrid())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => fetchComments())
+                .subscribe();
+            
+            // 2. Presence & Global Status
+            const ch = _client.channel('global_presence');
+            
+            ch.on('presence', { event: 'sync' }, () => {
+                const state = ch.presenceState();
+                let count = 0;
+                for (const id in state) count += state[id].length;
+                const badge = document.getElementById('member-count');
+                if (badge) badge.innerText = `${count} ONLINE`;
+            });
+
+            ch.subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    // Update UI ONLY when successfully connected
+                    if (dot) dot.style.background = 'var(--success)';
+                    if (text) text.innerText = 'Grid Live';
+                    
+                    try {
+                        const { data: { session } } = await _client.auth.getSession();
+                        await ch.track({ online_at: new Date().toISOString(), user: session?.user?.id || 'anon' });
+                    } catch (e) { console.error("Track error", e); }
+                } else {
+                    // Failures or timeouts
+                    if (dot) dot.style.background = 'var(--danger)';
+                    if (text) text.innerText = 'Reconnecting...';
+                }
+            });
+        }
+
+        // --- UI HELPERS & INTERACTIONS ---
         function timeAgo(date) {
-            if (!date) return "No updates yet";
-            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-            let interval = seconds / 31536000;
-            if (interval > 1) return Math.floor(interval) + "y ago";
-            interval = seconds / 2592000;
-            if (interval > 1) return Math.floor(interval) + "mo ago";
-            interval = seconds / 86400;
-            if (interval > 1) return Math.floor(interval) + "d ago";
-            interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + "h ago";
-            interval = seconds / 60;
-            if (interval > 1) return Math.floor(interval) + "m ago";
-            return "Just now";
+            if (!date) return "No updates";
+            const sec = Math.floor((new Date() - new Date(date)) / 1000);
+            if (sec < 60) return "Just now";
+            const min = Math.floor(sec / 60);
+            if (min < 60) return min + "m ago";
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return hr + "h ago";
+            return Math.floor(hr / 24) + "d ago";
         }
 
-        function handleSearch(val) {
-            const box = document.getElementById('suggestion-box');
-            if (!val) { box.style.display = 'none'; filterGrid(); return; }
-            const matches = gridData.filter(s => s.name.toLowerCase().includes(val.toLowerCase())).slice(0, 6);
-            if (matches.length > 0) {
-                box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectStreet('${m.name}')"><i data-lucide="map-pin" style="width:14px"></i>${m.name}</div>`).join('');
-                box.style.display = 'block'; lucide.createIcons();
-            } else { box.style.display = 'none'; }
-            filterGrid();
-        }
-
-        function selectStreet(name) {
-            document.getElementById('search-grid').value = name;
-            document.getElementById('suggestion-box').style.display = 'none';
-            filterGrid();
-        }
-
-        function interactionGuard() {
-            if (!user) { showToast('Please Login First'); window.scrollTo({ top: 0, behavior: 'smooth' }); return false; }
-            return true;
+        function filterGrid() {
+            const town = document.getElementById('town-filter').value;
+            const query = document.getElementById('search-grid').value.toLowerCase();
+            const filtered = gridData.filter(s => (town === 'all' || s.town === town) && s.name.toLowerCase().includes(query));
+            renderGrid(filtered);
         }
 
         function renderGrid(list) {
@@ -283,12 +325,9 @@
                 const isOn = s.status === 'Light On';
                 const subbed = userSubs.includes(s.id);
                 const followers = s.subscriptions?.[0]?.count || 0;
-                const oCount = s.outage_count || 0;
-                const rCount = s.restore_count || 0;
-                
                 const commentsHTML = allComments.filter(c => c.area_id === s.id).map(c => `
                     <div class="comment-item">
-                        <div class="comment-user"><span>${c.user_email.split('@')[0]}</span> <span style="color:var(--text-dim)">${timeAgo(c.created_at)}</span></div>
+                        <div class="comment-user"><span>${c.user_email.split('@')[0]}</span> <span>${timeAgo(c.created_at)}</span></div>
                         <div style="color:#fff;">${c.content}</div>
                     </div>
                 `).join('');
@@ -300,7 +339,7 @@
                             <p style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase;">${s.town}</p>
                             <h2 class="street-name">${s.name}</h2>
                             <div class="status-pill ${isOn ? 'pill-on' : 'pill-off'}">${s.status || 'Offline'}</div>
-                            <div class="time-ago">Last updated: ${timeAgo(s.updated_at)}</div>
+                            <div class="time-ago">Updated: ${timeAgo(s.updated_at)}</div>
                         </div>
                         <div style="display:flex; gap:8px;">
                             <div class="btn-circle ${subbed ? 'active' : ''}" onclick="if(interactionGuard()) toggleFav(${s.id})"><i data-lucide="bell" style="width:18px"></i></div>
@@ -310,15 +349,14 @@
                     
                     <div class="card-meta">
                         <span><i data-lucide="users" style="width:12px; display:inline"></i> ${followers} Followers</span>
-                        <span style="color:var(--success)">● ${rCount} Up Today</span>
-   <span style="color:var(--danger)">● ${oCount} Out Today</span>
+                        <span style="color:var(--success)">● ${s.restore_count || 0} Up</span>
+                        <span style="color:var(--danger)">● ${s.outage_count || 0} Out</span>
                     </div>
                     
                     <div class="chip-group">
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⛈️ Weather Issue')">⛈️ Weather</button>
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⚡ Low Voltage')">⚡ Voltage</button>
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '🔧 Phase Issue')">🔧 Phase</button>
-                        <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '🔊 Transformer Sound')">🔊 Transformer</button>
                     </div>
 
                     <div class="btn-row">
@@ -327,9 +365,7 @@
                     </div>
 
                     <div class="comment-section">
-                        <div id="comment-list-${s.id}" style="max-height: 120px; overflow-y: auto;">
-                            ${commentsHTML || '<p style="font-size:0.7rem; color:var(--text-dim); text-align:center;">No comments yet. Be the first!</p>'}
-                        </div>
+                        <div style="max-height: 120px; overflow-y: auto;">${commentsHTML || '<p style="font-size:0.7rem; color:var(--text-dim); text-align:center;">No comments yet.</p>'}</div>
                         <div class="comment-input-row">
                             <input type="text" id="comment-input-${s.id}" class="minimal-input" placeholder="Write a comment..." style="padding: 10px; font-size: 0.75rem;">
                             <button class="btn-post" onclick="if(interactionGuard()) postComment(${s.id})">Post</button>
@@ -342,26 +378,19 @@
 
         async function updateStatus(id, status) {
             const street = gridData.find(s => s.id === id);
-            if (!street) return;
-            if (street.status === status) { showToast(`Already marked as ${status}`); return; }
-
+            if (street.status === status) return showToast("Status already set");
+            
             const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
-            const lastUpdateStr = street.updated_at ? new Date(street.updated_at).toISOString().split('T')[0] : '';
+            const today = now.toISOString().split('T')[0];
+            const lastUp = street.updated_at ? new Date(street.updated_at).toISOString().split('T')[0] : '';
+            
+            let oCount = street.outage_count || 0;
+            let rCount = street.restore_count || 0;
+            if (today !== lastUp) { oCount = 0; rCount = 0; }
+            status === 'Light On' ? rCount++ : oCount++;
 
-            let newOutageCount = street.outage_count || 0;
-            let newRestoreCount = street.restore_count || 0;
-            if (todayStr !== lastUpdateStr) { newOutageCount = 0; newRestoreCount = 0; }
-            if (status === 'Light On') newRestoreCount++;
-            if (status === 'No Light') newOutageCount++;
-
-            const { error } = await _client.from('areas').update({ status: status, updated_at: now.toISOString(), outage_count: newOutageCount, restore_count: newRestoreCount }).eq('id', id);
-            if (!error) { showToast(`Status Updated: ${status}`); fetchGrid(); }
-        }
-
-        async function setChip(id, txt) { 
-            const { error } = await _client.from('areas').update({ status: txt, updated_at: new Date().toISOString() }).eq('id', id);
-            if (!error) { showToast(`Logged: ${txt}`); fetchGrid(); }
+            const { error } = await _client.from('areas').update({ status, updated_at: now.toISOString(), outage_count: oCount, restore_count: rCount }).eq('id', id);
+            if (!error) showToast("Grid Updated");
         }
 
         async function postComment(id) {
@@ -369,90 +398,51 @@
             const text = input.value.trim();
             if (!text) return;
             const { error } = await _client.from('comments').insert([{ area_id: id, user_email: user.email, content: text }]);
-            if (!error) { input.value = ''; showToast('Comment saved'); await fetchComments(); }
+            if (!error) { input.value = ''; showToast('Comment posted'); }
         }
 
         async function toggleFav(id) {
             if (userSubs.includes(id)) {
                 await _client.from('subscriptions').delete().eq('user_id', user.id).eq('area_id', id);
                 userSubs = userSubs.filter(x => x !== id);
-                showToast('Notifications Disabled');
+                showToast('Muted');
             } else {
                 await _client.from('subscriptions').insert([{ user_id: user.id, area_id: id }]);
                 userSubs.push(id);
-                showToast('Notifications Enabled');
+                showToast('Following');
             }
-            fetchGrid();
+            filterGrid();
         }
 
-        function openSuggest() { document.getElementById('suggest-modal').style.display = 'flex'; }
-        async function submitSuggestion() {
-            const name = document.getElementById('suggest-name').value;
-            const town = document.getElementById('suggest-town').value;
-            if(!name || !town) return showToast('Fill all fields');
-            await _client.from('areas').insert([{ name, town, approved: false, status: 'Pending' }]);
-            showToast('Suggestion sent for approval!');
-            closeModals();
-        }
-
-        function openShare(name, status) {
-            const text = encodeURIComponent(`💡 Grid Update: ${name} is currently ${status}.\n\nTrack live updates on Up-Nepa Osun!`);
-            const url = encodeURIComponent(window.location.href);
-            document.getElementById('share-wa').href = `https://wa.me/?text=${text} ${url}`;
-            document.getElementById('share-x').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
-            document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-            document.getElementById('share-tg').href = `https://t.me/share/url?url=${url}&text=${text}`;
-            document.getElementById('share-title').innerText = `Share ${name}`;
-            document.getElementById('share-modal').style.display = 'flex';
-        }
-
-        function openSupport() { document.getElementById('support-modal').style.display = 'flex'; }
-        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
-        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
-
-        // FIX 2: More stable status handling
-        function syncRealtime() {
-            _client.channel('db_sync').on('postgres_changes', { event: '*', schema: 'public' }, () => { fetchGrid(); fetchComments(); }).subscribe();
-            
-            const ch = _client.channel('presence');
-            ch.on('presence', { event: 'sync' }, () => {
-                const count = Object.keys(ch.presenceState()).length;
-                document.getElementById('member-count').innerText = `${count} ONLINE`;
-            })
-            .subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') {
-                    // Force the UI update to "Grid Live" once subscribed
-                    const dot = document.getElementById('status-dot');
-                    const text = document.getElementById('status-text');
-                    if (dot && text) {
-                        dot.style.background = 'var(--success)';
-                        text.innerText = 'Grid Live';
-                    }
-                    await ch.track({ online_at: new Date().toISOString() });
-                }
-            });
-        }
-
+        // Standard helpers
         function buildTowns(data) {
             const list = [...new Set(data.map(i => i.town).filter(Boolean))].sort();
             document.getElementById('town-filter').innerHTML = '<option value="all">ALL TOWNS</option>' + list.map(t => `<option value="${t}">${t}</option>`).join('');
         }
-
-        function filterGrid() {
-            const town = document.getElementById('town-filter').value;
-            const query = document.getElementById('search-grid').value.toLowerCase();
-            const filtered = gridData.filter(s => (town === 'all' || s.town === town) && s.name.toLowerCase().includes(query));
-            renderGrid(filtered);
+        function handleSearch(val) {
+            const box = document.getElementById('suggestion-box');
+            if (!val) { box.style.display = 'none'; filterGrid(); return; }
+            const matches = gridData.filter(s => s.name.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
+            box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectStreet('${m.name}')"><i data-lucide="map-pin" style="width:14px"></i>${m.name}</div>`).join('');
+            box.style.display = matches.length ? 'block' : 'none';
+            lucide.createIcons();
+            filterGrid();
+        }
+        function selectStreet(name) { document.getElementById('search-grid').value = name; document.getElementById('suggestion-box').style.display = 'none'; filterGrid(); }
+        function interactionGuard() { if (!user) { showToast('Please Login First'); window.scrollTo(0,0); return false; } return true; }
+        function openSuggest() { document.getElementById('suggest-modal').style.display = 'flex'; }
+        function openSupport() { document.getElementById('support-modal').style.display = 'flex'; }
+        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+        async function setChip(id, txt) { await _client.from('areas').update({ status: txt, updated_at: new Date().toISOString() }).eq('id', id); showToast("Logged: " + txt); }
+        
+        function openShare(name, status) {
+            const text = encodeURIComponent(`💡 Up-Nepa Osun: ${name} is ${status}.`);
+            const url = encodeURIComponent(window.location.origin + window.location.pathname);
+            document.getElementById('share-wa').href = `https://wa.me/?text=${text}%20${url}`;
+            document.getElementById('share-modal').style.display = 'flex';
         }
 
-        function renderAuth() {
-            const authSection = document.getElementById('auth-section');
-            if (user && authSection) {
-                authSection.innerHTML = `<div style="padding:12px; font-size:0.75rem; color:var(--primary); font-weight:800; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;"><span>USER: ${user.email.split('@')[0]}</span> <button onclick="_client.auth.signOut().then(()=>location.reload())" style="background:var(--danger); color:#fff; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">LOGOUT</button></div>`;
-            }
-        }
-
-        // Initialize on load
         window.onload = startApp;
     </script>
 </body>
