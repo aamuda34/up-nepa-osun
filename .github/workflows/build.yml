@@ -6,27 +6,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Using a specialized container prevents all interactive hangs
-    container: node:20-bullseye 
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install System Dependencies
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build APK
         run: |
-          apt-get update && apt-get install -y openjdk-17-jdk-headless
           npm install -g @bubblewrap/cli
+          # This tells Bubblewrap exactly where the Java we just installed is located
+          export JAVA_HOME=$JAVA_HOME
+          
+          # We use 'yes n' because it should NOT install its own JDK, it should use ours
+          yes n | bubblewrap build --skipSigning || true
 
-      - name: Generate APK
-        run: |
-          # The --confirm flag forces Bubblewrap to stop asking questions
-          bubblewrap build --skipSigning --confirm
-        env:
-          # Automatically tells the builder where Java is located
-          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-
-      - name: Upload Finished APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Up-Nepa-Osun-Final
