@@ -1,7 +1,9 @@
 name: Build Android APK
+
 on:
   push:
     branches: [ main ]
+  workflow_dispatch: # Allows you to manually trigger the build
 
 jobs:
   build:
@@ -10,32 +12,42 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Set up Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Build APK (Bypass Prompts)
+      - name: Build APK with Capacitor
         run: |
-          npm install -g @bubblewrap/cli
-          # This line prevents the "y/n" hang by pre-configuring the paths
-          mkdir -p ~/.bubblewrap
-          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
+          # 1. Initialize a basic package.json silently
+          npm init -y
           
-          # This command builds the APK directly without asking questions
-          bubblewrap build --skipSigning
+          # 2. Install Capacitor locally to avoid broken pipes and missing repos
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          
+          # 3. Initialize the app using your current directory as the web root
+          npx cap init "Up-Nepa Osun" "com.upnepa.osun" --web-dir .
+          
+          # 4. Add Android and sync files
+          npx cap add android
+          npx cap sync android
+          
+          # 5. Build the APK using GitHub's native, pre-configured Android tools
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
         env:
           CI: true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Up-Nepa-Osun-APK
-          path: ./*.apk
+          name: Up-Nepa-Osun-Release
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           
