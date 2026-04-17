@@ -16,12 +16,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build APK (Direct Method)
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build APK (Bypass Prompts)
         run: |
           npm install -g @bubblewrap/cli
-          # We force the web directory to the current folder correctly
-          yes | bubblewrap init --manifest="https://up-nepa-osun-1491a.firebaseapp.com/manifest.json"
-          yes | bubblewrap build --skipSigning
+          # This line prevents the "y/n" hang by pre-configuring the paths
+          mkdir -p ~/.bubblewrap
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
+          
+          # This command builds the APK directly without asking questions
+          bubblewrap build --skipSigning
         env:
           CI: true
 
