@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Up-Nepa Osun</title>
+    <title>Up-Nepa Osun | Real-time Grid Monitor</title>
     
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -17,6 +17,7 @@
             --primary: #bb86fc;
             --success: #03dac6;
             --danger: #ff5252;
+            --warning: #ffb74d;
             --bg: #050505;
             --surface: #121214;
             --surface-light: #1e1e22;
@@ -28,52 +29,61 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text-main); padding: 16px; padding-bottom: 120px; overflow-x: hidden; }
 
-        #toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -150%); background: var(--primary); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 800; font-size: 0.8rem; z-index: 10000; transition: transform 0.4s; }
+        /* Component: Notifications */
+        #toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -150%); background: var(--primary); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 800; font-size: 0.8rem; z-index: 10000; transition: transform 0.4s; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         #toast.show { transform: translate(-50%, 0); }
 
+        /* Component: Ticker */
         .global-ticker { position: relative; z-index: 2001; background: #1a1a1c; border-bottom: 1px solid var(--border); margin: -16px -16px 20px -16px; display: flex; align-items: center; height: 36px; overflow: hidden; }
         .ticker-badge { background: var(--primary); color: #000; font-size: 0.6rem; font-weight: 800; padding: 0 12px; height: 100%; display: flex; align-items: center; text-transform: uppercase; z-index: 2; }
         .ticker-content { position: relative; flex: 1; overflow: hidden; z-index: 1; }
         .ticker-scroll { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker-move 25s linear infinite; color: var(--primary); font-weight: 600; font-size: 0.8rem; }
         @keyframes ticker-move { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
+        /* Component: Navigation */
         .app-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
         .logo-img { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--surface); }
         .badge-status { padding: 6px 12px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; background: var(--border); color: var(--primary); }
 
+        /* Component: Search & Filter */
         .search-container { position: sticky; top: 10px; z-index: 1000; margin-bottom: 24px; }
         .command-bar { background: rgba(18,18,20,0.95); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 18px; padding: 8px; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 8px; }
-        .minimal-input { background: var(--surface-light); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 12px; font-size: 0.85rem; width: 100%; outline: none; }
+        .minimal-input { background: var(--surface-light); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 12px; font-size: 0.85rem; width: 100%; outline: none; transition: border-color 0.3s; }
+        .minimal-input:focus { border-color: var(--primary); }
         
         #suggestion-box { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-top: 8px; max-height: 250px; overflow-y: auto; display: none; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .suggestion-item { padding: 14px; border-bottom: 1px solid var(--border); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 10px; }
 
-        .pro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; position: relative; border-left: 4px solid var(--danger); }
+        /* Component: Grid Card */
+        .pro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; position: relative; border-left: 4px solid var(--danger); transition: transform 0.2s; }
+        .pro-card:active { transform: scale(0.98); }
         .card-on { border-left-color: var(--success); }
         .street-name { font-size: 1.2rem; font-weight: 800; }
         .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-top: 8px; display: inline-block; border: 1px solid currentColor; }
         .pill-on { color: var(--success); }
         .pill-off { color: var(--danger); }
-
         .time-ago { font-size: 0.6rem; color: var(--text-dim); margin-top: 4px; font-weight: 600; }
 
-        .card-meta { display: flex; gap: 12px; margin: 12px 0; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); }
-        .btn-circle { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-light); border: 1px solid var(--border); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .btn-circle.active { color: var(--primary); border-color: var(--primary); }
+        /* Component: Stats & Action Chips */
+        .card-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+        .meta-chip { background: var(--surface-light); border: 1px solid var(--border); padding: 6px 10px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); }
+        .meta-chip i { width: 14px; height: 14px; }
 
-        .chip-group { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
-        .action-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 8px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: pointer; }
+        .btn-circle { width: 44px; height: 44px; border-radius: 14px; background: var(--surface-light); border: 1px solid var(--border); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; }
+        .btn-circle.active { color: #fff; background: var(--primary); border-color: var(--primary); }
 
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn-up { background: var(--success); color: #000; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; }
-        .btn-down { background: var(--danger); color: #fff; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-up { background: var(--success); color: #000; padding: 16px; border-radius: 14px; font-weight: 800; border: none; cursor: pointer; font-size: 0.8rem; }
+        .btn-down { background: var(--danger); color: #fff; padding: 16px; border-radius: 14px; font-weight: 800; border: none; cursor: pointer; font-size: 0.8rem; }
 
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
+        /* Component: Modals */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 5000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
         .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; width: 100%; max-width: 400px; text-align: center; }
-        .social-btn { padding: 14px; border-radius: 14px; text-decoration: none; color: #fff; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .social-btn { padding: 16px; border-radius: 16px; text-decoration: none; color: #fff; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
 
-        .nav-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.95); backdrop-filter: blur(15px); border-top: 1px solid var(--border); padding: 12px 20px 25px; display: flex; justify-content: space-around; z-index: 2000; }
-        .nav-link { text-decoration: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 800; cursor: pointer; }
+        /* Component: Footer */
+        .nav-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--border); padding: 12px 20px 30px; display: flex; justify-content: space-around; z-index: 2000; }
+        .nav-link { text-decoration: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 800; cursor: pointer; transition: color 0.3s; }
         .nav-link.active { color: var(--primary); }
     </style>
 </head>
@@ -100,7 +110,9 @@
     </nav>
 
     <div id="auth-section">
-        <button class="btn-up" style="width:100%; background:#fff; margin-bottom:24px; color:#000;" onclick="loginGoogle()">Sign in with Google</button>
+        <button class="btn-up" style="width:100%; background:#fff; margin-bottom:24px; color:#000; display:flex; align-items:center; justify-content:center; gap:10px;" onclick="loginGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Sign in with Google
+        </button>
     </div>
 
     <div class="search-container">
@@ -115,13 +127,13 @@
 
     <main id="street-feed"></main>
 
-    <button onclick="openSuggest()" style="width:100%; background:var(--surface); border:1px dashed var(--primary); color:var(--primary); padding:15px; border-radius:15px; font-weight:800; margin-top:10px; cursor:pointer;">+ CAN'T FIND YOUR STREET? SUGGEST HERE</button>
+    <button onclick="openSuggest()" style="width:100%; background:var(--surface); border:1px dashed var(--primary); color:var(--primary); padding:18px; border-radius:18px; font-weight:800; margin-top:20px; cursor:pointer;">+ CAN'T FIND YOUR STREET? SUGGEST HERE</button>
 
     <div id="support-modal" class="modal-overlay">
         <div class="modal-content">
             <h2 style="margin-bottom:20px;">Support Center</h2>
             <a href="https://wa.me/2348062516110" class="social-btn" style="background:#25D366;"><i data-lucide="message-circle"></i> WhatsApp Support</a>
-            <a href="mailto:aamuda34@gmail.com" class="social-btn" style="background:#fff; color:#000;"><i data-lucide="mail"></i> Gmail Support</a>
+            <a href="mailto:aamuda34@gmail.com" class="social-btn" style="background:#fff; color:#000;"><i data-lucide="mail"></i> Email Support</a>
             <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:20px; font-weight:700;">Close</button>
         </div>
     </div>
@@ -129,8 +141,8 @@
     <div id="suggest-modal" class="modal-overlay">
         <div class="modal-content">
             <h2 style="margin-bottom:15px;">Suggest a Street</h2>
-            <input type="text" id="suggest-name" class="minimal-input" placeholder="Street Name" style="margin-bottom:10px;">
-            <input type="text" id="suggest-town" class="minimal-input" placeholder="Town" style="margin-bottom:15px;">
+            <input type="text" id="suggest-name" class="minimal-input" placeholder="Street Name (e.g., Adeeke Street)" style="margin-bottom:10px;">
+            <input type="text" id="suggest-town" class="minimal-input" placeholder="Town (e.g., Iwo)" style="margin-bottom:15px;">
             <button class="btn-up" style="width:100%;" onclick="if(interactionGuard()) submitSuggestion()">Submit Request</button>
             <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:15px; font-weight:700;">Cancel</button>
         </div>
@@ -138,8 +150,8 @@
 
     <div id="share-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2 id="share-title" style="margin-bottom:15px; font-size:1rem;">Share Update</h2>
-            <a id="share-wa" class="social-btn" style="background:#25D366;"><i data-lucide="message-circle"></i>WhatsApp</a>
+            <h2 id="share-title" style="margin-bottom:15px; font-size:1.1rem;">Share Update</h2>
+            <a id="share-wa" class="social-btn" style="background:#25D366;"><i data-lucide="message-circle"></i>Share to WhatsApp</a>
             <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:20px; font-weight:700;">Cancel</button>
         </div>
     </div>
@@ -156,22 +168,32 @@
 
         let gridData = [], user = null, userSubs = [];
 
-        // UPDATED: startApp with session recovery
+        /**
+         * INITIALIZATION & AUTH FIX
+         * Handles session recovery for both Web and Capacitor
+         */
         async function startApp() {
+            // 1. Initial check for existing session
             const { data: { session } } = await _client.auth.getSession();
             user = session?.user || null;
 
+            // 2. Special handler for returning from OAuth redirect
             if (!user && window.location.hash) {
                 const { data } = await _client.auth.getSession();
                 if (data?.session) user = data.session.user;
             }
 
-            if (user) { renderAuth(); await fetchSubs(); }
+            if (user) { 
+                renderAuth(); 
+                await fetchSubs(); 
+            }
+            
             fetchGrid();
             syncRealtime();
         }
 
         async function loginGoogle() { 
+            // Detect if running in mobile app via Capacitor
             const isApp = window.location.origin.includes('localhost') || window.localStorage.getItem('isCapacitor');
             const redirectUrl = isApp ? 'com.upnepa.osun://login-callback' : window.location.href;
 
@@ -181,9 +203,20 @@
             }); 
         }
 
+        /**
+         * DATA FETCHING
+         */
         async function fetchGrid() {
-            const { data } = await _client.from('areas').select('*, subscriptions(count)').eq('approved', true).order('name');
-            if (data) { gridData = data; buildTowns(data); filterGrid(); }
+            const { data } = await _client.from('areas')
+                .select('*, subscriptions(count)')
+                .eq('approved', true)
+                .order('name');
+            
+            if (data) { 
+                gridData = data; 
+                buildTowns(data); 
+                filterGrid(); 
+            }
         }
 
         async function fetchSubs() {
@@ -191,58 +224,39 @@
             if (data) userSubs = data.map(i => i.area_id);
         }
 
-        function timeAgo(date) {
-            if (!date) return "No updates";
-            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-            if (seconds < 60) return "Just now";
-            const m = Math.floor(seconds / 60);
-            if (m < 60) return m + "m ago";
-            const h = Math.floor(m / 60);
-            if (h < 24) return h + "h ago";
-            return Math.floor(h / 24) + "d ago";
-        }
-
-        function handleSearch(val) {
-            const box = document.getElementById('suggestion-box');
-            if (!val) { box.style.display = 'none'; filterGrid(); return; }
-            const matches = gridData.filter(s => s.name.toLowerCase().includes(val.toLowerCase())).slice(0, 6);
-            if (matches.length > 0) {
-                box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectStreet('${m.name}')"><i data-lucide="map-pin" style="width:14px"></i>${m.name}</div>`).join('');
-                box.style.display = 'block'; lucide.createIcons();
-            } else { box.style.display = 'none'; }
-            filterGrid();
-        }
-
-        function selectStreet(name) {
-            document.getElementById('search-grid').value = name;
-            document.getElementById('suggestion-box').style.display = 'none';
-            filterGrid();
-        }
-
-        function interactionGuard() {
-            if (!user) { showToast('Please Login First'); return false; }
-            return true;
-        }
-
+        /**
+         * UI RENDERING
+         */
         function renderGrid(list) {
             const container = document.getElementById('street-feed');
             container.innerHTML = list.map(s => {
                 const isOn = s.status === 'Light On';
                 const subbed = userSubs.includes(s.id);
+                const followers = s.subscriptions?.[0]?.count || 0;
+
                 return `
                 <div class="pro-card ${isOn ? 'card-on' : ''}">
-                    <div style="display:flex; justify-content:space-between">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <div>
-                            <p style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase;">${s.town}</p>
+                            <p style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">${s.town}</p>
                             <h2 class="street-name">${s.name}</h2>
-                            <div class="status-pill ${isOn ? 'pill-on' : 'pill-off'}">${s.status || 'Offline'}</div>
-                            <div class="time-ago">Last updated: ${timeAgo(s.updated_at)}</div>
+                            <div class="status-pill ${isOn ? 'pill-on' : 'pill-off'}">${s.status || 'No Data'}</div>
+                            <div class="time-ago">Updated ${timeAgo(s.updated_at)}</div>
                         </div>
-                        <div style="display:flex; gap:8px;">
+                        <div style="display:flex; gap:10px;">
+                            <div class="btn-circle" onclick="shareStreet('${s.name}', '${s.status}')"><i data-lucide="share-2" style="width:18px"></i></div>
                             <div class="btn-circle ${subbed ? 'active' : ''}" onclick="if(interactionGuard()) toggleFav(${s.id})"><i data-lucide="bell" style="width:18px"></i></div>
                         </div>
                     </div>
-                    <div class="btn-row" style="margin-top:20px;">
+
+                    <div class="card-meta">
+                        <div class="meta-chip"><i data-lucide="users"></i> ${followers} Followers</div>
+                        <div class="meta-chip"><i data-lucide="cloud-sun"></i> Weather: Clear</div>
+                        <div class="meta-chip"><i data-lucide="zap"></i> Voltage: 220V</div>
+                        <div class="meta-chip"><i data-lucide="activity"></i> Phase: Stable</div>
+                    </div>
+
+                    <div class="btn-row">
                         <button class="btn-up" onclick="if(interactionGuard()) updateStatus(${s.id}, 'Light On')">RESTORED</button>
                         <button class="btn-down" onclick="if(interactionGuard()) updateStatus(${s.id}, 'No Light')">OUTAGE</button>
                     </div>
@@ -251,44 +265,72 @@
             lucide.createIcons();
         }
 
+        /**
+         * ACTIONS & UTILITIES
+         */
         async function updateStatus(id, status) {
-            await _client.from('areas').update({ status: status, updated_at: new Date().toISOString() }).eq('id', id);
-            showToast('Updated!'); fetchGrid();
+            const { error } = await _client.from('areas')
+                .update({ status: status, updated_at: new Date().toISOString() })
+                .eq('id', id);
+            
+            if (!error) {
+                showToast(`Status set to ${status}`);
+                fetchGrid();
+            }
         }
 
         async function toggleFav(id) {
             if (userSubs.includes(id)) {
                 await _client.from('subscriptions').delete().eq('user_id', user.id).eq('area_id', id);
                 userSubs = userSubs.filter(x => x !== id);
+                showToast('Notifications Off');
             } else {
                 await _client.from('subscriptions').insert([{ user_id: user.id, area_id: id }]);
                 userSubs.push(id);
+                showToast('Notifications On!');
             }
             fetchGrid();
         }
 
-        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
-        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
-        function openSuggest() { document.getElementById('suggest-modal').style.display = 'flex'; }
-        function openSupport() { document.getElementById('support-modal').style.display = 'flex'; }
-
-        async function submitSuggestion() {
-            const name = document.getElementById('suggest-name').value;
-            const town = document.getElementById('suggest-town').value;
-            await _client.from('areas').insert([{ name, town, approved: false }]);
-            showToast('Sent for approval!'); closeModals();
+        function shareStreet(name, status) {
+            const text = encodeURIComponent(`💡 Up-Nepa Osun Report:\nStreet: ${name}\nStatus: ${status}\n\nCheck live updates here: https://up-nepa-osun.vercel.app/`);
+            document.getElementById('share-wa').href = `https://wa.me/?text=${text}`;
+            document.getElementById('share-title').innerText = `Share ${name}`;
+            document.getElementById('share-modal').style.display = 'flex';
         }
 
-        function syncRealtime() {
-            const ch = _client.channel('presence').on('presence', { event: 'sync' }, () => {
-                document.getElementById('member-count').innerText = `${Object.keys(ch.presenceState()).length} ONLINE`;
-            }).subscribe(async (s) => {
-                if(s === 'SUBSCRIBED') {
-                    document.getElementById('status-dot').style.background = 'var(--success)';
-                    document.getElementById('status-text').innerText = 'Grid Live';
-                    await ch.track({ online_at: new Date().toISOString() });
-                }
-            });
+        function timeAgo(date) {
+            if (!date) return "Long ago";
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return "just now";
+            const m = Math.floor(seconds / 60);
+            if (m < 60) return m + "m ago";
+            const h = Math.floor(m / 60);
+            return h < 24 ? h + "h ago" : Math.floor(h / 24) + "d ago";
+        }
+
+        function interactionGuard() {
+            if (!user) { showToast('Login to perform actions'); return false; }
+            return true;
+        }
+
+        function handleSearch(val) {
+            const box = document.getElementById('suggestion-box');
+            if (!val) { box.style.display = 'none'; filterGrid(); return; }
+            
+            const matches = gridData.filter(s => s.name.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
+            if (matches.length > 0) {
+                box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectStreet('${m.name}')"><i data-lucide="map-pin" style="width:14px"></i>${m.name}</div>`).join('');
+                box.style.display = 'block'; 
+                lucide.createIcons();
+            } else { box.style.display = 'none'; }
+            filterGrid();
+        }
+
+        function selectStreet(name) {
+            document.getElementById('search-grid').value = name;
+            document.getElementById('suggestion-box').style.display = 'none';
+            filterGrid();
         }
 
         function buildTowns(data) {
@@ -303,25 +345,79 @@
             renderGrid(filtered);
         }
 
-        function renderAuth() {
-            document.getElementById('auth-section').innerHTML = `<div style="padding:12px; font-size:0.7rem; color:var(--primary); font-weight:800;">USER: ${user.email.split('@')[0]} <span onclick="_client.auth.signOut().then(()=>location.reload())" style="color:var(--danger); margin-left:15px;">LOGOUT</span></div>`;
+        function syncRealtime() {
+            const ch = _client.channel('global-presence').on('presence', { event: 'sync' }, () => {
+                const count = Object.keys(ch.presenceState()).length;
+                document.getElementById('member-count').innerText = `${count} ONLINE`;
+            }).subscribe(async (s) => {
+                if(s === 'SUBSCRIBED') {
+                    document.getElementById('status-dot').style.background = 'var(--success)';
+                    document.getElementById('status-text').innerText = 'Grid Live';
+                    await ch.track({ online_at: new Date().toISOString() });
+                }
+            });
         }
 
+        function showToast(msg) { 
+            const t = document.getElementById('toast'); 
+            t.innerText = msg; 
+            t.classList.add('show'); 
+            setTimeout(() => t.classList.remove('show'), 3000); 
+        }
+
+        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+        function openSuggest() { document.getElementById('suggest-modal').style.display = 'flex'; }
+        function openSupport() { document.getElementById('support-modal').style.display = 'flex'; }
+
+        async function submitSuggestion() {
+            const name = document.getElementById('suggest-name').value;
+            const town = document.getElementById('suggest-town').value;
+            if(!name || !town) return showToast('Fill all fields');
+            
+            await _client.from('areas').insert([{ name, town, approved: false }]);
+            showToast('Sent for review!'); 
+            closeModals();
+        }
+
+        function renderAuth() {
+            document.getElementById('auth-section').innerHTML = `
+                <div style="background:var(--surface); border:1px solid var(--border); padding:16px; border-radius:18px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <p style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase;">Logged in as</p>
+                        <p style="font-weight:800; color:var(--primary); font-size:0.85rem;">${user.email.split('@')[0]}</p>
+                    </div>
+                    <button onclick="_client.auth.signOut().then(()=>location.reload())" style="background:var(--danger); border:none; color:#fff; padding:8px 16px; border-radius:10px; font-weight:800; font-size:0.7rem;">LOGOUT</button>
+                </div>`;
+        }
+
+        // START
         startApp();
 
-        // UPDATED: Manual token extraction for deep linking
+        /**
+         * CAPACITOR DEEP LINK HANDLER
+         * This code captures the URL from the OS when Google redirects back to your app
+         */
         if (window.Capacitor) {
             window.localStorage.setItem('isCapacitor', 'true');
             const { App } = window.Capacitor.Plugins;
+            
             App.addListener('appUrlOpen', async ({ url }) => {
                 if (url.includes('login-callback')) {
+                    // Convert deep link to standard URL to parse hash
                     const scopeUrl = url.replace('com.upnepa.osun://login-callback', window.location.origin + window.location.pathname);
-                    const { data } = await _client.auth.setSession({
-                        access_token: new URL(scopeUrl).hash.split('access_token=')[1]?.split('&')[0],
-                        refresh_token: new URL(scopeUrl).hash.split('refresh_token=')[1]?.split('&')[0],
-                    });
-                    if (data?.session) location.reload();
-      }
+                    const hash = new URL(scopeUrl).hash;
+                    
+                    if (hash) {
+                        const { data, error } = await _client.auth.setSession({
+                            access_token: hash.split('access_token=')[1]?.split('&')[0],
+                            refresh_token: hash.split('refresh_token=')[1]?.split('&')[0],
+                        });
+
+                        if (data?.session) {
+                            location.reload(); // Refresh to trigger startApp with active user
+                        }
+                    }
+                }
             });
         }
     </script>
