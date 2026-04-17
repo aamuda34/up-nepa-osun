@@ -23,50 +23,43 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build Branded APK
+      - name: Build Branded APK with Custom Icon
         run: |
           # 1. Install necessary branding tools
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
           
-          # 2. Structure web files
-          mkdir -p www
-          rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
-          
-          # 3. FIX: Create the config at the ROOT (Sets the "Up-Nepa Osun" name)
+          # 2. Setup the config at the ROOT
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.upnepa.osun",
             "appName": "Up-Nepa Osun",
-            "webDir": "www",
-            "bundledWebRuntime": false
+            "webDir": "www"
           }
           EOF
           
-          # 4. FIX: Correct Icon Generation (Fixes the unknown option error)
-          # The tool automatically looks for icons in an "assets" folder
-          mkdir -p assets
-          if [ -f "www/icon.png" ]; then
-            cp www/icon.png assets/icon.png
-          fi
-          npx @capacitor/assets generate --android
-          
-          # 5. Fresh Platform Setup
+          # 3. Fresh Platform Setup
           rm -rf android
           npx cap add android
           
-          # 6. Fix Firebase Location
+          # 4. GENERATE ICON (Must run AFTER 'cap add android')
+          # This specifically targets your file in the www folder and overwrites the default logos
+          if [ -f "www/icon.png" ]; then
+            npx @capacitor/assets generate --android --iconSource www/icon.png
+          fi
+          
+          # 5. Move google-services.json to the required Android location
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/
           fi
           
-          # 7. Final Sync and Compile
+          # 6. Final Sync and Compile
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
           
-          # Rename output for a professional look
+          # Rename for the final download
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun.apk
         env:
           CI: true
