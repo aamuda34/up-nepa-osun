@@ -171,8 +171,8 @@
         let allComments = []; 
 
         async function startApp() {
-            // Check session
-            const { data: { session } } = await _client.auth.getSession();
+            // FIX 1: Robust session checking
+            const { data: { session }, error: sessionError } = await _client.auth.getSession();
             user = session?.user || null;
 
             if (user) { 
@@ -180,12 +180,11 @@
                 await fetchSubs(); 
             }
 
-            // Load Data
             await fetchGrid();
             await fetchComments();
             syncRealtime();
 
-            // CAPACITOR NATIVE REDIRECT HANDLER (For Successful App Login)
+            // Capacitor handle for redirect
             if (window.hasOwnProperty('Capacitor')) {
                 const { App } = Capacitor.Plugins;
                 App.addListener('appUrlOpen', async (data) => {
@@ -201,8 +200,10 @@
                                 refresh_token: refreshToken
                             });
                             if (!error && sessionData.user) {
-                                showToast("Welcome Back!");
-                                location.reload(); // Refresh to apply user state
+                                user = sessionData.user;
+                                renderAuth();
+                                await fetchSubs();
+                                showToast("Login Successful!");
                             }
                         }
                     }
@@ -233,6 +234,7 @@
         }
 
         async function fetchSubs() {
+            if (!user) return;
             const { data } = await _client.from('subscriptions').select('area_id').eq('user_id', user.id);
             if (data) userSubs = data.map(i => i.area_id);
         }
@@ -309,8 +311,8 @@
                     <div class="card-meta">
                         <span><i data-lucide="users" style="width:12px; display:inline"></i> ${followers} Followers</span>
                         <span style="color:var(--success)">● ${rCount} Up Today</span>
-                        <span style="color:var(--danger)">● ${oCount} Out Today</span>
-     </div>
+   <span style="color:var(--danger)">● ${oCount} Out Today</span>
+                    </div>
                     
                     <div class="chip-group">
                         <button class="action-chip" onclick="if(interactionGuard()) setChip(${s.id}, '⛈️ Weather Issue')">⛈️ Weather</button>
@@ -408,15 +410,24 @@
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
         function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500); }
 
+        // FIX 2: More stable status handling
         function syncRealtime() {
             _client.channel('db_sync').on('postgres_changes', { event: '*', schema: 'public' }, () => { fetchGrid(); fetchComments(); }).subscribe();
-            const ch = _client.channel('presence').on('presence', { event: 'sync' }, () => {
+            
+            const ch = _client.channel('presence');
+            ch.on('presence', { event: 'sync' }, () => {
                 const count = Object.keys(ch.presenceState()).length;
                 document.getElementById('member-count').innerText = `${count} ONLINE`;
-            }).subscribe(async (s) => {
-                if(s === 'SUBSCRIBED') {
-                    document.getElementById('status-dot').style.background = 'var(--success)';
-                    document.getElementById('status-text').innerText = 'Grid Live';
+            })
+            .subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    // Force the UI update to "Grid Live" once subscribed
+                    const dot = document.getElementById('status-dot');
+                    const text = document.getElementById('status-text');
+                    if (dot && text) {
+                        dot.style.background = 'var(--success)';
+                        text.innerText = 'Grid Live';
+                    }
                     await ch.track({ online_at: new Date().toISOString() });
                 }
             });
@@ -435,10 +446,14 @@
         }
 
         function renderAuth() {
-            document.getElementById('auth-section').innerHTML = `<div style="padding:12px; font-size:0.75rem; color:var(--primary); font-weight:800; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;"><span>USER: ${user.email.split('@')[0]}</span> <button onclick="_client.auth.signOut().then(()=>location.reload())" style="background:var(--danger); color:#fff; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">LOGOUT</button></div>`;
+            const authSection = document.getElementById('auth-section');
+            if (user && authSection) {
+                authSection.innerHTML = `<div style="padding:12px; font-size:0.75rem; color:var(--primary); font-weight:800; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;"><span>USER: ${user.email.split('@')[0]}</span> <button onclick="_client.auth.signOut().then(()=>location.reload())" style="background:var(--danger); color:#fff; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">LOGOUT</button></div>`;
+            }
         }
 
-        startApp();
+        // Initialize on load
+        window.onload = startApp;
     </script>
 </body>
 </html>
