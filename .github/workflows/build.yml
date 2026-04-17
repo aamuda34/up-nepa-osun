@@ -1,37 +1,12 @@
-name: Build Android APK Final Fix
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Java & Node
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
       - name: Build Branded APK with Deep Links
         run: |
-          # 1. Initialize and install ALL necessary plugins
+          # 1. Initialize and force install compatible versions
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/assets@latest
+          # Using --legacy-peer-deps to bypass version conflicts once and for all
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/app@latest @capacitor/assets@latest --legacy-peer-deps
           
           # 2. Asset Setup
           mkdir -p assets
-          # Check if icon exists in www, if not use a placeholder to prevent build failure
           if [ -f "www/icon.png" ]; then
             cp www/icon.png assets/icon-only.png
             cp www/icon.png assets/icon-foreground.png
@@ -50,40 +25,30 @@ jobs:
           # 4. Add Android Platform
           npx cap add android
           
-          # 5. Generate Icons (if assets exist)
+          # 5. Generate Icons
           if [ -d "assets" ]; then
             npx capacitor-assets generate --android || true
           fi
           
-          # 6. PROFESSIONAL DEEP LINK INJECTION
-          # We inject the intent-filter specifically into the MainActivity section
+          # 6. Deep Link Injection (Modified for high reliability)
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          
-          # Create the Deep Link block
           DEEP_LINK='<intent-filter android:label="browsable"><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="com.upnepa.osun" /></intent-filter>'
           
-          # Use sed to insert it right before the closing tag of the MainActivity
+          # Ensure we place it inside the Activity tag correctly
           sed -i "/<\/activity>/i $DEEP_LINK" $MANIFEST
 
-          # 7. Google Services Check
+          # 7. Google Services
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/
           fi
           
-          # 8. Sync and Build
-          npx cap sync android
+          # 8. Final Sync and Gradle Build
+          npx cap sync android --legacy-peer-deps
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
           
-          # 9. Rename for clarity
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Up-Nepa-Osun-Final.apk
         env:
           CI: true
-
-      - name: Upload Final APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Up-Nepa-Osun-Final-Checkmark
-          path: android/app/build/outputs/apk/debug/Up-Nepa-Osun-Final.apk
           
