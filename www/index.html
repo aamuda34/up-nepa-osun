@@ -4,867 +4,889 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Up-Nepa Osun</title>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #bb86fc;
-            --success: #03dac6;
-            --danger: #ff5252;
-            --bg: #050505;
-            --surface: #121214;
-            --surface-light: #1e1e22;
-            --border: #28282c;
-            --text-main: #f5f5f7;
-            --text-dim: #94949b;
+            --p:#bb86fc; --ok:#03dac6; --no:#cf6679;
+            --bg:#050507; --s1:#111113; --s2:#1a1a1f;
+            --bd:#26262c; --tx:#f0f0f5; --dim:#808088;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text-main); padding: 16px; padding-bottom: 120px; overflow-x: hidden; }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--tx);
+             padding-bottom:90px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 
-        #toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -150%); background: var(--primary); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 800; font-size: 0.8rem; z-index: 10000; transition: transform 0.4s; text-align: center; max-width: 90%; pointer-events: none; }
-        #toast.show { transform: translate(-50%, 0); }
+        /* LOADING */
+        #ld{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
+            align-items:center;justify-content:center;gap:14px;z-index:9999;transition:opacity .4s}
+        .spin{width:38px;height:38px;border:3px solid var(--bd);border-top-color:var(--p);
+              border-radius:50%;animation:spin .75s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
 
-        .global-ticker { position: relative; z-index: 2001; background: #1a1a1c; border-bottom: 1px solid var(--border); margin: -16px -16px 20px -16px; display: flex; align-items: center; height: 36px; overflow: hidden; }
-        .ticker-badge { background: var(--primary); color: #000; font-size: 0.6rem; font-weight: 800; padding: 0 12px; height: 100%; display: flex; align-items: center; text-transform: uppercase; z-index: 2; white-space: nowrap; }
-        .ticker-content { position: relative; flex: 1; overflow: hidden; z-index: 1; }
-        .ticker-scroll { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker-move 30s linear infinite; color: var(--primary); font-weight: 600; font-size: 0.8rem; }
-        @keyframes ticker-move { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        /* TOAST */
+        #toast{position:fixed;top:16px;left:50%;transform:translate(-50%,-80px);
+               background:var(--p);color:#000;padding:9px 20px;border-radius:40px;
+               font-weight:800;font-size:.76rem;z-index:9998;
+               transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+               max-width:86vw;text-align:center;pointer-events:none;white-space:nowrap}
+        #toast.show{transform:translate(-50%,0)}
 
-        .app-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .logo-img { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--surface); flex-shrink: 0; }
-        .badge-status { padding: 6px 12px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; background: var(--border); color: var(--primary); white-space: nowrap; }
+        /* TICKER */
+        .ticker{background:var(--s2);border-bottom:1px solid var(--bd);
+                height:32px;display:flex;align-items:center;overflow:hidden}
+        .t-badge{background:var(--p);color:#000;font-size:.56rem;font-weight:800;
+                 padding:0 10px;height:100%;display:flex;align-items:center;
+                 text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+        .t-track{flex:1;overflow:hidden}
+        .t-inner{display:inline-block;white-space:nowrap;padding-left:100%;
+                 animation:tick 30s linear infinite;font-size:.72rem;
+                 color:var(--p);font-weight:600}
+        @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 
-        .search-container { position: sticky; top: 10px; z-index: 1000; margin-bottom: 24px; }
-        .command-bar { background: rgba(18,18,20,0.97); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 18px; padding: 8px; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 8px; }
-        .minimal-input { background: var(--surface-light); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 12px; font-size: 0.85rem; width: 100%; outline: none; -webkit-appearance: none; }
+        /* NAV */
+        .topnav{padding:12px 16px 8px;display:flex;justify-content:space-between;align-items:center}
+        .brand{display:flex;align-items:center;gap:10px}
+        .logo-box{width:40px;height:40px;border-radius:10px;background:var(--s2);
+                  border:1.5px solid var(--p);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .b-title{font-size:1rem;font-weight:800;line-height:1.1}
+        .b-title span{color:var(--p)}
+        .b-sub{display:flex;align-items:center;gap:4px;margin-top:2px}
+        .conn-dot{width:6px;height:6px;border-radius:50%;background:var(--no);flex-shrink:0;transition:background .3s}
+        .conn-dot.live{background:var(--ok)}
+        .conn-lbl{font-size:.56rem;color:var(--dim);font-weight:600}
+        .online-chip{padding:5px 10px;border-radius:7px;background:var(--s2);
+                     border:1px solid var(--bd);font-size:.6rem;font-weight:800;color:var(--p)}
 
-        #suggestion-box { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-top: 8px; max-height: 250px; overflow-y: auto; display: none; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .suggestion-item { padding: 14px; border-bottom: 1px solid var(--border); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        /* AUTH */
+        #auth-bar{margin:0 16px 12px;padding:10px 14px;background:var(--s1);
+                  border:1px solid var(--bd);border-radius:12px;
+                  display:flex;justify-content:space-between;align-items:center;min-height:46px}
+        .u-name{font-size:.7rem;font-weight:800;color:var(--p)}
+        .btn-out{background:var(--no);color:#fff;border:none;padding:7px 13px;
+                 border-radius:8px;font-weight:800;font-size:.68rem;cursor:pointer;
+                 -webkit-appearance:none;touch-action:manipulation}
+        .btn-goo{width:100%;background:#fff;color:#111;border:none;padding:12px 16px;
+                 border-radius:12px;font-weight:800;font-size:.8rem;cursor:pointer;
+                 display:flex;align-items:center;justify-content:center;gap:10px;
+                 -webkit-appearance:none;touch-action:manipulation}
+        .btn-goo img{width:18px;height:18px;flex-shrink:0}
 
-        .pro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; border-left: 4px solid var(--danger); }
-        .card-on { border-left-color: var(--success); }
-        .street-name { font-size: 1.1rem; font-weight: 800; word-break: break-word; margin: 2px 0 4px; }
-        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; display: inline-block; border: 1px solid currentColor; }
-        .pill-on { color: var(--success); }
-        .pill-off { color: var(--danger); }
-        .time-ago { font-size: 0.6rem; color: var(--text-dim); margin-top: 4px; font-weight: 600; }
+        /* SEARCH */
+        .search-area{position:sticky;top:0;z-index:400;padding:0 16px 10px;background:var(--bg)}
+        .search-row{display:grid;grid-template-columns:auto 1fr;gap:7px;
+                    background:var(--s2);border:1px solid var(--bd);border-radius:14px;padding:6px}
+        select.tsel{background:var(--p);color:#000;border:none;border-radius:9px;
+                    padding:8px 10px;font-weight:800;font-size:.7rem;cursor:pointer;
+                    -webkit-appearance:none;max-width:118px}
+        input.sbox{background:var(--s1);border:1px solid var(--bd);color:var(--tx);
+                   border-radius:9px;padding:8px 12px;font-size:.78rem;outline:none;
+                   font-family:inherit;width:100%;-webkit-appearance:none}
+        #sdrop{position:absolute;top:calc(100% - 2px);left:16px;right:16px;
+               background:var(--s1);border:1px solid var(--bd);border-radius:12px;
+               display:none;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden}
+        .sdrop-i{padding:12px 15px;font-size:.8rem;cursor:pointer;
+                 border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
+        .sdrop-i:last-child{border-bottom:none}
 
-        .card-meta { display: flex; gap: 10px; margin: 12px 0; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); flex-wrap: wrap; }
-        .btn-circle { width: 42px; height: 42px; border-radius: 12px; background: var(--surface-light); border: 1px solid var(--border); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
-        .btn-circle.active { color: var(--primary); border-color: var(--primary); }
+        /* FEED */
+        #feed{padding:0 16px}
+        .card{background:var(--s1);border:1px solid var(--bd);border-radius:20px;
+              padding:17px;margin-bottom:14px;border-left:4px solid var(--no)}
+        .card.on{border-left-color:var(--ok)}
+        .c-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+        .c-info{flex:1;min-width:0}
+        .c-town{font-size:.55rem;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+        .c-name{font-size:1.02rem;font-weight:800;margin:2px 0;word-break:break-word}
+        .c-pill{display:inline-block;padding:3px 9px;border-radius:5px;
+                font-size:.56rem;font-weight:800;text-transform:uppercase;
+                border:1px solid currentColor;margin-bottom:3px}
+        .c-pill.on{color:var(--ok)}.c-pill.off{color:var(--no)}
+        .c-time{font-size:.56rem;color:var(--dim);font-weight:600}
+        .c-btns{display:flex;gap:6px;flex-shrink:0}
+        .ic-btn{width:38px;height:38px;border-radius:10px;background:var(--s2);
+                border:1px solid var(--bd);color:var(--dim);display:flex;
+                align-items:center;justify-content:center;cursor:pointer;
+                touch-action:manipulation;flex-shrink:0}
+        .ic-btn.on{color:var(--p);border-color:var(--p)}
+        .c-stats{display:flex;gap:10px;flex-wrap:wrap;font-size:.6rem;font-weight:700;
+                 color:var(--dim);margin-bottom:11px}
+        .s-ok{color:var(--ok)}.s-no{color:var(--no)}
+        .chips{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;margin-bottom:11px;
+               -webkit-overflow-scrolling:touch}
+        .chip{flex-shrink:0;background:transparent;border:1px solid var(--bd);color:var(--dim);
+              padding:6px 10px;border-radius:8px;font-size:.66rem;font-weight:700;cursor:pointer;
+              touch-action:manipulation;-webkit-appearance:none}
+        .rep-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+        .btn-r{background:var(--ok);color:#000;border:none;padding:12px 6px;border-radius:11px;
+               font-weight:800;font-size:.73rem;cursor:pointer;width:100%;
+               touch-action:manipulation;-webkit-appearance:none}
+        .btn-o{background:var(--no);color:#fff;border:none;padding:12px 6px;border-radius:11px;
+               font-weight:800;font-size:.73rem;cursor:pointer;width:100%;
+               touch-action:manipulation;-webkit-appearance:none}
+        .btn-r.lk,.btn-o.lk{opacity:.28;cursor:default}
+        .cmt-wrap{border-top:1px solid var(--bd);padding-top:11px;margin-top:2px}
+        .cmt-list{max-height:118px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-bottom:7px}
+        .cmt-i{background:var(--s2);border-radius:9px;padding:8px 10px;margin-bottom:5px;font-size:.71rem}
+        .cmt-m{display:flex;justify-content:space-between;margin-bottom:3px}
+        .cmt-who{color:var(--p);font-weight:800;font-size:.6rem}
+        .cmt-wh{color:var(--dim);font-size:.56rem}
+        .cmt-tx{color:var(--tx);line-height:1.4}
+        .no-cmt{text-align:center;padding:6px 0;font-size:.66rem;color:var(--dim)}
+        .cmt-row{display:flex;gap:6px}
+        .cmt-in{flex:1;background:var(--s2);border:1px solid var(--bd);color:var(--tx);
+                border-radius:9px;padding:8px 11px;font-size:.73rem;font-family:inherit;outline:none}
+        .btn-post{background:var(--p);color:#000;border:none;border-radius:9px;padding:0 13px;
+                  font-weight:800;font-size:.7rem;cursor:pointer;min-height:38px;white-space:nowrap;
+                  touch-action:manipulation;-webkit-appearance:none}
 
-        .chip-group { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
-        .action-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 8px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        /* MODALS */
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);
+               z-index:9000;align-items:center;justify-content:center;padding:16px}
+        .modal.open{display:flex}
+        .mbox{background:var(--s1);border:1px solid var(--bd);border-radius:20px;
+              padding:22px;width:100%;max-width:360px;text-align:center;max-height:90vh;overflow-y:auto}
+        .mbox h2{font-size:.95rem;font-weight:800;margin-bottom:15px}
+        .mclose{background:none;border:none;color:var(--dim);margin-top:12px;font-weight:700;
+                font-size:.8rem;cursor:pointer;padding:8px 20px;display:block;
+                margin-left:auto;margin-right:auto}
+        .shr-a{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;
+               border-radius:11px;text-decoration:none;color:#fff;font-weight:800;
+               font-size:.76rem;margin-bottom:8px}
+        .m-in{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--tx);
+              border-radius:10px;padding:10px 13px;font-size:.8rem;font-family:inherit;
+              outline:none;margin-bottom:9px;display:block;-webkit-appearance:none}
 
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn-up { background: var(--success); color: #000; padding: 14px 8px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; font-size: 0.78rem; width: 100%; -webkit-appearance: none; }
-        .btn-down { background: var(--danger); color: #fff; padding: 14px 8px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; font-size: 0.78rem; width: 100%; -webkit-appearance: none; }
-        .btn-locked { opacity: 0.32 !important; cursor: not-allowed !important; }
+        /* BOTTOM NAV */
+        .bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(5,5,7,.97);
+              border-top:1px solid var(--bd);padding:9px 0 20px;
+              display:flex;justify-content:space-around;z-index:8000}
+        .nb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;
+            color:var(--dim);touch-action:manipulation;font-size:.58rem;font-weight:800;padding:3px 20px}
+        .nb.on{color:var(--p)}
 
-        .comment-section { margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }
-        .comment-item { font-size: 0.75rem; background: var(--surface-light); padding: 10px; border-radius: 10px; margin-bottom: 8px; }
-        .comment-user { color: var(--primary); font-weight: 800; font-size: 0.65rem; display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .comment-input-row { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-post { background: var(--primary); color: #000; border: none; border-radius: 10px; padding: 0 14px; font-weight: 800; font-size: 0.75rem; cursor: pointer; white-space: nowrap; min-height: 44px; -webkit-appearance: none; }
+        /* SUGGEST BTN */
+        .sug-btn{display:block;width:calc(100% - 32px);margin:4px 16px 14px;
+                 background:var(--s1);border:1px dashed var(--p);color:var(--p);
+                 padding:13px;border-radius:14px;font-weight:800;font-size:.73rem;
+                 cursor:pointer;touch-action:manipulation;-webkit-appearance:none}
 
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; width: 100%; max-width: 400px; text-align: center; max-height: 90vh; overflow-y: auto; }
-        .social-btn { padding: 14px; border-radius: 14px; text-decoration: none; color: #fff; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
-
-        .nav-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.97); backdrop-filter: blur(15px); border-top: 1px solid var(--border); padding: 12px 20px 28px; display: flex; justify-content: space-around; z-index: 2000; }
-        .nav-link { color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        .nav-link.active { color: var(--primary); }
-
-        #loading-screen { position: fixed; inset: 0; background: var(--bg); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.5s; }
-        .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
-        .empty-state p { font-size: 0.85rem; font-weight: 700; margin-top: 12px; }
+        .empty{text-align:center;padding:44px 20px;color:var(--dim)}
+        .empty p{font-size:.8rem;font-weight:700;margin-top:10px}
     </style>
 </head>
 <body>
 
-<div id="loading-screen">
-    <div class="spinner"></div>
-    <p style="font-size:0.75rem; color:var(--text-dim); font-weight:700; margin-top:8px;">Loading Up-Nepa Osun...</p>
+<div id="ld">
+    <div class="spin"></div>
+    <p style="font-size:.7rem;color:var(--dim);font-weight:700;">Starting Up-Nepa Osun...</p>
 </div>
-
 <div id="toast"></div>
 
-<div class="global-ticker">
-    <div class="ticker-badge">⚡ Live</div>
-    <div class="ticker-content">
-        <span class="ticker-scroll">Up-Nepa Osun — Track real-time electricity status across Osun State. Report outages. Stay informed.</span>
+<div class="ticker">
+    <div class="t-badge">⚡ Live</div>
+    <div class="t-track">
+        <span class="t-inner">Up-Nepa Osun — Real-time electricity tracking for Osun State. Report outages. Stay informed. Help your community.</span>
     </div>
 </div>
 
-<nav class="app-nav">
-    <div style="display:flex; align-items:center; gap:12px;">
-        <div class="logo-img">
-            <i data-lucide="zap" style="color:var(--primary); width:22px; height:22px;"></i>
+<div class="topnav">
+    <div class="brand">
+        <div class="logo-box">
+            <i data-lucide="zap" style="color:var(--p);width:20px;height:20px;"></i>
         </div>
         <div>
-            <h1 style="font-size:1.1rem; font-weight:800; line-height:1.2;">Up-Nepa <span style="color:var(--primary);">Osun</span></h1>
-            <div style="display:flex; align-items:center; gap:5px; margin-top:2px;">
-                <div id="status-dot" style="width:7px; height:7px; background:var(--danger); border-radius:50%; flex-shrink:0;"></div>
-                <span id="status-text" style="font-size:0.6rem; color:var(--text-dim); font-weight:600;">Connecting...</span>
+            <div class="b-title">Up-Nepa <span>Osun</span></div>
+            <div class="b-sub">
+                <div class="conn-dot" id="cdot"></div>
+                <span class="conn-lbl" id="clbl">Connecting...</span>
             </div>
         </div>
     </div>
-    <div id="member-count" class="badge-status">0 ONLINE</div>
-</nav>
+    <div class="online-chip" id="ochip">0 ONLINE</div>
+</div>
 
-<div id="auth-section"></div>
+<div id="auth-bar">
+    <span style="font-size:.7rem;color:var(--dim);font-weight:600;">Not signed in</span>
+</div>
 
-<div class="search-container">
-    <div class="command-bar">
-        <select id="town-filter" class="minimal-input" style="background:var(--primary); color:#000; font-weight:800; border:none;" onchange="window.filterGrid()">
-            <option value="all">ALL TOWNS</option>
+<div class="search-area" style="position:relative;">
+    <div class="search-row">
+        <select class="tsel" id="tsel" onchange="App.filter()">
+            <option value="">ALL TOWNS</option>
         </select>
-        <input type="text" id="search-grid" class="minimal-input" placeholder="Search street..." oninput="window.handleSearch(this.value)">
+        <input class="sbox" id="sbox" type="text" placeholder="Search street..."
+               oninput="App.search(this.value)" autocomplete="off" spellcheck="false">
     </div>
-    <div id="suggestion-box"></div>
+    <div id="sdrop"></div>
 </div>
 
-<main id="street-feed"></main>
+<div id="feed"></div>
 
-<div style="margin-top:12px; margin-bottom:8px;">
-    <button onclick="window.openSuggest()" style="width:100%; background:var(--surface); border:1px dashed var(--primary); color:var(--primary); padding:15px; border-radius:15px; font-weight:800; cursor:pointer; font-size:0.8rem; -webkit-appearance:none;">
-        + CAN'T FIND YOUR STREET? SUGGEST HERE
-    </button>
-</div>
+<button class="sug-btn" onclick="App.openM('mSuggest')">
+    + CAN'T FIND YOUR STREET? SUGGEST IT HERE
+</button>
 
-<!-- MODALS -->
-<div id="support-modal" class="modal-overlay" onclick="if(event.target===this) window.closeModals()">
-    <div class="modal-content">
-        <i data-lucide="shield-check" style="color:var(--primary); width:32px; height:32px; margin-bottom:12px;"></i>
-        <h2 style="margin-bottom:20px;">Support Center</h2>
-        <a href="https://wa.me/2348062516110" class="social-btn" style="background:#25D366;">
-            <i data-lucide="message-circle" style="width:18px;"></i> WhatsApp Support
+<!-- SHARE MODAL -->
+<div class="modal" id="mShare">
+    <div class="mbox">
+        <h2>Share Update</h2>
+        <a class="shr-a" id="sw" style="background:#25D366;" target="_blank" href="#">
+            <i data-lucide="message-circle" style="width:15px;height:15px;"></i> WhatsApp
         </a>
-        <a href="mailto:aamuda34@gmail.com" class="social-btn" style="background:#4285F4;">
-            <i data-lucide="mail" style="width:18px;"></i> Email Support
+        <a class="shr-a" id="sx" style="background:#111;border:1px solid #333;" target="_blank" href="#">
+            <i data-lucide="twitter" style="width:15px;height:15px;"></i> X / Twitter
         </a>
-        <button onclick="window.closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:16px; font-weight:700; cursor:pointer; font-size:0.85rem; padding:8px 20px;">Close</button>
-    </div>
-</div>
-
-<div id="suggest-modal" class="modal-overlay" onclick="if(event.target===this) window.closeModals()">
-    <div class="modal-content">
-        <i data-lucide="map-pin" style="color:var(--primary); width:32px; height:32px; margin-bottom:12px;"></i>
-        <h2 style="margin-bottom:8px;">Suggest a Street</h2>
-        <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:16px;">Help us grow the grid map for Osun State.</p>
-        <input type="text" id="suggest-name" class="minimal-input" placeholder="Street / Area Name" style="margin-bottom:10px; display:block;">
-        <input type="text" id="suggest-town" class="minimal-input" placeholder="Town / LGA" style="margin-bottom:16px; display:block;">
-        <button onclick="window.submitSuggestion()" class="btn-up" style="width:100%; padding:14px;">Submit Request</button>
-        <button onclick="window.closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:14px; font-weight:700; cursor:pointer; font-size:0.85rem; padding:8px 20px;">Cancel</button>
+        <a class="shr-a" id="sf" style="background:#1877F2;" target="_blank" href="#">
+            <i data-lucide="facebook" style="width:15px;height:15px;"></i> Facebook
+        </a>
+        <a class="shr-a" id="st" style="background:#0088cc;" target="_blank" href="#">
+            <i data-lucide="send" style="width:15px;height:15px;"></i> Telegram
+        </a>
+        <button class="mclose" onclick="App.closeM()">Cancel</button>
     </div>
 </div>
 
-<div id="share-modal" class="modal-overlay" onclick="if(event.target===this) window.closeModals()">
-    <div class="modal-content">
-        <i data-lucide="share-2" style="color:var(--primary); width:32px; height:32px; margin-bottom:12px;"></i>
-        <h2 id="share-title" style="margin-bottom:20px; font-size:1rem;">Share Update</h2>
-        <a id="share-wa" href="#" target="_blank" class="social-btn" style="background:#25D366;">
-            <i data-lucide="message-circle" style="width:18px;"></i> WhatsApp
-        </a>
-        <a id="share-x" href="#" target="_blank" class="social-btn" style="background:#1a1a1a; border:1px solid #333;">
-            <i data-lucide="twitter" style="width:18px;"></i> X (Twitter)
-        </a>
-        <a id="share-fb" href="#" target="_blank" class="social-btn" style="background:#1877F2;">
-            <i data-lucide="facebook" style="width:18px;"></i> Facebook
-        </a>
-        <a id="share-tg" href="#" target="_blank" class="social-btn" style="background:#0088cc;">
-            <i data-lucide="send" style="width:18px;"></i> Telegram
-        </a>
-        <button onclick="window.closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:16px; font-weight:700; cursor:pointer; font-size:0.85rem; padding:8px 20px;">Cancel</button>
+<!-- SUGGEST MODAL -->
+<div class="modal" id="mSuggest">
+    <div class="mbox">
+        <h2>Suggest a Street</h2>
+        <p style="font-size:.7rem;color:var(--dim);margin-bottom:14px;">Help grow the Osun grid map.</p>
+        <input class="m-in" id="sug-n" type="text" placeholder="Street / Area Name">
+        <input class="m-in" id="sug-t" type="text" placeholder="Town / LGA">
+        <button class="btn-r" style="width:100%;padding:12px;" onclick="App.suggest()">Submit</button>
+        <button class="mclose" onclick="App.closeM()">Cancel</button>
     </div>
 </div>
 
-<footer class="nav-footer">
-    <div class="nav-link active" onclick="window.refreshAll()">
-        <i data-lucide="layout-grid" style="width:20px; height:20px;"></i>
+<!-- SUPPORT MODAL -->
+<div class="modal" id="mSupport">
+    <div class="mbox">
+        <h2>Support Center</h2>
+        <a class="shr-a" style="background:#25D366;" href="https://wa.me/2348062516110" target="_blank">
+            <i data-lucide="message-circle" style="width:15px;height:15px;"></i> WhatsApp Support
+        </a>
+        <a class="shr-a" style="background:#4285F4;" href="mailto:aamuda34@gmail.com">
+            <i data-lucide="mail" style="width:15px;height:15px;"></i> Email Support
+        </a>
+        <button class="mclose" onclick="App.closeM()">Close</button>
+    </div>
+</div>
+
+<div class="bnav">
+    <div class="nb on" onclick="App.refresh()">
+        <i data-lucide="layout-grid" style="width:19px;height:19px;"></i>
         <span>Grid</span>
     </div>
-    <div class="nav-link" onclick="window.openSupport()">
-        <i data-lucide="shield-check" style="width:20px; height:20px;"></i>
+    <div class="nb" onclick="App.openM('mSupport')">
+        <i data-lucide="shield-check" style="width:19px;height:19px;"></i>
         <span>Support</span>
     </div>
-</footer>
+</div>
 
 <script>
-// ================================================================
-// CAPACITOR WEBVIEW FIX — CRITICAL
-// All interactive functions MUST be on the window object.
-// In Capacitor's Android WebView, after a deep-link OAuth redirect,
-// the JS execution context partially resets. Functions referenced
-// by inline onclick="" attributes only work reliably when they are
-// explicitly assigned to window.*. This is the root cause of ALL
-// buttons failing after Google login.
-// ================================================================
+// ====================================================================
+// UP-NEPA OSUN — CLEAN REBUILD
+//
+// KEY DESIGN DECISION:
+// All interactive functions live on window.App.*
+// This is the ONLY reliable way to use onclick="" attributes in
+// Capacitor's Android WebView. After a deep-link OAuth redirect,
+// WebView partially resets its JS context. Functions on window.*
+// survive this reset. Event listeners and module-scoped functions
+// do NOT survive it — that is why every previous version's buttons
+// stopped working after Google login.
+// ====================================================================
 
-(function() {
+window.App = (function () {
+    'use strict';
 
-// ----------------------------------------------------------------
-// CONFIG
-// ----------------------------------------------------------------
-var S_URL = 'https://tzsumiudcqxpyphhjymu.supabase.co';
-var S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6c3VtaXVkY3F4cHlwaGhqeW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDczMzUsImV4cCI6MjA5MTU4MzMzNX0.gDjhwcitscFZfVhWq1YIYdvrccX5rP-BGYNkqUm5v8Y';
-
-var _sb = supabase.createClient(S_URL, S_KEY, {
-    auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: window.localStorage,
-        storageKey: 'upnepa-auth-v2'
-    }
-});
-
-// ----------------------------------------------------------------
-// STATE — kept in module scope
-// ----------------------------------------------------------------
-var _grid = [];
-var _user = null;
-var _subs = [];
-var _comments = [];
-var _lastAction = {};
-var _ready = false;
-var _realtimeChannel = null;
-
-// ----------------------------------------------------------------
-// STORAGE HELPERS
-// ----------------------------------------------------------------
-function loadLastAction() {
-    try { _lastAction = JSON.parse(localStorage.getItem('upnepa_act') || '{}'); } catch(e) { _lastAction = {}; }
-}
-function saveLastAction() {
-    try { localStorage.setItem('upnepa_act', JSON.stringify(_lastAction)); } catch(e) {}
-}
-function today() { return new Date().toISOString().split('T')[0]; }
-function getLastActionToday(id) {
-    var e = _lastAction[id];
-    return (e && e.date === today()) ? e.action : null;
-}
-
-// ----------------------------------------------------------------
-// DEEP LINK — runs immediately before anything else
-// Catches the OAuth tokens when Google redirects back to the APK
-// ----------------------------------------------------------------
-function initDeepLink() {
-    // Capacitor native listener
-    try {
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
-            window.Capacitor.Plugins.App.addListener('appUrlOpen', function(data) {
-                if (data && data.url) processOAuthUrl(data.url);
-            });
+    // ── ONE Supabase client ──────────────────────────────────────
+    var DB = supabase.createClient(
+        'https://tzsumiudcqxpyphhjymu.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6c3VtaXVkY3F4cHlwaGhqeW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDczMzUsImV4cCI6MjA5MTU4MzMzNX0.gDjhwcitscFZfVhWq1YIYdvrccX5rP-BGYNkqUm5v8Y',
+        {
+            auth: {
+                persistSession:     true,
+                autoRefreshToken:   true,
+                detectSessionInUrl: true,
+                storage:            window.localStorage,
+                storageKey:         'upnepa_v3'
+            }
         }
-    } catch(e) {}
+    );
 
-    // Web/PWA: handle token in current URL
-    processOAuthUrl(window.location.href);
-}
+    // ── STATE ────────────────────────────────────────────────────
+    var S = {
+        user:     null,
+        grid:     [],
+        subs:     [],
+        comments: [],
+        acts:     {},
+        rt:       null,
+        booted:   false
+    };
 
-async function processOAuthUrl(rawUrl) {
-    try {
-        var str = '';
-        var hi = rawUrl.indexOf('#');
-        var qi = rawUrl.indexOf('?');
-        if (hi !== -1) str = rawUrl.substring(hi + 1);
-        else if (qi !== -1) str = rawUrl.substring(qi + 1);
-        if (!str) return;
+    // ── HELPERS ──────────────────────────────────────────────────
+    function toast(msg) {
+        var el = document.getElementById('toast');
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(toast._t);
+        toast._t = setTimeout(function () { el.classList.remove('show'); }, 3000);
+    }
 
-        var p = new URLSearchParams(str);
-        var at = p.get('access_token');
-        var rt = p.get('refresh_token');
+    function esc(v) {
+        return v ? String(v)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') : '';
+    }
+
+    // Safe for onclick="App.fn('...')"
+    function sq(v) {
+        return v ? String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'") : '';
+    }
+
+    function ago(d) {
+        if (!d) return 'No updates';
+        var s = Math.floor((Date.now() - new Date(d)) / 1000);
+        if (s < 60) return 'Just now';
+        var m = Math.floor(s/60); if (m < 60) return m+'m ago';
+        var h = Math.floor(m/60); if (h < 24) return h+'h ago';
+        return Math.floor(h/24)+'d ago';
+    }
+
+    function td() { return new Date().toISOString().split('T')[0]; }
+
+    function loadActs() {
+        try { S.acts = JSON.parse(localStorage.getItem('upnepa_acts') || '{}'); }
+        catch(e) { S.acts = {}; }
+    }
+    function saveActs() {
+        try { localStorage.setItem('upnepa_acts', JSON.stringify(S.acts)); }
+        catch(e) {}
+    }
+    function actToday(id) {
+        var e = S.acts[id];
+        return (e && e.d === td()) ? e.a : null;
+    }
+
+    function icons() { try { lucide.createIcons(); } catch(e) {} }
+
+    function hideLd() {
+        var el = document.getElementById('ld');
+        if (!el) return;
+        el.style.opacity = '0';
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 420);
+    }
+
+    // ── DEEP LINK ────────────────────────────────────────────────
+    // Runs immediately. Catches OAuth tokens after Google redirect.
+    function initDeepLink() {
+        try {
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+                window.Capacitor.Plugins.App.addListener('appUrlOpen', function (ev) {
+                    if (ev && ev.url) processUrl(ev.url);
+                });
+            }
+        } catch(e) {}
+        // Handle token in current URL (web/PWA)
+        processUrl(window.location.href);
+    }
+
+    function processUrl(raw) {
+        var frag = '';
+        var hi = raw.indexOf('#'), qi = raw.indexOf('?');
+        if (hi !== -1) frag = raw.slice(hi + 1);
+        else if (qi !== -1) frag = raw.slice(qi + 1);
+        if (!frag) return;
+        var p = new URLSearchParams(frag);
+        var at = p.get('access_token'), rt = p.get('refresh_token');
         if (!at || !rt) return;
+     toast('Completing sign in\u2026');
+        DB.auth.setSession({ access_token: at, refresh_token: rt }).then(function (res) {
+            if (res.error) { toast('Sign-in error. Try again.'); return; }
+            try { history.replaceState({}, '', location.pathname); } catch(e) {}
+            // onAuthStateChange fires automatically after setSession
+        });
+    }
 
-        showToast('Completing sign in...');
-        var res = await _sb.auth.setSession({ access_token: at, refresh_token: rt });
-        if (!res.error && res.data && res.data.session) {
-            _user = res.data.session.user;
-            try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
+    initDeepLink(); // must run before boot
+
+    // ── BOOT ─────────────────────────────────────────────────────
+    function boot() {
+        icons();
+        loadActs();
+
+        // Auth state — fires on: page load (session restore), login,
+        // logout, token refresh, app resume. Single source of truth.
+        DB.auth.onAuthStateChange(function (event, session) {
+            var prev = S.user;
+            S.user = (session && session.user) ? session.user : null;
             renderAuth();
-            loadLastAction();
-            await fetchSubs();
-            renderGrid(applyFilter());
-            showToast('Welcome! Signed in successfully.');
-        } else {
-            showToast('Sign in error. Please try again.');
-        }
-    } catch(e) {}
-}
 
-initDeepLink();
+            if (S.user && !prev) {
+                // Newly signed in
+                loadActs();
+                fetchSubs().then(function () { renderFeed(); });
+                toast('Welcome, ' + S.user.email.split('@')[0] + '!');
+            } else if (!S.user && prev) {
+                // Signed out
+                S.subs = [];
+                renderFeed();
+            } else if (S.user && prev) {
+                // Session refreshed / app resumed
+                fetchSubs().then(function () { renderFeed(); });
+            }
+        });
 
-// ----------------------------------------------------------------
-// APP INIT
-// ----------------------------------------------------------------
-async function startApp() {
-    try { lucide.createIcons(); } catch(e) {}
-    loadLastAction();
+        // Load grid data for everyone (logged in or not)
+        Promise.all([fetchGrid(), fetchComments()]).then(function () {
+            startRT();
+            hideLd();
+            S.booted = true;
+        });
+    }
 
-    // Auth state listener — single source of truth
-    _sb.auth.onAuthStateChange(async function(event, session) {
-        var hadUser = !!_user;
-        _user = (session && session.user) ? session.user : null;
-        renderAuth();
-
-        if (_user && !hadUser) {
-            loadLastAction();
-            await fetchSubs();
-            renderGrid(applyFilter());
-        } else if (!_user && hadUser) {
-            _subs = [];
-            renderGrid(applyFilter());
-        } else if (_user) {
-            await fetchSubs();
-            renderGrid(applyFilter());
+    // Refresh on app resume (swipe back)
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && S.booted) {
+            fetchGrid();
+            fetchComments();
+            if (S.user) fetchSubs();
         }
     });
 
-    await fetchGrid();
-    await fetchComments();
-    startRealtime();
-    hideLoading();
-    _ready = true;
-}
-
-function hideLoading() {
-    var el = document.getElementById('loading-screen');
-    if (!el) return;
-    el.style.opacity = '0';
-    setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 500);
-}
-
-// App resume — refresh when user comes back to app
-document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'visible' && _ready) {
-        fetchGrid();
-        fetchComments();
-        if (_user) fetchSubs();
-    }
-});
-
-// ----------------------------------------------------------------
-// AUTH
-// ----------------------------------------------------------------
-async function loginGoogle() {
- try {
-        var isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-        var redirectTo = isNative
+    // ── AUTH ─────────────────────────────────────────────────────
+    function doLogin() {
+        var native = !!(window.Capacitor &&
+                        window.Capacitor.isNativePlatform &&
+                        window.Capacitor.isNativePlatform());
+        var redir = native
             ? 'com.upnepa.osun://login-callback'
-            : (window.location.origin + window.location.pathname);
-
-        var res = await _sb.auth.signInWithOAuth({
+            : (location.origin + location.pathname);
+        DB.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: redirectTo, skipBrowserRedirect: false }
+            options: { redirectTo: redir, skipBrowserRedirect: false }
+        }).then(function (r) {
+            if (r.error) toast('Login failed: ' + r.error.message);
         });
-        if (res.error) showToast('Login failed: ' + res.error.message);
-    } catch(e) {
-        showToast('Login error. Please try again.');
-    }
-}
-
-async function logoutUser() {
-    try {
-        showToast('Signing out...');
-        await _sb.auth.signOut();
-        // onAuthStateChange will fire and set _user = null automatically
-    } catch(e) {
-        showToast('Logout failed. Try again.');
-    }
-}
-
-function renderAuth() {
-    var el = document.getElementById('auth-section');
-    if (!el) return;
-
-    if (_user) {
-        var name = (_user.email || 'user').split('@')[0].toUpperCase();
-        // CRITICAL: onclick must call window.* function explicitly
-        el.innerHTML =
-            '<div style="padding:12px 16px; font-size:0.75rem; color:var(--primary); font-weight:800;' +
-            ' background:var(--surface); border:1px solid var(--border); border-radius:12px;' +
-            ' margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">' +
-            '<span>\uD83D\uDC64 ' + esc(name) + '</span>' +
-            '<button onclick="window._doLogout()" style="background:var(--danger); color:#fff; border:none;' +
-            ' padding:9px 16px; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.75rem;' +
-            ' -webkit-appearance:none;">LOGOUT</button>' +
-            '</div>';
-    } else {
-        el.innerHTML =
-            '<button onclick="window._doLogin()" style="width:100%; background:#fff; margin-bottom:20px;' +
-            ' color:#000; padding:14px; border-radius:12px; font-weight:800; border:none; cursor:pointer;' +
-            ' display:flex; align-items:center; justify-content:center; gap:10px; font-size:0.85rem;' +
-            ' -webkit-appearance:none;">' +
-            '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" style="flex-shrink:0;">' +
-            ' Sign in with Google' +
-            '</button>';
     }
 
-    try { lucide.createIcons(); } catch(e) {}
-}
+    function doLogout() {
+        DB.auth.signOut().then(function (r) {
+            if (r.error) toast('Logout failed. Try again.');
+            // onAuthStateChange fires and clears state
+        });
+    }
 
-// Exposed on window so inline onclick can reach them from WebView
-window._doLogin = loginGoogle;
-window._doLogout = logoutUser;
-
-// ----------------------------------------------------------------
-// DATA
-// ----------------------------------------------------------------
-async function fetchGrid() {
-    try {
-        var res = await _sb.from('areas').select('*, subscriptions(count)').eq('approved', true).order('name');
-        if (res.data) {
-            _grid = res.data;
-            buildTowns(_grid);
-            renderGrid(applyFilter());
+    function renderAuth() {
+        var el = document.getElementById('auth-bar');
+        if (!el) return;
+        if (S.user) {
+            var n = S.user.email.split('@')[0].toUpperCase();
+            // onclick calls App.* — window-scoped, survives WebView resets
+            el.innerHTML =
+                '<span class="u-name">\uD83D\uDC64 ' + esc(n) + '</span>' +
+                '<button class="btn-out" onclick="App.logout()">LOGOUT</button>';
+        } else {
+            el.innerHTML =
+                '<button class="btn-goo" onclick="App.login()">' +
+                '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">' +
+                'Sign in with Google</button>';
         }
-    } catch(e) {}
-}
-
-async function fetchComments() {
-    try {
-        var res = await _sb.from('comments').select('*').order('created_at', { ascending: false });
-        if (res.data) _comments = res.data;
-    } catch(e) {}
-}
-
-async function fetchSubs() {
-    if (!_user) return;
-    try {
-        var res = await _sb.from('subscriptions').select('area_id').eq('user_id', _user.id);
-        if (res.data) _subs = res.data.map(function(i) { return i.area_id; });
-    } catch(e) {}
-}
-
-// ----------------------------------------------------------------
-// REALTIME
-// ----------------------------------------------------------------
-function startRealtime() {
-    var dot = document.getElementById('status-dot');
-    var txt = document.getElementById('status-text');
-
-    function online() {
-        if (dot) dot.style.background = 'var(--success)';
-        if (txt) txt.innerText = 'Grid Live';
-    }
-    function offline() {
-        if (dot) dot.style.background = 'var(--danger)';
-        if (txt) txt.innerText = 'Reconnecting...';
-        setTimeout(startRealtime, 6000);
     }
 
-    try {
-        if (_realtimeChannel) { _sb.removeChannel(_realtimeChannel); }
-        _realtimeChannel = _sb.channel('grid-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, function() { fetchGrid(); })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, function() { fetchComments(); renderGrid(applyFilter()); })
-            .subscribe(function(status) {
-                if (status === 'SUBSCRIBED') online();
-                else if (status === 'CHANNEL_ERROR' || status === 'CLOSED' || status === 'TIMED_OUT') offline();
+    // ── DATA ─────────────────────────────────────────────────────
+    function fetchGrid() {
+        return DB.from('areas')
+            .select('*, subscriptions(count)')
+            .eq('approved', true)
+            .order('name')
+            .then(function (r) {
+                if (r.data) { S.grid = r.data; buildTowns(); renderFeed(); }
             });
-    } catch(e) {}
-
-    // Fallback ping after 6s
-    setTimeout(async function() {
-        if (txt && txt.innerText === 'Connecting...') {
-            try {
-                var r = await _sb.from('areas').select('id').limit(1);
-                if (!r.error) online(); else offline();
-            } catch(e) { offline(); }
-        }
-    }, 6000);
-
-    // Presence
-    try {
-        var pCh = _sb.channel('presence-osun');
-        pCh.on('presence', { event: 'sync' }, function() {
-            var state = pCh.presenceState();
-            var count = 0;
-            for (var k in state) count += state[k].length;
-            var el = document.getElementById('member-count');
-            if (el) el.innerText = count + ' ONLINE';
-        }).subscribe(async function(status) {
-            if (status === 'SUBSCRIBED') {
-                await pCh.track({ t: Date.now(), u: (_user && _user.email) || 'anon' });
-            }
-        });
-    } catch(e) {}
-}
-
-// ----------------------------------------------------------------
-// FILTER & RENDER
-// ----------------------------------------------------------------
-function applyFilter() {
-    var town = (document.getElementById('town-filter') || {}).value || 'all';
-    var q = ((document.getElementById('search-grid') || {}).value || '').toLowerCase();
-    return _grid.filter(function(s) {
-        return (town === 'all' || s.town === town) && s.name.toLowerCase().indexOf(q) !== -1;
-    });
-}
-
-function renderGrid(list) {
-    var container = document.getElementById('street-feed');
-    if (!container) return;
-
-    if (!list || !list.length) {
-        container.innerHTML = '<div class="empty-state"><i data-lucide="search" style="width:40px; height:40px; color:var(--border);"></i><p>No streets found.</p></div>';
-        try { lucide.createIcons(); } catch(e) {}
-        return;
     }
 
-    var html = '';
-    for (var i = 0; i < list.length; i++) {
-        var s = list[i];
-        var isOn = (s.status === 'Light On');
-        var subbed = (_subs.indexOf(s.id) !== -1);
-        var followers = (s.subscriptions && s.subscriptions[0]) ? (s.subscriptions[0].count || 0) : 0;
-        var lastAct = getLastActionToday(s.id);
-        var outLocked = (lastAct === 'outage');
-        var resLocked = (lastAct === 'restored');
+    function fetchComments() {
+        return DB.from('comments')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .then(function (r) { if (r.data) S.comments = r.data; });
+    }
 
-        // Comments for this street
-        var cHtml = '';
-        var cList = _comments.filter(function(c) { return c.area_id === s.id; }).slice(0, 3);
-        for (var j = 0; j < cList.length; j++) {
-            var c = cList[j];
-            cHtml +=
-                '<div class="comment-item">' +
-                '<div class="comment-user">' +
-                '<span>' + esc((c.user_email || 'anon').split('@')[0]) + '</span>' +
-                '<span>' + timeAgo(c.created_at) + '</span>' +
-                '</div>' +
-                '<div style="color:#fff; font-size:0.78rem; line-height:1.4;">' + esc(c.content) + '</div>' +
-                '</div>';
+    function fetchSubs() {
+        if (!S.user) return Promise.resolve();
+        return DB.from('subscriptions')
+            .select('area_id')
+            .eq('user_id', S.user.id)
+            .then(function (r) {
+                if (r.data) S.subs = r.data.map(function (x) { return x.area_id; });
+            });
+    }
+
+    // ── REALTIME ─────────────────────────────────────────────────
+    function startRT() {
+        var dot = document.getElementById('cdot');
+        var lbl = document.getElementById('clbl');
+
+        function live() {
+            if (dot) dot.classList.add('live');
+            if (lbl) lbl.textContent = 'Grid Live';
         }
-        if (!cHtml) cHtml = '<p style="font-size:0.7rem; color:var(--text-dim); text-align:center; padding:6px 0;">No updates yet.</p>';
+        function dead() {
+            if (dot) dot.classList.remove('live');
+            if (lbl) lbl.textContent = 'Reconnecting...';
+            setTimeout(startRT, 7000);
+        }
 
-        // Each button calls window.* directly — the ONLY reliable way in Capacitor WebView
-        html +=
-            '<div class="pro-card' + (isOn ? ' card-on' : '') + '">' +
+        try {
+            if (S.rt) DB.removeChannel(S.rt);
+            S.rt = DB.channel('upnepa-rt-v3')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, function () {
+                    fetchGrid();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, function () {
+                    fetchComments().then(renderFeed);
+                })
+                .subscribe(function (st) {
+                    if (st === 'SUBSCRIBED') live();
+                    else if (st === 'CHANNEL_ERROR' || st === 'CLOSED' || st === 'TIMED_OUT') dead();
+                });
+        } catch(e) {}
 
-            // Header
-            '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">' +
-            '<div style="flex:1; min-width:0;">' +
-            '<p style="font-size:0.58rem; color:var(--text-dim); text-transform:uppercase; font-weight:700; letter-spacing:0.04em;">' + esc(s.town || '') + '</p>' +
-            '<h2 class="street-name">' + esc(s.name) + '</h2>' +
-            '<span class="status-pill ' + (isOn ? 'pill-on' : 'pill-off') + '">' + esc(s.status || 'Unknown') + '</span>' +
-            '<div class="time-ago">Updated ' + timeAgo(s.updated_at) + '</div>' +
+        // Fallback ping after 6s
+        setTimeout(function () {
+            if (lbl && lbl.textContent === 'Connecting...') {
+                DB.from('areas').select('id').limit(1).then(function (r) {
+                    if (!r.error) live(); else dead();
+                });
+            }
+        }, 6000);
+
+        // Presence
+        try {var pc = DB.channel('presence-v3');
+            pc.on('presence', { event: 'sync' }, function () {
+                var st = pc.presenceState(), n = 0;
+                for (var k in st) n += st[k].length;
+                var el = document.getElementById('ochip');
+                if (el) el.textContent = n + ' ONLINE';
+            }).subscribe(function (st) {
+                if (st === 'SUBSCRIBED') {
+                    pc.track({ t: Date.now(), u: (S.user && S.user.email) || 'anon' });
+                }
+            });
+        } catch(e) {}
+    }
+
+    // ── FILTER & RENDER ──────────────────────────────────────────
+    function filtered() {
+        var town = (document.getElementById('tsel') || {}).value || '';
+        var q = ((document.getElementById('sbox') || {}).value || '').trim().toLowerCase();
+        return S.grid.filter(function (s) {
+            return (!town || s.town === town) &&
+                   (!q || s.name.toLowerCase().indexOf(q) !== -1);
+        });
+    }
+
+    function buildTowns() {
+        var sel = document.getElementById('tsel');
+        if (!sel) return;
+        var seen = {}, towns = [];
+        S.grid.forEach(function (s) {
+            if (s.town && !seen[s.town]) { towns.push(s.town); seen[s.town] = 1; }
+        });
+        towns.sort();
+        var cur = sel.value;
+        sel.innerHTML = '<option value="">ALL TOWNS</option>' +
+            towns.map(function (t) {
+                return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
+            }).join('');
+        if (cur) sel.value = cur;
+    }
+
+    function renderFeed() {
+        var el = document.getElementById('feed');
+        if (!el) return;
+        var list = filtered();
+
+        if (!list.length) {
+            el.innerHTML = '<div class="empty">' +
+                '<i data-lucide="zap-off" style="width:38px;height:38px;color:var(--bd);"></i>' +
+                '<p>No streets found.</p></div>';
+            icons(); return;
+        }
+
+        el.innerHTML = list.map(function (s) {
+            var on  = s.status === 'Light On';
+            var sub = S.subs.indexOf(s.id) !== -1;
+            var fol = (s.subscriptions && s.subscriptions[0]) ? (s.subscriptions[0].count || 0) : 0;
+            var act = actToday(s.id);
+            var rL  = act === 'restored';
+            var oL  = act === 'outage';
+
+            var cmts = S.comments.filter(function (c) { return c.area_id === s.id; }).slice(0, 3);
+            var cHtml = cmts.length ? cmts.map(function (c) {
+                return '<div class="cmt-i">' +
+                    '<div class="cmt-m">' +
+                    '<span class="cmt-who">' + esc((c.user_email||'anon').split('@')[0]) + '</span>' +
+                    '<span class="cmt-wh">' + ago(c.created_at) + '</span>' +
+                    '</div><div class="cmt-tx">' + esc(c.content) + '</div></div>';
+            }).join('') : '<div class="no-cmt">No updates yet.</div>';
+
+            // Every single onclick uses App.* — window-scoped
+            return '<div class="card' + (on?' on':'') + '">' +
+
+            '<div class="c-head">' +
+            '<div class="c-info">' +
+            '<div class="c-town">' + esc(s.town||'') + '</div>' +
+            '<div class="c-name">' + esc(s.name) + '</div>' +
+            '<span class="c-pill ' + (on?'on':'off') + '">' + esc(s.status||'Unknown') + '</span>' +
+            '<div class="c-time">Updated ' + ago(s.updated_at) + '</div>' +
             '</div>' +
-            '<div style="display:flex; gap:8px; flex-shrink:0;">' +
-            '<div class="btn-circle' + (subbed ? ' active' : '') + '" onclick="window._bell(' + s.id + ')" title="' + (subbed ? 'Unfollow' : 'Follow') + '">' +
-            '<i data-lucide="' + (subbed ? 'bell-ring' : 'bell') + '" style="width:18px; height:18px;"></i>' +
-            '</div>' +
-            '<div class="btn-circle" onclick="window._share(\'' + escJ(s.name) + '\',\'' + escJ(s.status || '') + '\')" title="Share">' +
-            '<i data-lucide="share-2" style="width:18px; height:18px;"></i>' +
-            '</div>' +
-            '</div>' +
+            '<div class="c-btns">' +
+            '<div class="ic-btn' + (sub?' on':'') + '" onclick="App.bell(' + s.id + ')">' +
+            '<i data-lucide="' + (sub?'bell-ring':'bell') + '" style="width:16px;height:16px;"></i></div>' +
+            '<div class="ic-btn" onclick="App.share(\'' + sq(s.name) + '\',\'' + sq(s.status||'') + '\')">' +
+            '<i data-lucide="share-2" style="width:16px;height:16px;"></i></div>' +
+            '</div></div>' +
+
+            '<div class="c-stats">' +
+            '<span><i data-lucide="users" style="width:10px;height:10px;display:inline-block;vertical-align:middle;margin-right:2px;"></i>' + fol + ' Followers</span>' +
+            '<span class="s-ok">&#9679; ' + (s.restore_count||0) + ' Restored</span>' +
+            '<span class="s-no">&#9679; ' + (s.outage_count||0) + ' Outages</span>' +
             '</div>' +
 
-            // Stats
-            '<div class="card-meta">' +
-            '<span><i data-lucide="users" style="width:11px; height:11px; display:inline-block; vertical-align:middle; margin-right:3px;"></i>' + followers + ' Followers</span>' +
-            '<span style="color:var(--success);">&#9679; ' + (s.restore_count || 0) + ' Restored</span>' +
-            '<span style="color:var(--danger);">&#9679; ' + (s.outage_count || 0) + ' Outages</span>' +
+            '<div class="chips">' +
+            '<button class="chip" onclick="App.chip(' + s.id + ',\'Weather Issue\')">&#x26C8; Weather</button>' +
+            '<button class="chip" onclick="App.chip(' + s.id + ',\'Low Voltage\')">&#x26A1; Voltage</button>' +
+            '<button class="chip" onclick="App.chip(' + s.id + ',\'Phase Issue\')">&#x1F527; Phase</button>' +
+            '<button class="chip" onclick="App.chip(' + s.id + ',\'Transformer Fault\')">&#x1F50C; Transformer</button>' +
             '</div>' +
 
-            // Chips
-            '<div class="chip-group">' +
-            '<button class="action-chip" onclick="window._chip(' + s.id + ',\'&#x26C8;&#xFE0F; Weather Issue\')">&#x26C8;&#xFE0F; Weather</button>' +
-            '<button class="action-chip" onclick="window._chip(' + s.id + ',\'&#x26A1; Low Voltage\')">&#x26A1; Voltage</button>' +
-            '<button class="action-chip" onclick="window._chip(' + s.id + ',\'&#x1F527; Phase Issue\')">&#x1F527; Phase</button>' +
-            '<button class="action-chip" onclick="window._chip(' + s.id + ',\'&#x1F50C; Transformer Fault\')">&#x1F50C; Transformer</button>' +
+            '<div class="rep-row">' +
+            '<button class="btn-r' + (rL?' lk':'') + '" onclick="App.report(' + s.id + ',\'Light On\',' + rL + ')">' +
+            (rL ? '&#x2705; RESTORED &#x2713;' : '&#x2705; RESTORED') + '</button>' +
+            '<button class="btn-o' + (oL?' lk':'') + '" onclick="App.report(' + s.id + ',\'No Light\',' + oL + ')">' +
+            (oL ? '&#x26A1; OUTAGE &#x2713;' : '&#x26A1; OUTAGE') + '</button>' +
             '</div>' +
 
-            // Status buttons
-            '<div class="btn-row">' +
-            '<button class="btn-up' + (resLocked ? ' btn-locked' : '') + '" onclick="window._status(' + s.id + ',\'Light On\',' + resLocked + ')">' +
-            '&#x2705; RESTORED' + (resLocked ? ' \u2713' : '') +
-            '</button>' +
-            '<button class="btn-down' + (outLocked ? ' btn-locked' : '') + '" onclick="window._status(' + s.id + ',\'No Light\',' + outLocked + ')">' +
-            '&#x26A1; OUTAGE' + (outLocked ? ' \u2713' : '') +
-            '</button>' +
-            '</div>' +
-
-            // Comments
-            '<div class="comment-section">' +
-            '<div style="max-height:130px; overflow-y:auto; -webkit-overflow-scrolling:touch;">' + cHtml + '</div>' +
-            '<div class="comment-input-row">' +
-            '<input type="text" id="ci' + s.id + '" class="minimal-input" placeholder="Add an update..." style="padding:10px; font-size:0.75rem;">' +
-            '<button class="btn-post" onclick="window._post(' + s.id + ')">Post</button>' +
-            '</div>' +
-            '</div>' +
+            '<div class="cmt-wrap">' +
+            '<div class="cmt-list">' + cHtml + '</div>' +
+            '<div class="cmt-row">' +
+            '<input class="cmt-in" id="ci' + s.id + '" type="text" placeholder="Add an update...">' +
+            '<button class="btn-post" onclick="App.post(' + s.id + ')">Post</button>' +
+            '</div></div>' +
 
             '</div>';
-    }
-
-    container.innerHTML = html;
-    try { lucide.createIcons(); } catch(e) {}
-}
-
-// ----------------------------------------------------------------
-// WINDOW-EXPOSED ACTION HANDLERS
-// These are the ONLY functions called by inline onclick=""
-// They must all be on window.* to survive WebView context resets
-// ----------------------------------------------------------------
-
-window._bell = async function(id) {
-    if (!guard()) return;
-    if (_subs.indexOf(id) !== -1) {
-        await _sb.from('subscriptions').delete().eq('user_id', _user.id).eq('area_id', id);
-        _subs = _subs.filter(function(x) { return x !== id; });
-        showToast('Unfollowed.');
-    } else {
-        await _sb.from('subscriptions').insert([{ user_id: _user.id, area_id: id }]);
-        _subs.push(id);
-        showToast('Following! You will get alerts.');
-    }
-    renderGrid(applyFilter());
-};
-
-window._share = function(name, status) {
-    var text = encodeURIComponent('&#x1F4A1; Up-Nepa Osun: ' + name + ' is currently ' + status + '. Check your area:');
-    var url = encodeURIComponent('https://up-nepa-osun.vercel.app/');
-    var el;
-    el = document.getElementById('share-wa'); if(el) el.href = 'https://wa.me/?text=' + text + '%20' + url;
-    el = document.getElementById('share-x'); if(el) el.href = 'https://twitter.com/intent/tweet?text=' + text + '&url=' + url;
-    el = document.getElementById('share-fb'); if(el) el.href = 'https://www.facebook.com/sharer/sharer.php?u=' + url;
-    el = document.getElementById('share-tg'); if(el) el.href = 'https://t.me/share/url?url=' + url + '&text=' + text;
-    var m = document.getElementById('share-modal'); if(m) m.style.display = 'flex';
-};
-
-window._chip = async function(id, txt) {
-    if (!guard()) return;
-    var r = await _sb.from('areas').update({ status: txt, updated_at: new Date().toISOString() }).eq('id', id);
-    if (!r.error) {
-        showToast('Logged: ' + txt);
-        var idx = _grid.findIndex(function(x) { return x.id === id; });
-        if (idx !== -1) _grid[idx] = Object.assign({}, _grid[idx], { status: txt, updated_at: new Date().toISOString() });
-        renderGrid(applyFilter());
-    } else {
-        showToast('Failed. Check connection.');
-    }
-};
-
-window._status = async function(id, status, locked) {
-    if (!guard()) return;
-    if (locked) {
-        showToast(status === 'No Light' ? 'Already reported. Press RESTORED first.' : 'Already reported. Press OUTAGE first.');
-        return;
-    }
-    var newAct = (status === 'Light On') ? 'restored' : 'outage';
-    if (getLastActionToday(id) === newAct) {
-        showToast('Already reported today.');
-        return;
-    }
-    var s = null;
-    for (var i = 0; i < _grid.length; i++) { if (_grid[i].id === id) { s = _grid[i]; break; } }
-    if (!s) return;
-
-    var now = new Date();
-    var nowDate = now.toISOString().split('T')[0];
-    var lastDate = s.updated_at ? new Date(s.updated_at).toISOString().split('T')[0] : '';
-    var oC = (lastDate === nowDate) ? (s.outage_count || 0) : 0;
-    var rC = (lastDate === nowDate) ? (s.restore_count || 0) : 0;
-    if (status === 'Light On') rC++; else oC++;
-
-    var r = await _sb.from('areas').update({
-        status: status,
-        updated_at: now.toISOString(),
-        outage_count: oC,
-        restore_count: rC
-    }).eq('id', id);
-
-    if (!r.error) {
-        _lastAction[id] = { action: newAct, date: today() };
-        saveLastAction();
-        showToast(newAct === 'outage' ? '&#x26A1; Outage reported!' : '&#x2705; Restored reported!');
-        for (var i = 0; i < _grid.length; i++) {
-            if (_grid[i].id === id) {
-                _grid[i] = Object.assign({}, _grid[i], { status: status, updated_at: now.toISOString(), outage_count: oC, restore_count: rC });
-                break;
-            }
-        }
-        renderGrid(applyFilter());
-    } else {
-        showToast('Update failed. Check connection.');
-    }
-};
-
-window._post = async function(id) {
-    if (!guard()) return;
-    var input = document.getElementById('ci' + id);
-    if (!input) return;
-    var text = input.value.trim();
-    if (!text) { showToast('Please type something first.'); return; }
-
-    var r = await _sb.from('comments').insert([{
-        area_id: id,
-        user_email: _user.email,
-        content: text
-    }]);
-
-    if (!r.error) {
-        input.value = '';
-        showToast('Comment posted!');
-        await fetchComments();
-        renderGrid(applyFilter());
-    } else {
-        showToast('Failed to post. Try again.');
-    }
-};
-
-// ----------------------------------------------------------------
-// GLOBAL UI FUNCTIONS — also on window.*
-// ----------------------------------------------------------------
-
-window.filterGrid = function() {
-    renderGrid(applyFilter());
-};
-
-window.handleSearch = function(val) {
-    var box = document.getElementById('suggestion-box');
-    if (!val) {
-        if (box) box.style.display = 'none';
-        renderGrid(applyFilter());
-        return;
-    }
-    var matches = _grid.filter(function(s) {
-        return s.name.toLowerCase().indexOf(val.toLowerCase()) !== -1;
-    }).slice(0, 5);
-
-    if (box) {
-        var html = '';
-        for (var i = 0; i < matches.length; i++) {
-            html += '<div class="suggestion-item" onclick="window._selectStreet(\'' + escJ(matches[i].name) + '\')">' +
-                    '<i data-lucide="map-pin" style="width:14px; height:14px; flex-shrink:0;"></i>' +
-                    esc(matches[i].name) +
-                    '</div>';
-        }
-        box.innerHTML = html;
-        box.style.display = matches.length ? 'block' : 'none';
-        try { lucide.createIcons(); } catch(e) {}
-    }
-    renderGrid(applyFilter());
-};
-
-window._selectStreet = function(name) {
-    var el = document.getElementById('search-grid');
-    if (el) el.value = name;
-    var box = document.getElementById('suggestion-box');
-    if (box) box.style.display = 'none';
-    renderGrid(applyFilter());
-};
-
-window.openSuggest = function() {
-    var m = document.getElementById('suggest-modal');
-    if (m) m.style.display = 'flex';
-};
-
-window.openSupport = function() {
-    var m = document.getElementById('support-modal');
-    if (m) m.style.display = 'flex';
-};
-
-window.closeModals = function() {
-    document.querySelectorAll('.modal-overlay').forEach(function(m) { m.style.display = 'none'; });
-};
-
-window.submitSuggestion = async function() {
-    if (!guard()) return;
-    var name = (document.getElementById('suggest-name') || {}).value || '';
-    var town = (document.getElementById('suggest-town') || {}).value || '';
-    name = name.trim(); town = town.trim();
-    if (!name || !town) { showToast('Please fill both fields.'); return; }
-    var r = await _sb.from('areas').insert([{ name: name, town: town, approved: false, status: 'No Light' }]);
-    if (!r.error) { showToast("Suggestion sent! We'll review it."); window.closeModals(); }
-    else showToast('Failed to submit. Try again.');
-};
-
-window.refreshAll = async function() {
-    showToast('Refreshing...');
-    await fetchGrid();
-    await fetchComments();
-    if (_user) await fetchSubs();
-    renderGrid(applyFilter());
-    showToast('Updated!');
-};
-
-// ----------------------------------------------------------------
-// HELPERS
-// ----------------------------------------------------------------
-function guard() {
-    if (!_user) {
-        showToast('Please sign in first.');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return false;
-    }
-    return true;
-}
-
-function buildTowns(data) {
-    var towns = [];
-    var seen = {};
-    for (var i = 0; i < data.length; i++) {
-        if (data[i].town && !seen[data[i].town]) { towns.push(data[i].town); seen[data[i].town] = 1; }
-    }
-    towns.sort();
-    var el = document.getElementById('town-filter');
-    if (el) {
-        el.innerHTML = '<option value="all">ALL TOWNS</option>' + towns.map(function(t) {
-            return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
         }).join('');
+
+        icons();
     }
-}
 
-function timeAgo(date) {
-    if (!date) return 'No updates';
-    var sec = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-    if (sec < 60) return 'Just now';
-    var min = Math.floor(sec / 60);
-    if (min < 60) return min + 'm ago';
-    var hr = Math.floor(min / 60);
-    if (hr < 24) return hr + 'h ago';
-    return Math.floor(hr / 24) + 'd ago';
-}
+    // ── CARD ACTIONS ─────────────────────────────────────────────
+    function guard() {
+if (!S.user) {
+            toast('Please sign in first.');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return false;
+        }
+        return true;
+    }
 
-function esc(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+    function doBell(id) {
+        if (!guard()) return;
+        var had = S.subs.indexOf(id) !== -1;
+        var p = had
+            ? DB.from('subscriptions').delete().eq('user_id', S.user.id).eq('area_id', id)
+            : DB.from('subscriptions').insert([{ user_id: S.user.id, area_id: id }]);
+        p.then(function (r) {
+            if (r.error) { toast('Error. Try again.'); return; }
+            if (had) {
+                S.subs = S.subs.filter(function (x) { return x !== id; });
+                toast('Unfollowed.');
+            } else {
+                S.subs.push(id);
+                toast('Following! You will get alerts.');
+            }
+            renderFeed();
+        });
+    }
 
-function escJ(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'")
-        .replace(/"/g, '\\"');
-}
+    function doReport(id, status, locked) {
+        if (!guard()) return;
+        if (locked) {
+            toast(status === 'No Light'
+                ? 'Already reported OUTAGE. Press RESTORED first.'
+                : 'Already reported RESTORED. Press OUTAGE first.');
+            return;
+        }
+        var newAct = (status === 'Light On') ? 'restored' : 'outage';
+        if (actToday(id) === newAct) { toast('Already reported today.'); return; }
 
-function showToast(msg) {
-    var t = document.getElementById('toast');
-    if (!t) return;
-    t.innerText = msg;
-    t.classList.add('show');
-    clearTimeout(window._toastTimer);
-    window._toastTimer = setTimeout(function() { t.classList.remove('show'); }, 3000);
-}
+        var s = null;
+        for (var i = 0; i < S.grid.length; i++) { if (S.grid[i].id === id) { s = S.grid[i]; break; } }
+        if (!s) return;
 
-// ----------------------------------------------------------------
-// BOOT
-// ----------------------------------------------------------------
-window.onload = startApp;
+        var now    = new Date();
+        var nowISO = now.toISOString();
+        var nowD   = nowISO.split('T')[0];
+        var lastD  = s.updated_at ? new Date(s.updated_at).toISOString().split('T')[0] : '';
+        var oC = (lastD === nowD) ? (s.outage_count  || 0) : 0;
+        var rC = (lastD === nowD) ? (s.restore_count || 0) : 0;
+        if (status === 'Light On') rC++; else oC++;
 
-})(); // end IIFE
+        DB.from('areas').update({
+            status: status, updated_at: nowISO, outage_count: oC, restore_count: rC
+        }).eq('id', id).then(function (r) {
+            if (r.error) { toast('Update failed. Check connection.'); return; }
+            S.acts[id] = { a: newAct, d: nowD };
+            saveActs();
+            toast(newAct === 'outage' ? '\u26A1 Outage reported!' : '\u2705 Restored reported!');
+            for (var j = 0; j < S.grid.length; j++) {
+                if (S.grid[j].id === id) {
+                    S.grid[j] = Object.assign({}, S.grid[j], {
+                        status: status, updated_at: nowISO, outage_count: oC, restore_count: rC
+                    });
+                    break;
+                }
+            }
+            renderFeed();
+        });
+    }
+
+    function doChip(id, label) {
+        if (!guard()) return;
+        DB.from('areas').update({ status: label, updated_at: new Date().toISOString() })
+            .eq('id', id).then(function (r) {
+                if (r.error) { toast('Failed. Try again.'); return; }
+                toast('Logged: ' + label);
+                for (var i = 0; i < S.grid.length; i++) {
+                    if (S.grid[i].id === id) {
+                        S.grid[i] = Object.assign({}, S.grid[i], { status: label, updated_at: new Date().toISOString() });
+                        break;
+                    }
+                }
+                renderFeed();
+            });
+    }
+
+    function doPost(id) {
+        if (!guard()) return;
+        var inp = document.getElementById('ci' + id);
+        if (!inp) return;
+        var txt = inp.value.trim();
+        if (!txt) { toast('Please type something first.'); return; }
+        DB.from('comments').insert([{ area_id: id, user_email: S.user.email, content: txt }])
+            .then(function (r) {
+                if (r.error) { toast('Failed to post. Try again.'); return; }
+                inp.value = '';
+                toast('Comment posted!');
+                fetchComments().then(renderFeed);
+            });
+    }
+
+    function doSuggest() {
+        if (!guard()) return;
+        var n = ((document.getElementById('sug-n') || {}).value || '').trim();
+        var t = ((document.getElementById('sug-t') || {}).value || '').trim();
+        if (!n || !t) { toast('Please fill both fields.'); return; }
+        DB.from('areas').insert([{ name: n, town: t, approved: false, status: 'No Light' }])
+            .then(function (r) {
+                if (r.error) { toast('Failed. Try again.'); return; }
+                toast('Suggestion sent! We will review it.');
+                doCloseM();
+            });
+    }
+
+    // ── SEARCH ───────────────────────────────────────────────────
+    function doSearch(val) {
+        var drop = document.getElementById('sdrop');
+        if (!val) { if (drop) drop.style.display = 'none'; renderFeed(); return; }
+        var m = S.grid.filter(function (s) {
+            return s.name.toLowerCase().indexOf(val.toLowerCase()) !== -1;
+        }).slice(0, 5);
+        if (drop) {
+            drop.innerHTML = m.map(function (s) {
+                return '<div class="sdrop-i" onclick="App.pick(\'' + sq(s.name) + '\')">' +
+                       '<i data-lucide="map-pin" style="width:12px;height:12px;flex-shrink:0;"></i>' +
+                       esc(s.name) + '</div>';
+            }).join('');
+            drop.style.display = m.length ? 'block' : 'none';
+            icons();
+        }
+        renderFeed();
+    }
+
+    // ── MODALS ───────────────────────────────────────────────────
+    function doOpenM(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.add('open');
+    }
+    function doCloseM() {
+        document.querySelectorAll('.modal').forEach(function (m) { m.classList.remove('open'); });
+    }
+
+    // Close modal on backdrop tap
+    document.querySelectorAll('.modal').forEach(function (m) {
+        m.addEventListener('click', function (e) {
+            if (e.target === m) doCloseM();
+        });
+    });
+
+    // ── SHARE ────────────────────────────────────────────────────
+    function doShare(name, status) {
+        var txt = encodeURIComponent('\uD83D\uDCA1 Up-Nepa Osun: ' + name + ' is currently ' + status + '. Check your area:');
+        var url = encodeURIComponent('https://up-nepa-osun.vercel.app/');
+        function setHref(id, h) { var e = document.getElementById(id); if (e) e.href = h; }
+        setHref('sw', 'https://wa.me/?text=' + txt + '%20' + url);
+        setHref('sx', 'https://twitter.com/intent/tweet?text=' + txt + '&url=' + url);
+        setHref('sf', 'https://www.facebook.com/sharer/sharer.php?u=' + url);
+        setHref('st', 'https://t.me/share/url?url=' + url + '&text=' + txt);
+        doOpenM('mShare');
+    }
+
+    // ── PUBLIC API ───────────────────────────────────────────────
+    // Every method here is accessible as App.xxx() from onclick=""
+    return {
+        login:    doLogin,
+        logout:   doLogout,
+        filter:   function ()         { renderFeed(); },
+        search:   function (v)        { doSearch(v); },
+        pick:     function (name)     {
+            var el = document.getElementById('sbox');
+            if (el) el.value = name;
+            var dr = document.getElementById('sdrop');
+            if (dr) dr.style.display = 'none';
+            renderFeed();
+        },
+        bell:     function (id)              { doBell(id); },
+        share:    function (name, status)    { doShare(name, status); },
+        chip:     function (id, label)       { doChip(id, label); },
+        report:   function (id, st, lk)      { doReport(id, st, lk); },
+        post:     function (id)              { doPost(id); },
+        suggest:  function ()                { doSuggest(); },
+        openM:    function (id)              { doOpenM(id); },
+        closeM:   function ()                { doCloseM(); },
+        refresh:  function () {
+            toast('Refreshing...');
+            Promise.all([fetchGrid(), fetchComments()]).then(function () {
+                if (S.user) fetchSubs().then(renderFeed);
+                else renderFeed();
+                toast('Updated!');
+            });
+        },
+        // Expose boot so window.onload can call it
+        _boot: boot
+    };
+
+}()); // end App IIFE
+
+// ── SINGLE BOOT ENTRY POINT ──────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function () {
+    App._boot();
+});
 </script>
 </body>
 </html>
