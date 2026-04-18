@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Up-Nepa Osun</title>
-    
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
         :root {
             --primary: #bb86fc;
@@ -22,711 +19,852 @@
             --text-main: #f5f5f7;
             --text-dim: #94949b;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text-main); padding: 16px; padding-bottom: 120px; overflow-x: hidden; }
 
-        #toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -150%); background: var(--primary); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 800; font-size: 0.8rem; z-index: 10000; transition: transform 0.4s; text-align: center; max-width: 90%; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -150%); background: var(--primary); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 800; font-size: 0.8rem; z-index: 10000; transition: transform 0.4s; text-align: center; max-width: 90%; pointer-events: none; }
         #toast.show { transform: translate(-50%, 0); }
 
         .global-ticker { position: relative; z-index: 2001; background: #1a1a1c; border-bottom: 1px solid var(--border); margin: -16px -16px 20px -16px; display: flex; align-items: center; height: 36px; overflow: hidden; }
-        .ticker-badge { background: var(--primary); color: #000; font-size: 0.6rem; font-weight: 800; padding: 0 12px; height: 100%; display: flex; align-items: center; text-transform: uppercase; z-index: 2; }
+        .ticker-badge { background: var(--primary); color: #000; font-size: 0.6rem; font-weight: 800; padding: 0 12px; height: 100%; display: flex; align-items: center; text-transform: uppercase; z-index: 2; white-space: nowrap; }
         .ticker-content { position: relative; flex: 1; overflow: hidden; z-index: 1; }
-        .ticker-scroll { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker-move 25s linear infinite; color: var(--primary); font-weight: 600; font-size: 0.8rem; }
+        .ticker-scroll { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker-move 30s linear infinite; color: var(--primary); font-weight: 600; font-size: 0.8rem; }
         @keyframes ticker-move { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         .app-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .logo-img { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--surface); }
-        .badge-status { padding: 6px 12px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; background: var(--border); color: var(--primary); }
+        .logo-img { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--surface); flex-shrink: 0; }
+        .badge-status { padding: 6px 12px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; background: var(--border); color: var(--primary); white-space: nowrap; }
 
         .search-container { position: sticky; top: 10px; z-index: 1000; margin-bottom: 24px; }
-        .command-bar { background: rgba(18,18,20,0.95); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 18px; padding: 8px; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 8px; }
-        .minimal-input { background: var(--surface-light); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 12px; font-size: 0.85rem; width: 100%; outline: none; }
+        .command-bar { background: rgba(18,18,20,0.97); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 18px; padding: 8px; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 8px; }
+        .minimal-input { background: var(--surface-light); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 12px; font-size: 0.85rem; width: 100%; outline: none; -webkit-appearance: none; }
 
         #suggestion-box { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-top: 8px; max-height: 250px; overflow-y: auto; display: none; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .suggestion-item { padding: 14px; border-bottom: 1px solid var(--border); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 10px; }
 
-        .pro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; position: relative; border-left: 4px solid var(--danger); }
+        .pro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; border-left: 4px solid var(--danger); }
         .card-on { border-left-color: var(--success); }
-        .street-name { font-size: 1.2rem; font-weight: 800; }
-        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-top: 8px; display: inline-block; border: 1px solid currentColor; }
+        .street-name { font-size: 1.1rem; font-weight: 800; word-break: break-word; margin: 2px 0 4px; }
+        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; display: inline-block; border: 1px solid currentColor; }
         .pill-on { color: var(--success); }
         .pill-off { color: var(--danger); }
         .time-ago { font-size: 0.6rem; color: var(--text-dim); margin-top: 4px; font-weight: 600; }
 
-        .card-meta { display: flex; gap: 12px; margin: 12px 0; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); flex-wrap: wrap; }
-        .btn-circle { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-light); border: 1px solid var(--border); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .card-meta { display: flex; gap: 10px; margin: 12px 0; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); flex-wrap: wrap; }
+        .btn-circle { width: 42px; height: 42px; border-radius: 12px; background: var(--surface-light); border: 1px solid var(--border); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
         .btn-circle.active { color: var(--primary); border-color: var(--primary); }
 
-        .chip-group { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
-        .action-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 8px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
-        .action-chip:active { background: var(--primary); color: #000; }
+        .chip-group { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+        .action-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 8px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
         .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn-up { background: var(--success); color: #000; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; transition: opacity 0.2s, transform 0.1s; font-size: 0.8rem; }
-        .btn-down { background: var(--danger); color: #fff; padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; transition: opacity 0.2s, transform 0.1s; font-size: 0.8rem; }
-        .btn-up.btn-locked, .btn-down.btn-locked { opacity: 0.3; cursor: not-allowed; }
-        .btn-up:not(.btn-locked):active { transform: scale(0.97); }
-        .btn-down:not(.btn-locked):active { transform: scale(0.97); }
+        .btn-up { background: var(--success); color: #000; padding: 14px 8px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; font-size: 0.78rem; width: 100%; -webkit-appearance: none; }
+        .btn-down { background: var(--danger); color: #fff; padding: 14px 8px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; font-size: 0.78rem; width: 100%; -webkit-appearance: none; }
+        .btn-locked { opacity: 0.32 !important; cursor: not-allowed !important; }
 
         .comment-section { margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }
-        .comment-item { font-size: 0.75rem; background: var(--surface-light); padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px; }
-        .comment-user { color: var(--primary); font-weight: 800; font-size: 0.65rem; display: flex; justify-content: space-between; align-items: center; }
+        .comment-item { font-size: 0.75rem; background: var(--surface-light); padding: 10px; border-radius: 10px; margin-bottom: 8px; }
+        .comment-user { color: var(--primary); font-weight: 800; font-size: 0.65rem; display: flex; justify-content: space-between; margin-bottom: 4px; }
         .comment-input-row { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-post { background: var(--primary); color: #000; border: none; border-radius: 10px; padding: 0 15px; font-weight: 800; font-size: 0.75rem; cursor: pointer; white-space: nowrap; min-height: 44px; }
+        .btn-post { background: var(--primary); color: #000; border: none; border-radius: 10px; padding: 0 14px; font-weight: 800; font-size: 0.75rem; cursor: pointer; white-space: nowrap; min-height: 44px; -webkit-appearance: none; }
 
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; width: 100%; max-width: 400px; text-align: center; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; width: 100%; max-width: 400px; text-align: center; max-height: 90vh; overflow-y: auto; }
         .social-btn { padding: 14px; border-radius: 14px; text-decoration: none; color: #fff; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
 
-        .nav-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.95); backdrop-filter: blur(15px); border-top: 1px solid var(--border); padding: 12px 20px 25px; display: flex; justify-content: space-around; z-index: 2000; }
-        .nav-link { text-decoration: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 800; cursor: pointer; }
+        .nav-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.97); backdrop-filter: blur(15px); border-top: 1px solid var(--border); padding: 12px 20px 28px; display: flex; justify-content: space-around; z-index: 2000; }
+        .nav-link { color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .nav-link.active { color: var(--primary); }
 
-        #loading-screen { position: fixed; inset: 0; background: var(--bg); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.4s; }
+        #loading-screen { position: fixed; inset: 0; background: var(--bg); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.5s; }
         .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
+        .empty-state p { font-size: 0.85rem; font-weight: 700; margin-top: 12px; }
     </style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <div class="spinner"></div>
-        <p style="font-size:0.75rem; color:var(--text-dim); font-weight:700;">Loading Up-Nepa Osun...</p>
+<div id="loading-screen">
+    <div class="spinner"></div>
+    <p style="font-size:0.75rem; color:var(--text-dim); font-weight:700; margin-top:8px;">Loading Up-Nepa Osun...</p>
+</div>
+
+<div id="toast"></div>
+
+<div class="global-ticker">
+    <div class="ticker-badge">⚡ Live</div>
+    <div class="ticker-content">
+        <span class="ticker-scroll">Up-Nepa Osun — Track real-time electricity status across Osun State. Report outages. Stay informed.</span>
     </div>
+</div>
 
-    <div id="toast">Notification</div>
-
-    <div class="global-ticker">
-        <div class="ticker-badge">Live</div>
-        <div class="ticker-content">
-            <span class="ticker-scroll" id="ticker-text">NEWS: Up-Nepa Osun is now live! Track your local grid status in real-time.</span>
+<nav class="app-nav">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div class="logo-img">
+            <i data-lucide="zap" style="color:var(--primary); width:22px; height:22px;"></i>
         </div>
-    </div>
-
-    <nav class="app-nav">
-        <div style="display:flex; align-items:center; gap:12px;">
-            <div class="logo-img"><i data-lucide="zap" style="color:var(--primary)"></i></div>
-            <div>
-                <h1 style="font-size:1.1rem; font-weight:800;">Up-Nepa <span style="color:var(--primary)">Osun</span></h1>
-                <div style="display:flex; align-items:center; gap:4px; font-size:0.6rem; color:var(--text-dim);">
-                    <div id="status-dot" style="width:6px; height:6px; background:var(--danger); border-radius:50%;"></div>
-                    <span id="status-text">Connecting...</span>
-                </div>
+        <div>
+            <h1 style="font-size:1.1rem; font-weight:800; line-height:1.2;">Up-Nepa <span style="color:var(--primary);">Osun</span></h1>
+            <div style="display:flex; align-items:center; gap:5px; margin-top:2px;">
+                <div id="status-dot" style="width:7px; height:7px; background:var(--danger); border-radius:50%; flex-shrink:0;"></div>
+                <span id="status-text" style="font-size:0.6rem; color:var(--text-dim); font-weight:600;">Connecting...</span>
             </div>
         </div>
-        <div id="member-count" class="badge-status">0 ONLINE</div>
-    </nav>
-
-    <div id="auth-section"></div>
-
-    <div class="search-container">
-        <div class="command-bar">
-            <select id="town-filter" class="minimal-input" style="background:var(--primary); color:#000; font-weight:800; border:none;" onchange="filterGrid()">
-                <option value="all">ALL TOWNS</option>
-            </select>
-            <input type="text" id="search-grid" class="minimal-input" placeholder="Search street..." oninput="handleSearch(this.value)">
-        </div>
-        <div id="suggestion-box"></div>
     </div>
+    <div id="member-count" class="badge-status">0 ONLINE</div>
+</nav>
 
-    <main id="street-feed"></main>
+<div id="auth-section"></div>
 
-    <button onclick="openSuggest()" style="width:100%; background:var(--surface); border:1px dashed var(--primary); color:var(--primary); padding:15px; border-radius:15px; font-weight:800; margin-top:10px; cursor:pointer;">+ CAN'T FIND YOUR STREET? SUGGEST HERE</button>
-
-    <div id="support-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 style="margin-bottom:20px;">Support Center</h2>
-            <a href="https://wa.me/2348062516110" class="social-btn" style="background:#25D366;"><i data-lucide="message-circle"></i> WhatsApp Support</a>
-            <a href="mailto:aamuda34@gmail.com" class="social-btn" style="background:#fff; color:#000;"><i data-lucide="mail"></i> Gmail Support</a>
-            <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:20px; font-weight:700; cursor:pointer;">Close</button>
-        </div>
+<div class="search-container">
+    <div class="command-bar">
+        <select id="town-filter" class="minimal-input" style="background:var(--primary); color:#000; font-weight:800; border:none;" onchange="window.filterGrid()">
+            <option value="all">ALL TOWNS</option>
+        </select>
+        <input type="text" id="search-grid" class="minimal-input" placeholder="Search street..." oninput="window.handleSearch(this.value)">
     </div>
+    <div id="suggestion-box"></div>
+</div>
 
-    <div id="suggest-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 style="margin-bottom:15px;">Suggest a Street</h2>
-            <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px;">Submit the street name and town to add to the grid.</p>
-            <input type="text" id="suggest-name" class="minimal-input" placeholder="Street Name" style="margin-bottom:10px;">
-            <input type="text" id="suggest-town" class="minimal-input" placeholder="Town" style="margin-bottom:15px;">
-            <button class="btn-up" style="width:100%;" onclick="submitSuggestion()">Submit Request</button>
-            <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:15px; font-weight:700; cursor:pointer;">Cancel</button>
-        </div>
+<main id="street-feed"></main>
+
+<div style="margin-top:12px; margin-bottom:8px;">
+    <button onclick="window.openSuggest()" style="width:100%; background:var(--surface); border:1px dashed var(--primary); color:var(--primary); padding:15px; border-radius:15px; font-weight:800; cursor:pointer; font-size:0.8rem; -webkit-appearance:none;">
+        + CAN'T FIND YOUR STREET? SUGGEST HERE
+    </button>
+</div>
+
+<!-- MODALS -->
+<div id="support-modal" class="modal-overlay" onclick="if(event.target===this) window.closeModals()">
+    <div class="modal-content">
+        <i data-lucide="shield-check" style="color:var(--primary); width:32px; height:32px; margin-bottom:12px;"></i>
+        <h2 style="margin-bottom:20px;">Support Center</h2>
+        <a href="https://wa.me/2348062516110" class="social-btn" style="background:#25D366;">
+            <i data-lucide="message-circle" style="width:18px;"></i> WhatsApp Support
+        </a>
+        <a href="mailto:aamuda34@gmail.com" class="social-btn" style="background:#4285F4;">
+            <i data-lucide="mail" style="width:18px;"></i> Email Support
+        </a>
+        <button onclick="window.closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:16px; font-weight:700; cursor:pointer; font-size:0.85rem; padding:8px 20px;">Close</button>
     </div>
+</div>
 
-    <div id="share-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 id="share-title" style="margin-bottom:15px; font-size:1rem;">Share Update</h2>
-            <a id="share-wa" href="#" class="social-btn" style="background:#25D366;"><i data-lucide="message-circle"></i>WhatsApp</a>
-            <a id="share-x" href="#" class="social-btn" style="background:#000; border:1px solid #333;"><i data-lucide="twitter"></i>X (Twitter)</a>
-            <a id="share-fb" href="#" class="social-btn" style="background:#1877F2;"><i data-lucide="facebook"></i>Facebook</a>
-            <a id="share-tg" href="#" class="social-btn" style="background:#0088cc;"><i data-lucide="send"></i>Telegram</a>
-            <button onclick="closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:20px; font-weight:700; cursor:pointer;">Cancel</button>
-        </div>
+<div id="suggest-modal" class="modal-overlay" onclick="if(event.target===this) window.closeModals()">
+    <div class="modal-content">
+        <i data-lucide="map-pin" style="color:var(--primary); width:32px; height:32px; margin-bottom:12px;"></i>
+        <h2 style="margin-bottom:8px;">Suggest a Street</h2>
+        <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:16px;">Help us grow the grid map for Osun State.</p>
+        <input type="text" id="suggest-name" class="minimal-input" placeholder="Street / Area Name" style="margin-bottom:10px; display:block;">
+        <input type="text" id="suggest-town" class="minimal-input" placeholder="Town / LGA" style="margin-bottom:16px; display:block;">
+        <button onclick="window.submitSuggestion()" class="btn-up" style="width:100%; padding:14px;">Submit Request</button>
+        <button onclick="window.closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:14px; font-weight:700; cursor:pointer; font-size:0.85rem; padding:8px 20px;">Cancel</button>
     </div>
+</div>
 
-    <footer class="nav-footer">
-        <div class="nav-link active" onclick="refreshAll()">
-            <i data-lucide="layout-grid"></i><span>Grid</span>
-        </div>
-        <div class="nav-link" onclick="openSupport()">
-            <i data-lucide="shield-check"></i><span>Support</span>
-        </div>
-    </footer>
+<div id="share-modal" class="modal-overlay" onclick="if(event.target===this) window.closeModals()">
+    <div class="modal-content">
+        <i data-lucide="share-2" style="color:var(--primary); width:32px; height:32px; margin-bottom:12px;"></i>
+        <h2 id="share-title" style="margin-bottom:20px; font-size:1rem;">Share Update</h2>
+        <a id="share-wa" href="#" target="_blank" class="social-btn" style="background:#25D366;">
+            <i data-lucide="message-circle" style="width:18px;"></i> WhatsApp
+        </a>
+        <a id="share-x" href="#" target="_blank" class="social-btn" style="background:#1a1a1a; border:1px solid #333;">
+            <i data-lucide="twitter" style="width:18px;"></i> X (Twitter)
+        </a>
+        <a id="share-fb" href="#" target="_blank" class="social-btn" style="background:#1877F2;">
+            <i data-lucide="facebook" style="width:18px;"></i> Facebook
+        </a>
+        <a id="share-tg" href="#" target="_blank" class="social-btn" style="background:#0088cc;">
+            <i data-lucide="send" style="width:18px;"></i> Telegram
+        </a>
+        <button onclick="window.closeModals()" style="background:none; border:none; color:var(--text-dim); margin-top:16px; font-weight:700; cursor:pointer; font-size:0.85rem; padding:8px 20px;">Cancel</button>
+    </div>
+</div>
 
-    <script>
-    // ============================================================
-    // CONFIG
-    // ============================================================
-    const S_URL = 'https://tzsumiudcqxpyphhjymu.supabase.co';
-    const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6c3VtaXVkY3F4cHlwaGhqeW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDczMzUsImV4cCI6MjA5MTU4MzMzNX0.gDjhwcitscFZfVhWq1YIYdvrccX5rP-BGYNkqUm5v8Y';
+<footer class="nav-footer">
+    <div class="nav-link active" onclick="window.refreshAll()">
+        <i data-lucide="layout-grid" style="width:20px; height:20px;"></i>
+        <span>Grid</span>
+    </div>
+    <div class="nav-link" onclick="window.openSupport()">
+        <i data-lucide="shield-check" style="width:20px; height:20px;"></i>
+        <span>Support</span>
+    </div>
+</footer>
 
-    // persistSession + autoRefreshToken = session survives app swipe-away and reopen
-    const _client = supabase.createClient(S_URL, S_KEY, {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true,
-            storageKey: 'upnepa-auth'
-        }
-    });
+<script>
+// ================================================================
+// CAPACITOR WEBVIEW FIX — CRITICAL
+// All interactive functions MUST be on the window object.
+// In Capacitor's Android WebView, after a deep-link OAuth redirect,
+// the JS execution context partially resets. Functions referenced
+// by inline onclick="" attributes only work reliably when they are
+// explicitly assigned to window.*. This is the root cause of ALL
+// buttons failing after Google login.
+// ================================================================
 
-    // ============================================================
-    // STATE
-    // ============================================================
-    let gridData = [], user = null, userSubs = [], allComments = [];
-    let appReady = false;
-    let userLastAction = {};
+(function() {
 
-    function loadUserLastAction() {
-        try { userLastAction = JSON.parse(localStorage.getItem('upnepa_last_action') || '{}'); }
-        catch(e) { userLastAction = {}; }
+// ----------------------------------------------------------------
+// CONFIG
+// ----------------------------------------------------------------
+var S_URL = 'https://tzsumiudcqxpyphhjymu.supabase.co';
+var S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6c3VtaXVkY3F4cHlwaGhqeW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDczMzUsImV4cCI6MjA5MTU4MzMzNX0.gDjhwcitscFZfVhWq1YIYdvrccX5rP-BGYNkqUm5v8Y';
+
+var _sb = supabase.createClient(S_URL, S_KEY, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage,
+        storageKey: 'upnepa-auth-v2'
     }
-    function saveUserLastAction() {
-        try { localStorage.setItem('upnepa_last_action', JSON.stringify(userLastAction)); }
-        catch(e) {}
-    }
-    function getTodayDate() { return new Date().toISOString().split('T')[0]; }
-    function getUserLastActionToday(areaId) {
-        const e = userLastAction[areaId];
-        if (!e || e.date !== getTodayDate()) return null;
-        return e.action;
-    }
+});
 
-    // ============================================================
-    // DEEP LINK — must run before window.onload
-    // Catches the OAuth token when Google redirects back to the app
-    // ============================================================
-    function setupDeepLinkListener() {
-        if (window.Capacitor?.Plugins?.App) {
-            window.Capacitor.Plugins.App.addListener('appUrlOpen', async (data) => {
-                if (data?.url) await handleOAuthRedirectUrl(data.url);
+// ----------------------------------------------------------------
+// STATE — kept in module scope
+// ----------------------------------------------------------------
+var _grid = [];
+var _user = null;
+var _subs = [];
+var _comments = [];
+var _lastAction = {};
+var _ready = false;
+var _realtimeChannel = null;
+
+// ----------------------------------------------------------------
+// STORAGE HELPERS
+// ----------------------------------------------------------------
+function loadLastAction() {
+    try { _lastAction = JSON.parse(localStorage.getItem('upnepa_act') || '{}'); } catch(e) { _lastAction = {}; }
+}
+function saveLastAction() {
+    try { localStorage.setItem('upnepa_act', JSON.stringify(_lastAction)); } catch(e) {}
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function getLastActionToday(id) {
+    var e = _lastAction[id];
+    return (e && e.date === today()) ? e.action : null;
+}
+
+// ----------------------------------------------------------------
+// DEEP LINK — runs immediately before anything else
+// Catches the OAuth tokens when Google redirects back to the APK
+// ----------------------------------------------------------------
+function initDeepLink() {
+    // Capacitor native listener
+    try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+            window.Capacitor.Plugins.App.addListener('appUrlOpen', function(data) {
+                if (data && data.url) processOAuthUrl(data.url);
             });
         }
-        // Also handle token if it's in the current page URL (web/PWA)
-        if (window.location.hash || window.location.search) {
-            handleOAuthRedirectUrl(window.location.href);
-        }
-    }
+    } catch(e) {}
 
-    async function handleOAuthRedirectUrl(rawUrl) {
-        try {
-            let paramStr = '';
-            const hi = rawUrl.indexOf('#');
-            const qi = rawUrl.indexOf('?');
-            if (hi !== -1) paramStr = rawUrl.substring(hi + 1);
-            else if (qi !== -1) paramStr = rawUrl.substring(qi + 1);
-            if (!paramStr) return;
+    // Web/PWA: handle token in current URL
+    processOAuthUrl(window.location.href);
+}
 
-            const params = new URLSearchParams(paramStr);
-            const access_token = params.get('access_token');
-            const refresh_token = params.get('refresh_token');
-            if (!access_token || !refresh_token) return;
+async function processOAuthUrl(rawUrl) {
+    try {
+        var str = '';
+        var hi = rawUrl.indexOf('#');
+        var qi = rawUrl.indexOf('?');
+        if (hi !== -1) str = rawUrl.substring(hi + 1);
+        else if (qi !== -1) str = rawUrl.substring(qi + 1);
+        if (!str) return;
 
-            showToast("Completing sign in...");
-            const { data: sd, error } = await _client.auth.setSession({ access_token, refresh_token });
-            if (!error && sd?.session) {
-                user = sd.session.user;
-                if (window.history?.replaceState) {
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }
-                renderAuth();
-                loadUserLastAction();
-                await fetchSubs();
-                filterGrid();
-                showToast("Welcome! Signed in successfully.");
-            } else {
-                showToast("Sign in error. Please try again.");
-            }
-        } catch(e) { /* not an OAuth URL */ }
-    }
+        var p = new URLSearchParams(str);
+        var at = p.get('access_token');
+        var rt = p.get('refresh_token');
+        if (!at || !rt) return;
 
-    setupDeepLinkListener();
-
-    // ============================================================
-    // APP STARTUP
-    // ============================================================
-    async function startApp() {
-        lucide.createIcons();
-        loadUserLastAction();
-
-        // onAuthStateChange is the single source of truth for session.
-        // It fires on: page load (with existing session), login, logout,
-        // token refresh, and app resume. Replaces all manual getSession calls.
-        _client.auth.onAuthStateChange(async (event, session) => {
-            const hadUser = !!user;
-            user = session?.user || null;
+        showToast('Completing sign in...');
+        var res = await _sb.auth.setSession({ access_token: at, refresh_token: rt });
+        if (!res.error && res.data && res.data.session) {
+            _user = res.data.session.user;
+            try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
             renderAuth();
+            loadLastAction();
+            await fetchSubs();
+            renderGrid(applyFilter());
+            showToast('Welcome! Signed in successfully.');
+        } else {
+            showToast('Sign in error. Please try again.');
+        }
+    } catch(e) {}
+}
 
-            if (user && !hadUser) {
-                // Fresh login
-                loadUserLastAction();
-                await fetchSubs();
-                filterGrid();
-            } else if (!user && hadUser) {
-                // Logged out
-                userSubs = [];
-                filterGrid();
-            } else if (user) {
-                // Session restored on resume
-                await fetchSubs();
-                filterGrid();
-            }
-        });
+initDeepLink();
 
-        // Fetch data (visible to everyone logged in or not)
-        await Promise.all([fetchGrid(), fetchComments()]);
-        syncRealtime();
-        hideLoading();
-        appReady = true;
-    }
+// ----------------------------------------------------------------
+// APP INIT
+// ----------------------------------------------------------------
+async function startApp() {
+    try { lucide.createIcons(); } catch(e) {}
+    loadLastAction();
 
-    function hideLoading() {
-        const el = document.getElementById('loading-screen');
-        if (!el) return;
-        el.style.opacity = '0';
-        setTimeout(() => el.remove(), 400);
-    }
+    // Auth state listener — single source of truth
+    _sb.auth.onAuthStateChange(async function(event, session) {
+        var hadUser = !!_user;
+        _user = (session && session.user) ? session.user : null;
+        renderAuth();
 
-    // App resume handler — refresh data when user comes back to the app
-    document.addEventListener('visibilitychange', async () => {
-        if (document.visibilityState === 'visible' && appReady) {
-            await Promise.all([fetchGrid(), fetchComments()]);
-            if (user) await fetchSubs();
+        if (_user && !hadUser) {
+            loadLastAction();
+            await fetchSubs();
+            renderGrid(applyFilter());
+        } else if (!_user && hadUser) {
+            _subs = [];
+            renderGrid(applyFilter());
+        } else if (_user) {
+            await fetchSubs();
+            renderGrid(applyFilter());
         }
     });
 
-    // ============================================================
-    // AUTH
-    // ============================================================
-    async function loginGoogle() {
-        const isNative = window.Capacitor?.isNativePlatform?.();
-        const redirectTo = isNative
+    await fetchGrid();
+    await fetchComments();
+    startRealtime();
+    hideLoading();
+    _ready = true;
+}
+
+function hideLoading() {
+    var el = document.getElementById('loading-screen');
+    if (!el) return;
+    el.style.opacity = '0';
+    setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 500);
+}
+
+// App resume — refresh when user comes back to app
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && _ready) {
+        fetchGrid();
+        fetchComments();
+        if (_user) fetchSubs();
+    }
+});
+
+// ----------------------------------------------------------------
+// AUTH
+// ----------------------------------------------------------------
+async function loginGoogle() {
+ try {
+        var isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        var redirectTo = isNative
             ? 'com.upnepa.osun://login-callback'
-            : window.location.origin + window.location.pathname;
+            : (window.location.origin + window.location.pathname);
 
-        const { error } = await _client.auth.signInWithOAuth({
+        var res = await _sb.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo, skipBrowserRedirect: false }
+            options: { redirectTo: redirectTo, skipBrowserRedirect: false }
         });
-        if (error) showToast("Login failed: " + error.message);
+        if (res.error) showToast('Login failed: ' + res.error.message);
+    } catch(e) {
+        showToast('Login error. Please try again.');
+    }
+}
+
+async function logoutUser() {
+    try {
+        showToast('Signing out...');
+        await _sb.auth.signOut();
+        // onAuthStateChange will fire and set _user = null automatically
+    } catch(e) {
+        showToast('Logout failed. Try again.');
+    }
+}
+
+function renderAuth() {
+    var el = document.getElementById('auth-section');
+    if (!el) return;
+
+    if (_user) {
+        var name = (_user.email || 'user').split('@')[0].toUpperCase();
+        // CRITICAL: onclick must call window.* function explicitly
+        el.innerHTML =
+            '<div style="padding:12px 16px; font-size:0.75rem; color:var(--primary); font-weight:800;' +
+            ' background:var(--surface); border:1px solid var(--border); border-radius:12px;' +
+            ' margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">' +
+            '<span>\uD83D\uDC64 ' + esc(name) + '</span>' +
+            '<button onclick="window._doLogout()" style="background:var(--danger); color:#fff; border:none;' +
+            ' padding:9px 16px; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.75rem;' +
+            ' -webkit-appearance:none;">LOGOUT</button>' +
+            '</div>';
+    } else {
+        el.innerHTML =
+            '<button onclick="window._doLogin()" style="width:100%; background:#fff; margin-bottom:20px;' +
+            ' color:#000; padding:14px; border-radius:12px; font-weight:800; border:none; cursor:pointer;' +
+            ' display:flex; align-items:center; justify-content:center; gap:10px; font-size:0.85rem;' +
+            ' -webkit-appearance:none;">' +
+            '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" style="flex-shrink:0;">' +
+            ' Sign in with Google' +
+            '</button>';
     }
 
-    async function logoutUser() {
-        // Just call signOut — onAuthStateChange handles the rest
-        const { error } = await _client.auth.signOut();
-        if (error) showToast("Logout failed. Try again.");
-        else showToast("Signed out.");
-    }
+    try { lucide.createIcons(); } catch(e) {}
+}
 
-    function renderAuth() {
-        const el = document.getElementById('auth-section');
-        if (!el) return;
+// Exposed on window so inline onclick can reach them from WebView
+window._doLogin = loginGoogle;
+window._doLogout = logoutUser;
 
-        if (user) {
-            const name = (user.email || 'user').split('@')[0].toUpperCase();
-            el.innerHTML = `
-                <div style="padding:12px 16px; font-size:0.75rem; color:var(--primary); font-weight:800;
-                     background:var(--surface); border:1px solid var(--border); border-radius:12px;
-                     margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>👤 ${name}</span>
-                    <button id="logout-btn" style="background:var(--danger); color:#fff; border:none;
-                        padding:8px 16px; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.75rem;">
-                        LOGOUT
-                    </button>
-                </div>`;
-            // Attach via addEventListener — NOT onclick attribute.
-            // onclick attributes lose JS scope in Android WebView after deep link login.
-            document.getElementById('logout-btn').addEventListener('click', logoutUser);
-        } else {
-            el.innerHTML = `
-                <button id="login-btn" style="width:100%; background:#fff; margin-bottom:24px; color:#000;
-                    padding:14px; border-radius:12px; font-weight:800; border:none; cursor:pointer;
-                    display:flex; align-items:center; justify-content:center; gap:10px; font-size:0.85rem;">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
-                    Sign in with Google
-                </button>`;
-            document.getElementById('login-btn').addEventListener('click', loginGoogle);
+// ----------------------------------------------------------------
+// DATA
+// ----------------------------------------------------------------
+async function fetchGrid() {
+    try {
+        var res = await _sb.from('areas').select('*, subscriptions(count)').eq('approved', true).order('name');
+        if (res.data) {
+            _grid = res.data;
+            buildTowns(_grid);
+            renderGrid(applyFilter());
         }
+    } catch(e) {}
+}
+
+async function fetchComments() {
+    try {
+        var res = await _sb.from('comments').select('*').order('created_at', { ascending: false });
+        if (res.data) _comments = res.data;
+    } catch(e) {}
+}
+
+async function fetchSubs() {
+    if (!_user) return;
+    try {
+        var res = await _sb.from('subscriptions').select('area_id').eq('user_id', _user.id);
+        if (res.data) _subs = res.data.map(function(i) { return i.area_id; });
+    } catch(e) {}
+}
+
+// ----------------------------------------------------------------
+// REALTIME
+// ----------------------------------------------------------------
+function startRealtime() {
+    var dot = document.getElementById('status-dot');
+    var txt = document.getElementById('status-text');
+
+    function online() {
+        if (dot) dot.style.background = 'var(--success)';
+        if (txt) txt.innerText = 'Grid Live';
+    }
+    function offline() {
+        if (dot) dot.style.background = 'var(--danger)';
+        if (txt) txt.innerText = 'Reconnecting...';
+        setTimeout(startRealtime, 6000);
     }
 
-    // ============================================================
-    // DATA FETCHING
-    // ============================================================
-    async function fetchGrid() {
-        const { data } = await _client.from('areas').select('*, subscriptions(count)').eq('approved', true).order('name');
-        if (data) { gridData = data; buildTowns(data); filterGrid(); }
-    }
-
-    async function fetchComments() {
-        const { data } = await _client.from('comments').select('*').order('created_at', { ascending: false });
-        if (data) { allComments = data; }
-    }
-
-    async function fetchSubs() {
-        if (!user) return;
-        const { data } = await _client.from('subscriptions').select('area_id').eq('user_id', user.id);
-        if (data) userSubs = data.map(i => i.area_id);
-    }
-
-    // ============================================================
-    // REALTIME
-    // ============================================================
-    function syncRealtime() {
-        const dot = document.getElementById('status-dot');
-        const txt = document.getElementById('status-text');
-        const setOnline = () => { if(dot) dot.style.background='var(--success)'; if(txt) txt.innerText='Grid Live'; };
-        const setOffline = () => { if(dot) dot.style.background='var(--danger)'; if(txt) txt.innerText='Reconnecting...'; };
-
-        _client.channel('public-db')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, () => fetchGrid())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => fetchComments())
-            .subscribe(status => {
-                if (status === 'SUBSCRIBED') setOnline();
-                else if (['CHANNEL_ERROR','CLOSED','TIMED_OUT'].includes(status)) {
-                    setOffline();
-                    setTimeout(syncRealtime, 5000);
-                }
+    try {
+        if (_realtimeChannel) { _sb.removeChannel(_realtimeChannel); }
+        _realtimeChannel = _sb.channel('grid-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, function() { fetchGrid(); })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, function() { fetchComments(); renderGrid(applyFilter()); })
+            .subscribe(function(status) {
+                if (status === 'SUBSCRIBED') online();
+                else if (status === 'CHANNEL_ERROR' || status === 'CLOSED' || status === 'TIMED_OUT') offline();
             });
+    } catch(e) {}
 
-        setTimeout(async () => {
-            if (txt?.innerText === 'Connecting...') {
-                const { error } = await _client.from('areas').select('id').limit(1);
-                if (!error) setOnline(); else setOffline();
-            }
-        }, 5000);
+    // Fallback ping after 6s
+    setTimeout(async function() {
+        if (txt && txt.innerText === 'Connecting...') {
+            try {
+                var r = await _sb.from('areas').select('id').limit(1);
+                if (!r.error) online(); else offline();
+            } catch(e) { offline(); }
+        }
+    }, 6000);
 
-        const pCh = _client.channel('online-status');
-        pCh.on('presence', { event: 'sync' }, () => {
-            const state = pCh.presenceState();
-            let count = 0;
-            for (const k in state) count += state[k].length;
-            const el = document.getElementById('member-count');
-            if (el) el.innerText = `${count} ONLINE`;
-        }).subscribe(async status => {
+    // Presence
+    try {
+        var pCh = _sb.channel('presence-osun');
+        pCh.on('presence', { event: 'sync' }, function() {
+            var state = pCh.presenceState();
+            var count = 0;
+            for (var k in state) count += state[k].length;
+            var el = document.getElementById('member-count');
+            if (el) el.innerText = count + ' ONLINE';
+        }).subscribe(async function(status) {
             if (status === 'SUBSCRIBED') {
-                await pCh.track({ online_at: new Date().toISOString(), email: user?.email || 'anon' });
+                await pCh.track({ t: Date.now(), u: (_user && _user.email) || 'anon' });
             }
         });
+    } catch(e) {}
+}
+
+// ----------------------------------------------------------------
+// FILTER & RENDER
+// ----------------------------------------------------------------
+function applyFilter() {
+    var town = (document.getElementById('town-filter') || {}).value || 'all';
+    var q = ((document.getElementById('search-grid') || {}).value || '').toLowerCase();
+    return _grid.filter(function(s) {
+        return (town === 'all' || s.town === town) && s.name.toLowerCase().indexOf(q) !== -1;
+    });
+}
+
+function renderGrid(list) {
+    var container = document.getElementById('street-feed');
+    if (!container) return;
+
+    if (!list || !list.length) {
+        container.innerHTML = '<div class="empty-state"><i data-lucide="search" style="width:40px; height:40px; color:var(--border);"></i><p>No streets found.</p></div>';
+        try { lucide.createIcons(); } catch(e) {}
+        return;
     }
 
-    // ============================================================
-    // RENDERING
-    // ============================================================
-    function timeAgo(date) {
-        if (!date) return "No updates";
-        const sec = Math.floor((new Date() - new Date(date)) / 1000);
-        if (sec < 60) return "Just now";
-        const min = Math.floor(sec / 60);
-        if (min < 60) return min + "m ago";
-        const hr = Math.floor(min / 60);
-        if (hr < 24) return hr + "h ago";
-        return Math.floor(hr / 24) + "d ago";
-    }
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+        var s = list[i];
+        var isOn = (s.status === 'Light On');
+        var subbed = (_subs.indexOf(s.id) !== -1);
+        var followers = (s.subscriptions && s.subscriptions[0]) ? (s.subscriptions[0].count || 0) : 0;
+        var lastAct = getLastActionToday(s.id);
+        var outLocked = (lastAct === 'outage');
+        var resLocked = (lastAct === 'restored');
 
-    function filterGrid() {
-        const town = document.getElementById('town-filter')?.value || 'all';
-        const q = (document.getElementById('search-grid')?.value || '').toLowerCase();
-        renderGrid(gridData.filter(s => (town === 'all' || s.town === town) && s.name.toLowerCase().includes(q)));
-    }
-
-    function renderGrid(list) {
-        const container = document.getElementById('street-feed');
-        if (!container) return;
-
-        if (!list.length) {
-            container.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--text-dim); font-weight:700; font-size:0.85rem;">No streets found.</div>`;
-            return;
+        // Comments for this street
+        var cHtml = '';
+        var cList = _comments.filter(function(c) { return c.area_id === s.id; }).slice(0, 3);
+        for (var j = 0; j < cList.length; j++) {
+            var c = cList[j];
+            cHtml +=
+                '<div class="comment-item">' +
+                '<div class="comment-user">' +
+                '<span>' + esc((c.user_email || 'anon').split('@')[0]) + '</span>' +
+                '<span>' + timeAgo(c.created_at) + '</span>' +
+                '</div>' +
+                '<div style="color:#fff; font-size:0.78rem; line-height:1.4;">' + esc(c.content) + '</div>' +
+                '</div>';
         }
+        if (!cHtml) cHtml = '<p style="font-size:0.7rem; color:var(--text-dim); text-align:center; padding:6px 0;">No updates yet.</p>';
 
-        container.innerHTML = list.map(s => {
-            const isOn = s.status === 'Light On';
-            const subbed = userSubs.includes(s.id);
-            const followers = s.subscriptions?.[0]?.count || 0;
-            const lastAct = getUserLastActionToday(s.id);
-            const outageLocked = lastAct === 'outage';
-            const restoreLocked = lastAct === 'restored';
+        // Each button calls window.* directly — the ONLY reliable way in Capacitor WebView
+        html +=
+            '<div class="pro-card' + (isOn ? ' card-on' : '') + '">' +
 
-            const commentsHTML = allComments.filter(c => c.area_id === s.id).slice(0, 3).map(c => `
-                <div class="comment-item">
-                    <div class="comment-user">
-                        <span>${esc((c.user_email||'anon').split('@')[0])}</span>
-                        <span>${timeAgo(c.created_at)}</span>
-                    </div>
-                    <div style="color:#fff;">${esc(c.content)}</div>
-                </div>`).join('');
+            // Header
+            '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">' +
+            '<div style="flex:1; min-width:0;">' +
+            '<p style="font-size:0.58rem; color:var(--text-dim); text-transform:uppercase; font-weight:700; letter-spacing:0.04em;">' + esc(s.town || '') + '</p>' +
+            '<h2 class="street-name">' + esc(s.name) + '</h2>' +
+            '<span class="status-pill ' + (isOn ? 'pill-on' : 'pill-off') + '">' + esc(s.status || 'Unknown') + '</span>' +
+            '<div class="time-ago">Updated ' + timeAgo(s.updated_at) + '</div>' +
+            '</div>' +
+            '<div style="display:flex; gap:8px; flex-shrink:0;">' +
+            '<div class="btn-circle' + (subbed ? ' active' : '') + '" onclick="window._bell(' + s.id + ')" title="' + (subbed ? 'Unfollow' : 'Follow') + '">' +
+            '<i data-lucide="' + (subbed ? 'bell-ring' : 'bell') + '" style="width:18px; height:18px;"></i>' +
+            '</div>' +
+            '<div class="btn-circle" onclick="window._share(\'' + escJ(s.name) + '\',\'' + escJ(s.status || '') + '\')" title="Share">' +
+            '<i data-lucide="share-2" style="width:18px; height:18px;"></i>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
 
-            return `
-            <div class="pro-card ${isOn ? 'card-on' : ''}">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-                    <div style="flex:1; min-width:0;">
-                        <p style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; font-weight:700; margin-bottom:2px;">${esc(s.town||'')}</p>
-                        <h2 class="street-name" style="word-break:break-word;">${esc(s.name)}</h2>
-                        <div class="status-pill ${isOn?'pill-on':'pill-off'}">${esc(s.status||'Unknown')}</div>
-                        <div class="time-ago">Updated: ${timeAgo(s.updated_at)}</div>
-                    </div>
-                    <div style="display:flex; gap:8px;">
-                        <div class="btn-circle ${subbed?'active':''}" data-act="bell" data-id="${s.id}">
-                            <i data-lucide="${subbed?'bell-ring':'bell'}" style="width:18px;"></i>
-                        </div>
-                        <div class="btn-circle" data-act="share" data-name="${escA(s.name)}" data-status="${escA(s.status||'')}">
-                            <i data-lucide="share-2" style="width:18px;"></i>
-                        </div>
-                    </div>
-                </div>
+            // Stats
+            '<div class="card-meta">' +
+            '<span><i data-lucide="users" style="width:11px; height:11px; display:inline-block; vertical-align:middle; margin-right:3px;"></i>' + followers + ' Followers</span>' +
+            '<span style="color:var(--success);">&#9679; ' + (s.restore_count || 0) + ' Restored</span>' +
+            '<span style="color:var(--danger);">&#9679; ' + (s.outage_count || 0) + ' Outages</span>' +
+            '</div>' +
 
-                <div class="card-meta">
-                    <span><i data-lucide="users" style="width:12px; display:inline-block; vertical-align:middle;"></i> ${followers} Followers</span>
-                    <span style="color:var(--success);">● ${s.restore_count||0} Restored</span>
-                    <span style="color:var(--danger);">● ${s.outage_count||0} Outages</span>
-                </div>
+            // Chips
+            '<div class="chip-group">' +
+            '<button class="action-chip" onclick="window._chip(' + s.id + ',\'&#x26C8;&#xFE0F; Weather Issue\')">&#x26C8;&#xFE0F; Weather</button>' +
+            '<button class="action-chip" onclick="window._chip(' + s.id + ',\'&#x26A1; Low Voltage\')">&#x26A1; Voltage</button>' +
+            '<button class="action-chip" onclick="window._chip(' + s.id + ',\'&#x1F527; Phase Issue\')">&#x1F527; Phase</button>' +
+            '<button class="action-chip" onclick="window._chip(' + s.id + ',\'&#x1F50C; Transformer Fault\')">&#x1F50C; Transformer</button>' +
+            '</div>' +
 
-                <div class="chip-group">
-                    <button class="action-chip" data-act="chip" data-id="${s.id}" data-chip="⛈️ Weather Issue">⛈️ Weather</button>
-                    <button class="action-chip" data-act="chip" data-id="${s.id}" data-chip="⚡ Low Voltage">⚡ Voltage</button>
-                    <button class="action-chip" data-act="chip" data-id="${s.id}" data-chip="🔧 Phase Issue">🔧 Phase</button>
-                    <button class="action-chip" data-act="chip" data-id="${s.id}" data-chip="🔌 Transformer Fault">🔌 Transformer</button>
-                </div>
+            // Status buttons
+            '<div class="btn-row">' +
+            '<button class="btn-up' + (resLocked ? ' btn-locked' : '') + '" onclick="window._status(' + s.id + ',\'Light On\',' + resLocked + ')">' +
+            '&#x2705; RESTORED' + (resLocked ? ' \u2713' : '') +
+            '</button>' +
+            '<button class="btn-down' + (outLocked ? ' btn-locked' : '') + '" onclick="window._status(' + s.id + ',\'No Light\',' + outLocked + ')">' +
+            '&#x26A1; OUTAGE' + (outLocked ? ' \u2713' : '') +
+            '</button>' +
+            '</div>' +
 
-                <div class="btn-row">
-                    <button class="btn-up ${restoreLocked?'btn-locked':''}"
-                        data-act="status" data-id="${s.id}" data-status="Light On" data-locked="${restoreLocked}">
-                        ✅ RESTORED${restoreLocked?' ✓':''}
-                    </button>
-                    <button class="btn-down ${outageLocked?'btn-locked':''}"
-                        data-act="status" data-id="${s.id}" data-status="No Light" data-locked="${outageLocked}">
-                        ⚡ OUTAGE${outageLocked?' ✓':''}
-                    </button>
-                </div>
+            // Comments
+            '<div class="comment-section">' +
+            '<div style="max-height:130px; overflow-y:auto; -webkit-overflow-scrolling:touch;">' + cHtml + '</div>' +
+            '<div class="comment-input-row">' +
+            '<input type="text" id="ci' + s.id + '" class="minimal-input" placeholder="Add an update..." style="padding:10px; font-size:0.75rem;">' +
+            '<button class="btn-post" onclick="window._post(' + s.id + ')">Post</button>' +
+            '</div>' +
+            '</div>' +
 
-                <div class="comment-section">
-                    <div style="max-height:120px; overflow-y:auto;">
-                        ${commentsHTML || '<p style="font-size:0.7rem; color:var(--text-dim); text-align:center; padding:8px 0;">No comments yet.</p>'}
-                    </div>
-                    <div class="comment-input-row">
-                        <input type="text" id="ci-${s.id}" class="minimal-input" placeholder="Add an update..." style="padding:10px; font-size:0.75rem;">
-                        <button class="btn-post" data-act="comment" data-id="${s.id}">Post</button>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-
-        lucide.createIcons();
-
-        // Event delegation on container — one listener handles ALL buttons.
-        // This is the key fix: inline onclick="" attributes fail in Android
-        // WebView after a deep-link session restore because the JS function
-        // references become stale. Delegation on a persistent DOM node works.
-        container.onclick = handleCardClick;
+            '</div>';
     }
 
-    function handleCardClick(e) {
-        const el = e.target.closest('[data-act]');
-        if (!el) return;
-        const act = el.dataset.act;
-        const id = el.dataset.id ? parseInt(el.dataset.id) : null;
+    container.innerHTML = html;
+    try { lucide.createIcons(); } catch(e) {}
+}
 
-        if (act === 'bell') {
-            if (!interactionGuard()) return;
-            toggleFav(id);
-        } else if (act === 'share') {
-            openShare(el.dataset.name, el.dataset.status);
-        } else if (act === 'chip') {
-            if (!interactionGuard()) return;
-            setChip(id, el.dataset.chip);
-        } else if (act === 'status') {
-            if (!interactionGuard()) return;
-            if (el.dataset.locked === 'true') {
-                const isOut = el.dataset.status === 'No Light';
-                showToast(isOut ? 'Already reported. Press RESTORED first.' : 'Already reported. Press OUTAGE first.');
-                return;
+// ----------------------------------------------------------------
+// WINDOW-EXPOSED ACTION HANDLERS
+// These are the ONLY functions called by inline onclick=""
+// They must all be on window.* to survive WebView context resets
+// ----------------------------------------------------------------
+
+window._bell = async function(id) {
+    if (!guard()) return;
+    if (_subs.indexOf(id) !== -1) {
+        await _sb.from('subscriptions').delete().eq('user_id', _user.id).eq('area_id', id);
+        _subs = _subs.filter(function(x) { return x !== id; });
+        showToast('Unfollowed.');
+    } else {
+        await _sb.from('subscriptions').insert([{ user_id: _user.id, area_id: id }]);
+        _subs.push(id);
+        showToast('Following! You will get alerts.');
+    }
+    renderGrid(applyFilter());
+};
+
+window._share = function(name, status) {
+    var text = encodeURIComponent('&#x1F4A1; Up-Nepa Osun: ' + name + ' is currently ' + status + '. Check your area:');
+    var url = encodeURIComponent('https://up-nepa-osun.vercel.app/');
+    var el;
+    el = document.getElementById('share-wa'); if(el) el.href = 'https://wa.me/?text=' + text + '%20' + url;
+    el = document.getElementById('share-x'); if(el) el.href = 'https://twitter.com/intent/tweet?text=' + text + '&url=' + url;
+    el = document.getElementById('share-fb'); if(el) el.href = 'https://www.facebook.com/sharer/sharer.php?u=' + url;
+    el = document.getElementById('share-tg'); if(el) el.href = 'https://t.me/share/url?url=' + url + '&text=' + text;
+    var m = document.getElementById('share-modal'); if(m) m.style.display = 'flex';
+};
+
+window._chip = async function(id, txt) {
+    if (!guard()) return;
+    var r = await _sb.from('areas').update({ status: txt, updated_at: new Date().toISOString() }).eq('id', id);
+    if (!r.error) {
+        showToast('Logged: ' + txt);
+        var idx = _grid.findIndex(function(x) { return x.id === id; });
+        if (idx !== -1) _grid[idx] = Object.assign({}, _grid[idx], { status: txt, updated_at: new Date().toISOString() });
+        renderGrid(applyFilter());
+    } else {
+        showToast('Failed. Check connection.');
+    }
+};
+
+window._status = async function(id, status, locked) {
+    if (!guard()) return;
+    if (locked) {
+        showToast(status === 'No Light' ? 'Already reported. Press RESTORED first.' : 'Already reported. Press OUTAGE first.');
+        return;
+    }
+    var newAct = (status === 'Light On') ? 'restored' : 'outage';
+    if (getLastActionToday(id) === newAct) {
+        showToast('Already reported today.');
+        return;
+    }
+    var s = null;
+    for (var i = 0; i < _grid.length; i++) { if (_grid[i].id === id) { s = _grid[i]; break; } }
+    if (!s) return;
+
+    var now = new Date();
+    var nowDate = now.toISOString().split('T')[0];
+    var lastDate = s.updated_at ? new Date(s.updated_at).toISOString().split('T')[0] : '';
+    var oC = (lastDate === nowDate) ? (s.outage_count || 0) : 0;
+    var rC = (lastDate === nowDate) ? (s.restore_count || 0) : 0;
+    if (status === 'Light On') rC++; else oC++;
+
+    var r = await _sb.from('areas').update({
+        status: status,
+        updated_at: now.toISOString(),
+        outage_count: oC,
+        restore_count: rC
+    }).eq('id', id);
+
+    if (!r.error) {
+        _lastAction[id] = { action: newAct, date: today() };
+        saveLastAction();
+        showToast(newAct === 'outage' ? '&#x26A1; Outage reported!' : '&#x2705; Restored reported!');
+        for (var i = 0; i < _grid.length; i++) {
+            if (_grid[i].id === id) {
+                _grid[i] = Object.assign({}, _grid[i], { status: status, updated_at: now.toISOString(), outage_count: oC, restore_count: rC });
+                break;
             }
-            updateStatus(id, el.dataset.status);
-        } else if (act === 'comment') {
-            if (!interactionGuard()) return;
-            postComment(id);
         }
+        renderGrid(applyFilter());
+    } else {
+        showToast('Update failed. Check connection.');
     }
+};
 
-    // ============================================================
-    // ACTIONS
-    // ============================================================
-    async function updateStatus(id, status) {
-        const today = getTodayDate();
-        const newAct = status === 'Light On' ? 'restored' : 'outage';
-        if (getUserLastActionToday(id) === newAct) {
-            showToast(newAct==='outage' ? 'Already reported OUTAGE today.' : 'Already reported RESTORED today.');
-            return;
-        }
-        const s = gridData.find(x => x.id === id);
-        if (!s) return;
-        const now = new Date();
-        const lastDate = s.updated_at ? new Date(s.updated_at).toISOString().split('T')[0] : '';
-        let oC = lastDate===today ? (s.outage_count||0) : 0;
-        let rC = lastDate===today ? (s.restore_count||0) : 0;
-        status==='Light On' ? rC++ : oC++;
+window._post = async function(id) {
+    if (!guard()) return;
+    var input = document.getElementById('ci' + id);
+    if (!input) return;
+    var text = input.value.trim();
+    if (!text) { showToast('Please type something first.'); return; }
 
-        const { error } = await _client.from('areas').update({
-            status, updated_at: now.toISOString(), outage_count: oC, restore_count: rC
-        }).eq('id', id);
+    var r = await _sb.from('comments').insert([{
+        area_id: id,
+        user_email: _user.email,
+        content: text
+    }]);
 
-        if (!error) {
-            userLastAction[id] = { action: newAct, date: today };
-            saveUserLastAction();
-            showToast(newAct==='outage' ? '⚡ Outage reported!' : '✅ Restored reported!');
-            const idx = gridData.findIndex(x => x.id === id);
-            if (idx !== -1) gridData[idx] = { ...gridData[idx], status, updated_at: now.toISOString(), outage_count: oC, restore_count: rC };
-            filterGrid();
-        } else {
-            showToast("Update failed. Check your connection.");
-        }
+    if (!r.error) {
+        input.value = '';
+        showToast('Comment posted!');
+        await fetchComments();
+        renderGrid(applyFilter());
+    } else {
+        showToast('Failed to post. Try again.');
     }
+};
 
-    async function postComment(id) {
-        if (!user) { interactionGuard(); return; }
-        const input = document.getElementById(`ci-${id}`);
-        if (!input) return;
-        const text = input.value.trim();
-        if (!text) { showToast('Please type something first.'); return; }
-        const { error } = await _client.from('comments').insert([{ area_id: id, user_email: user.email, content: text }]);
-        if (!error) { input.value = ''; showToast('Comment posted!'); await fetchComments(); filterGrid(); }
-        else showToast('Failed to post. Try again.');
-    }
+// ----------------------------------------------------------------
+// GLOBAL UI FUNCTIONS — also on window.*
+// ----------------------------------------------------------------
 
-    async function toggleFav(id) {
-        if (!user) return;
-        if (userSubs.includes(id)) {
-            await _client.from('subscriptions').delete().eq('user_id', user.id).eq('area_id', id);
-            userSubs = userSubs.filter(x => x !== id);
-            showToast('Unfollowed.');
-        } else {
-            await _client.from('subscriptions').insert([{ user_id: user.id, area_id: id }]);
-            userSubs.push(id);
-            showToast('Following! You will get alerts.');
-        }
-        filterGrid();
-    }
+window.filterGrid = function() {
+    renderGrid(applyFilter());
+};
 
-    async function setChip(id, txt) {
-        const { error } = await _client.from('areas').update({ status: txt, updated_at: new Date().toISOString() }).eq('id', id);
-        if (!error) showToast('Logged: ' + txt);
-        else showToast('Failed to log. Try again.');
-    }
-
-    async function submitSuggestion() {
-        if (!interactionGuard()) return;
-        const name = document.getElementById('suggest-name')?.value?.trim();
-        const town = document.getElementById('suggest-town')?.value?.trim();
-        if (!name || !town) { showToast('Please fill both fields.'); return; }
-        const { error } = await _client.from('areas').insert([{ name, town, approved: false, status: 'No Light' }]);
-        if (!error) { showToast("Suggestion sent! We'll review it."); closeModals(); }
-        else showToast('Failed to submit. Try again.');
-    }
-
-    // ============================================================
-    // SEARCH
-    // ============================================================
-    function buildTowns(data) {
-        const list = [...new Set(data.map(i => i.town).filter(Boolean))].sort();
-        const el = document.getElementById('town-filter');
-        if (el) el.innerHTML = '<option value="all">ALL TOWNS</option>' + list.map(t => `<option value="${t}">${t}</option>`).join('');
-    }
-
-    function handleSearch(val) {
-        const box = document.getElementById('suggestion-box');
-        if (!val) { if(box) box.style.display='none'; filterGrid(); return; }
-        const matches = gridData.filter(s => s.name.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
-        if (box) {
-            box.innerHTML = matches.map(m => `<div class="suggestion-item" data-name="${escA(m.name)}"><i data-lucide="map-pin" style="width:14px;"></i>${esc(m.name)}</div>`).join('');
-            box.style.display = matches.length ? 'block' : 'none';
-            box.querySelectorAll('.suggestion-item').forEach(item => {
-                item.addEventListener('click', () => selectStreet(item.dataset.name));
-            });
-            lucide.createIcons();
-        }
-        filterGrid();
-    }
-
-    function selectStreet(name) {
-        const el = document.getElementById('search-grid');
-        if (el) el.value = name;
-        const box = document.getElementById('suggestion-box');
+window.handleSearch = function(val) {
+    var box = document.getElementById('suggestion-box');
+    if (!val) {
         if (box) box.style.display = 'none';
-        filterGrid();
+        renderGrid(applyFilter());
+        return;
     }
+    var matches = _grid.filter(function(s) {
+        return s.name.toLowerCase().indexOf(val.toLowerCase()) !== -1;
+    }).slice(0, 5);
 
-    // ============================================================
-    // UTILITIES
-    // ============================================================
-    function interactionGuard() {
-        if (!user) {
-            showToast('Please sign in first.');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return false;
+    if (box) {
+        var html = '';
+        for (var i = 0; i < matches.length; i++) {
+            html += '<div class="suggestion-item" onclick="window._selectStreet(\'' + escJ(matches[i].name) + '\')">' +
+                    '<i data-lucide="map-pin" style="width:14px; height:14px; flex-shrink:0;"></i>' +
+                    esc(matches[i].name) +
+                    '</div>';
         }
-        return true;
+        box.innerHTML = html;
+        box.style.display = matches.length ? 'block' : 'none';
+        try { lucide.createIcons(); } catch(e) {}
     }
+    renderGrid(applyFilter());
+};
 
-    function esc(str) {
-        if (!str) return '';
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+window._selectStreet = function(name) {
+    var el = document.getElementById('search-grid');
+    if (el) el.value = name;
+    var box = document.getElementById('suggestion-box');
+    if (box) box.style.display = 'none';
+    renderGrid(applyFilter());
+};
+
+window.openSuggest = function() {
+    var m = document.getElementById('suggest-modal');
+    if (m) m.style.display = 'flex';
+};
+
+window.openSupport = function() {
+    var m = document.getElementById('support-modal');
+    if (m) m.style.display = 'flex';
+};
+
+window.closeModals = function() {
+    document.querySelectorAll('.modal-overlay').forEach(function(m) { m.style.display = 'none'; });
+};
+
+window.submitSuggestion = async function() {
+    if (!guard()) return;
+    var name = (document.getElementById('suggest-name') || {}).value || '';
+    var town = (document.getElementById('suggest-town') || {}).value || '';
+    name = name.trim(); town = town.trim();
+    if (!name || !town) { showToast('Please fill both fields.'); return; }
+    var r = await _sb.from('areas').insert([{ name: name, town: town, approved: false, status: 'No Light' }]);
+    if (!r.error) { showToast("Suggestion sent! We'll review it."); window.closeModals(); }
+    else showToast('Failed to submit. Try again.');
+};
+
+window.refreshAll = async function() {
+    showToast('Refreshing...');
+    await fetchGrid();
+    await fetchComments();
+    if (_user) await fetchSubs();
+    renderGrid(applyFilter());
+    showToast('Updated!');
+};
+
+// ----------------------------------------------------------------
+// HELPERS
+// ----------------------------------------------------------------
+function guard() {
+    if (!_user) {
+        showToast('Please sign in first.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return false;
     }
-    function escA(str) {
-        if (!str) return '';
-        return String(str).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    return true;
+}
+
+function buildTowns(data) {
+    var towns = [];
+    var seen = {};
+    for (var i = 0; i < data.length; i++) {
+        if (data[i].town && !seen[data[i].town]) { towns.push(data[i].town); seen[data[i].town] = 1; }
     }
-
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        if (!t) return;
-        t.innerText = msg;
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3000);
+    towns.sort();
+    var el = document.getElementById('town-filter');
+    if (el) {
+        el.innerHTML = '<option value="all">ALL TOWNS</option>' + towns.map(function(t) {
+            return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
+        }).join('');
     }
+}
 
-    function openSuggest() { document.getElementById('suggest-modal').style.display = 'flex'; }
-    function openSupport() { document.getElementById('support-modal').style.display = 'flex'; }
-    function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+function timeAgo(date) {
+    if (!date) return 'No updates';
+    var sec = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    if (sec < 60) return 'Just now';
+    var min = Math.floor(sec / 60);
+    if (min < 60) return min + 'm ago';
+    var hr = Math.floor(min / 60);
+    if (hr < 24) return hr + 'h ago';
+    return Math.floor(hr / 24) + 'd ago';
+}
 
-    function openShare(name, status) {
-        const text = encodeURIComponent(`💡 Up-Nepa Osun: ${name} is currently ${status}. Check your area:`);
-        const url = encodeURIComponent("https://up-nepa-osun.vercel.app/");
-        document.getElementById('share-wa').href = `https://wa.me/?text=${text}%20${url}`;
-        document.getElementById('share-x').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
-        document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-        document.getElementById('share-tg').href = `https://t.me/share/url?url=${url}&text=${text}`;
-        document.getElementById('share-modal').style.display = 'flex';
-    }
+function esc(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
-    async function refreshAll() {
-        showToast('Refreshing...');
-        await Promise.all([fetchGrid(), fetchComments()]);
-        if (user) await fetchSubs();
-        filterGrid();
-        showToast('Updated!');
-    }
+function escJ(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"');
+}
 
-    window.onload = startApp;
-    </script>
+function showToast(msg) {
+    var t = document.getElementById('toast');
+    if (!t) return;
+    t.innerText = msg;
+    t.classList.add('show');
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+// ----------------------------------------------------------------
+// BOOT
+// ----------------------------------------------------------------
+window.onload = startApp;
+
+})(); // end IIFE
+</script>
 </body>
 </html>
