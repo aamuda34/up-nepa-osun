@@ -1,0 +1,213 @@
+name: Up-Nepa Osun - Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Capacitor
+        run: |
+          npm install \
+            @capacitor/core@6 \
+            @capacitor/cli@6 \
+            @capacitor/android@6 \
+            @capacitor/app@6 \
+            @capacitor/browser@6 \
+            @capacitor/status-bar@6
+
+      # -------------------------------------------------------
+      # FIX: capacitor.config.json is inside www/ in your repo
+      # but Capacitor CLI requires it at the ROOT level.
+      # We write a fresh correct one at root here.
+      # -------------------------------------------------------
+      - name: Create capacitor.config.json at root
+        run: |
+          cat > capacitor.config.json << 'CAPEOF'
+          {
+            "appId": "com.upnepa.osun",
+            "appName": "Up-Nepa Osun",
+            "webDir": "www",
+            "bundledWebRuntime": false,
+            "server": {
+              "androidScheme": "https",
+              "hostname": "up-nepa-osun.vercel.app"
+            },
+            "plugins": {
+              "App": {
+                "launchUrl": "com.upnepa.osun://login-callback"
+              }
+            }
+          }
+          CAPEOF
+
+      - name: Add Android Platform
+        run: npx cap add android || true
+
+      - name: Sync Web Assets to Android
+        run: npx cap sync android
+
+      # -------------------------------------------------------
+      # FIX 1: APP ICON
+      # www/icon.png exists in your repo (confirmed from screenshot).
+      # We use Python Pillow (always available on GitHub runners)
+      # to resize into every required Android mipmap density.
+      # More reliable than imagemagick on CI runners.
+      # -------------------------------------------------------
+      - name: Install Pillow for icon resizing
+        run: pip install Pillow
+
+      - name: Apply App Icon to all Android mipmap folders
+        run: |
+          python3 << 'PYEOF'
+          from PIL import Image
+          import os
+
+          src = "www/icon.png"
+          if not os.path.exists(src):
+              print("ERROR: www/icon.png not found!")
+              exit(1)
+
+          img = Image.open(src).convert("RGBA")
+
+          densities = {
+              "mdpi":    48,
+              "hdpi":    72,
+              "xhdpi":   96,
+              "xxhdpi":  144,
+              "xxxhdpi": 192,
+          }
+
+          for density, size in densities.items():
+              folder = f"android/app/src/main/res/mipmap-{density}"
+              os.makedirs(folder, exist_ok=True)
+
+              resized = img.resize((size, size), Image.LANCZOS)
+
+              # Standard square icon
+              resized.save(f"{folder}/ic_launcher.png")
+
+              # Round icon (Android clips it to circle automatically)
+              resized.save(f"{folder}/ic_launcher_round.png")
+
+              print(f"  {density}: {size}x{size}px written")
+
+          # Also write to drawable folder (legacy fallback)
+          os.makedirs("android/app/src/main/res/drawable", exist_ok=True)
+          img.resize((192, 192), Image.LANCZOS).save("android/app/src/main/res/drawable/ic_launcher.png")
+
+          print("All icons applied successfully.")
+          PYEOF
+
+      # -------------------------------------------------------
+      # FIX: App Name in strings.xml
+      # -------------------------------------------------------
+      - name: Set correct App Name
+        run: |
+          STRINGS_FILE="android/app/src/main/res/values/strings.xml"
+          mkdir -p "$(dirname $STRINGS_FILE)"
+          cat > "$STRINGS_FILE" << 'STREOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Up-Nepa Osun</string>
+              <string name="title_activity_main">Up-Nepa Osun</string>
+              <string name="package_name">com.upnepa.osun</string>
+              <string name="custom_url_scheme">com.upnepa.osun</string>
+          </resources>
+          STREOF
+
+      # -------------------------------------------------------
+      # FIX 2: GOOGLE LOGIN DEEP LINK
+      # After user picks Google account, browser redirects to
+      # com.upnepa.osun://login-callback
+      # Android needs an intent-filter in AndroidManifest.xml
+      # to catch that URL and bring your app back to foreground.
+      # Without this, the browser just keeps spinning.
+      # -------------------------------------------------------
+      - name: Inject Deep Link Intent Filter into AndroidManifest.xml
+        run: |
+          python3 << 'PYEOF'
+          import os
+
+          manifest_path = "android/app/src/main/AndroidManifest.xml"
+
+          if not os.path.exists(manifest_path):
+              print("ERROR: AndroidManifest.xml not found!")
+              exit(1)
+
+          with open(manifest_path, "r") as f:
+              content = f.read()
+
+          # Avoid duplicate injection on re-runs
+          if "com.upnepa.osun" in content:
+              print("Deep link intent filter already present. Skipping.")
+              exit(0)
+
+          deep_link_block = """
+                  <intent-filter android:label="Up-Nepa Osun Login">
+                      <action android:name="android.intent.action.VIEW" />
+                      <category android:name="android.intent.category.DEFAULT" />
+                      <category android:name="android.intent.category.BROWSABLE" />
+                      <data
+                          android:scheme="com.upnepa.osun"
+                          android:host="login-callback" />
+                  </intent-filter>"""
+
+          # Insert before the first </activity> closing tag
+          content = content.replace("</activity>", deep_link_block + "\n        </activity>", 1)
+
+          with open(manifest_path, "w") as f:
+              f.write(content)
+
+          print("Deep link intent filter injected into AndroidManifest.xml")
+          PYEOF
+
+      # -------------------------------------------------------
+      # FIX: Copy google-services.json to correct Android folder
+      # Yours is in www/ but Firebase needs it at:
+      # android/app/google-services.json
+      # -------------------------------------------------------
+      - name: Copy google-services.json to Android folder
+        run: |
+          if [ -f "www/google-services.json" ]; then
+            cp www/google-services.json android/app/google-services.json
+            echo "google-services.json copied to android/app/"
+          else
+            echo "WARNING: www/google-services.json not found. Firebase notifications may not work."
+          fi
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Rename APK
+        run: |
+          mv android/app/build/outputs/apk/debug/app-debug.apk \
+             android/app/build/outputs/apk/debug/Up-Nepa-Osun.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Up-Nepa-Osun-APK
+          path: android/app/build/outputs/apk/debug/Up-Nepa-Osun.apk
+          retention-days: 14
