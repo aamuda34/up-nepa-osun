@@ -8,122 +8,61 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --p:#bb86fc; --ok:#03dac6; --no:#cf6679;
-            --bg:#050507; --s1:#111113; --s2:#1a1a1f;
-            --bd:#26262c; --tx:#f0f0f5; --dim:#808088;
-        }
+        :root{--p:#bb86fc;--ok:#03dac6;--no:#cf6679;--bg:#050507;--s1:#111113;--s2:#1a1a1f;--bd:#26262c;--tx:#f0f0f5;--dim:#808088}
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--tx);
-             padding-bottom:90px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-
-        /* LOADING */
-        #ld{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
-            align-items:center;justify-content:center;gap:14px;z-index:9999;transition:opacity .4s}
-        .spin{width:38px;height:38px;border:3px solid var(--bd);border-top-color:var(--p);
-              border-radius:50%;animation:spin .75s linear infinite}
-        @keyframes spin{to{transform:rotate(360deg)}}
-
-        /* TOAST */
-        #toast{position:fixed;top:16px;left:50%;transform:translate(-50%,-80px);
-               background:var(--p);color:#000;padding:9px 20px;border-radius:40px;
-               font-weight:800;font-size:.76rem;z-index:9998;
-               transition:transform .35s cubic-bezier(.34,1.56,.64,1);
-               max-width:86vw;text-align:center;pointer-events:none;white-space:nowrap}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--tx);padding-bottom:90px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+        #ld{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9999;transition:opacity .4s}
+        .spin{width:38px;height:38px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:sp .75s linear infinite}
+        @keyframes sp{to{transform:rotate(360deg)}}
+        #toast{position:fixed;top:16px;left:50%;transform:translate(-50%,-80px);background:var(--p);color:#000;padding:9px 20px;border-radius:40px;font-weight:800;font-size:.76rem;z-index:9998;transition:transform .35s cubic-bezier(.34,1.56,.64,1);max-width:86vw;text-align:center;pointer-events:none;white-space:nowrap}
         #toast.show{transform:translate(-50%,0)}
-
-        /* TICKER */
-        .ticker{background:var(--s2);border-bottom:1px solid var(--bd);
-                height:32px;display:flex;align-items:center;overflow:hidden}
-        .t-badge{background:var(--p);color:#000;font-size:.56rem;font-weight:800;
-                 padding:0 10px;height:100%;display:flex;align-items:center;
-                 text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+        .ticker{background:var(--s2);border-bottom:1px solid var(--bd);height:32px;display:flex;align-items:center;overflow:hidden}
+        .t-badge{background:var(--p);color:#000;font-size:.56rem;font-weight:800;padding:0 10px;height:100%;display:flex;align-items:center;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
         .t-track{flex:1;overflow:hidden}
-        .t-inner{display:inline-block;white-space:nowrap;padding-left:100%;
-                 animation:tick 30s linear infinite;font-size:.72rem;
-                 color:var(--p);font-weight:600}
+        .t-inner{display:inline-block;white-space:nowrap;padding-left:100%;animation:tick 30s linear infinite;font-size:.72rem;color:var(--p);font-weight:600}
         @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-100%)}}
-
-        /* NAV */
         .topnav{padding:12px 16px 8px;display:flex;justify-content:space-between;align-items:center}
         .brand{display:flex;align-items:center;gap:10px}
-        .logo-box{width:40px;height:40px;border-radius:10px;background:var(--s2);
-                  border:1.5px solid var(--p);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .logo-box{width:40px;height:40px;border-radius:10px;background:var(--s2);border:1.5px solid var(--p);display:flex;align-items:center;justify-content:center;flex-shrink:0}
         .b-title{font-size:1rem;font-weight:800;line-height:1.1}
         .b-title span{color:var(--p)}
         .b-sub{display:flex;align-items:center;gap:4px;margin-top:2px}
-        .conn-dot{width:6px;height:6px;border-radius:50%;background:var(--no);flex-shrink:0;transition:background .3s}
-        .conn-dot.live{background:var(--ok)}
-        .conn-lbl{font-size:.56rem;color:var(--dim);font-weight:600}
-        .online-chip{padding:5px 10px;border-radius:7px;background:var(--s2);
-                     border:1px solid var(--bd);font-size:.6rem;font-weight:800;color:var(--p)}
-
-        /* AUTH */
-        #auth-bar{margin:0 16px 12px;padding:10px 14px;background:var(--s1);
-                  border:1px solid var(--bd);border-radius:12px;
-                  display:flex;justify-content:space-between;align-items:center;min-height:46px}
+        .cdot{width:6px;height:6px;border-radius:50%;background:var(--no);flex-shrink:0;transition:background .3s}
+        .cdot.live{background:var(--ok)}
+        .clbl{font-size:.56rem;color:var(--dim);font-weight:600}
+        .ochip{padding:5px 10px;border-radius:7px;background:var(--s2);border:1px solid var(--bd);font-size:.6rem;font-weight:800;color:var(--p)}
+        #auth-bar{margin:0 16px 12px;padding:10px 14px;background:var(--s1);border:1px solid var(--bd);border-radius:12px;display:flex;justify-content:space-between;align-items:center;min-height:46px}
         .u-name{font-size:.7rem;font-weight:800;color:var(--p)}
-        .btn-out{background:var(--no);color:#fff;border:none;padding:7px 13px;
-                 border-radius:8px;font-weight:800;font-size:.68rem;cursor:pointer;
-                 -webkit-appearance:none;touch-action:manipulation}
-        .btn-goo{width:100%;background:#fff;color:#111;border:none;padding:12px 16px;
-                 border-radius:12px;font-weight:800;font-size:.8rem;cursor:pointer;
-                 display:flex;align-items:center;justify-content:center;gap:10px;
-                 -webkit-appearance:none;touch-action:manipulation}
+        .btn-out{background:var(--no);color:#fff;border:none;padding:7px 13px;border-radius:8px;font-weight:800;font-size:.68rem;cursor:pointer;-webkit-appearance:none;touch-action:manipulation}
+        .btn-goo{width:100%;background:#fff;color:#111;border:none;padding:12px 16px;border-radius:12px;font-weight:800;font-size:.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-appearance:none;touch-action:manipulation}
         .btn-goo img{width:18px;height:18px;flex-shrink:0}
-
-        /* SEARCH */
-        .search-area{position:sticky;top:0;z-index:400;padding:0 16px 10px;background:var(--bg)}
-        .search-row{display:grid;grid-template-columns:auto 1fr;gap:7px;
-                    background:var(--s2);border:1px solid var(--bd);border-radius:14px;padding:6px}
-        select.tsel{background:var(--p);color:#000;border:none;border-radius:9px;
-                    padding:8px 10px;font-weight:800;font-size:.7rem;cursor:pointer;
-                    -webkit-appearance:none;max-width:118px}
-        input.sbox{background:var(--s1);border:1px solid var(--bd);color:var(--tx);
-                   border-radius:9px;padding:8px 12px;font-size:.78rem;outline:none;
-                   font-family:inherit;width:100%;-webkit-appearance:none}
-        #sdrop{position:absolute;top:calc(100% - 2px);left:16px;right:16px;
-               background:var(--s1);border:1px solid var(--bd);border-radius:12px;
-               display:none;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden}
-        .sdrop-i{padding:12px 15px;font-size:.8rem;cursor:pointer;
-                 border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
+        .search-area{position:sticky;top:0;z-index:400;padding:0 16px 10px;background:var(--bg);position:relative}
+        .search-row{display:grid;grid-template-columns:auto 1fr;gap:7px;background:var(--s2);border:1px solid var(--bd);border-radius:14px;padding:6px}
+        select.tsel{background:var(--p);color:#000;border:none;border-radius:9px;padding:8px 10px;font-weight:800;font-size:.7rem;cursor:pointer;-webkit-appearance:none;max-width:118px}
+        input.sbox{background:var(--s1);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:8px 12px;font-size:.78rem;outline:none;font-family:inherit;width:100%;-webkit-appearance:none}
+        #sdrop{position:absolute;top:calc(100% - 2px);left:16px;right:16px;background:var(--s1);border:1px solid var(--bd);border-radius:12px;display:none;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden}
+        .sdrop-i{padding:12px 15px;font-size:.8rem;cursor:pointer;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
         .sdrop-i:last-child{border-bottom:none}
-
-        /* FEED */
         #feed{padding:0 16px}
-        .card{background:var(--s1);border:1px solid var(--bd);border-radius:20px;
-              padding:17px;margin-bottom:14px;border-left:4px solid var(--no)}
+        .card{background:var(--s1);border:1px solid var(--bd);border-radius:20px;padding:17px;margin-bottom:14px;border-left:4px solid var(--no)}
         .card.on{border-left-color:var(--ok)}
         .c-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
         .c-info{flex:1;min-width:0}
         .c-town{font-size:.55rem;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
         .c-name{font-size:1.02rem;font-weight:800;margin:2px 0;word-break:break-word}
-        .c-pill{display:inline-block;padding:3px 9px;border-radius:5px;
-                font-size:.56rem;font-weight:800;text-transform:uppercase;
-                border:1px solid currentColor;margin-bottom:3px}
+        .c-pill{display:inline-block;padding:3px 9px;border-radius:5px;font-size:.56rem;font-weight:800;text-transform:uppercase;border:1px solid currentColor;margin-bottom:3px}
         .c-pill.on{color:var(--ok)}.c-pill.off{color:var(--no)}
         .c-time{font-size:.56rem;color:var(--dim);font-weight:600}
         .c-btns{display:flex;gap:6px;flex-shrink:0}
-        .ic-btn{width:38px;height:38px;border-radius:10px;background:var(--s2);
-                border:1px solid var(--bd);color:var(--dim);display:flex;
-                align-items:center;justify-content:center;cursor:pointer;
-                touch-action:manipulation;flex-shrink:0}
+        .ic-btn{width:38px;height:38px;border-radius:10px;background:var(--s2);border:1px solid var(--bd);color:var(--dim);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;flex-shrink:0}
         .ic-btn.on{color:var(--p);border-color:var(--p)}
-        .c-stats{display:flex;gap:10px;flex-wrap:wrap;font-size:.6rem;font-weight:700;
-                 color:var(--dim);margin-bottom:11px}
+        .c-stats{display:flex;gap:10px;flex-wrap:wrap;font-size:.6rem;font-weight:700;color:var(--dim);margin-bottom:11px}
         .s-ok{color:var(--ok)}.s-no{color:var(--no)}
-        .chips{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;margin-bottom:11px;
-               -webkit-overflow-scrolling:touch}
-        .chip{flex-shrink:0;background:transparent;border:1px solid var(--bd);color:var(--dim);
-              padding:6px 10px;border-radius:8px;font-size:.66rem;font-weight:700;cursor:pointer;
-              touch-action:manipulation;-webkit-appearance:none}
+        .chips{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;margin-bottom:11px;-webkit-overflow-scrolling:touch}
+        .chip{flex-shrink:0;background:transparent;border:1px solid var(--bd);color:var(--dim);padding:6px 10px;border-radius:8px;font-size:.66rem;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-appearance:none}
         .rep-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
-        .btn-r{background:var(--ok);color:#000;border:none;padding:12px 6px;border-radius:11px;
-               font-weight:800;font-size:.73rem;cursor:pointer;width:100%;
-               touch-action:manipulation;-webkit-appearance:none}
-        .btn-o{background:var(--no);color:#fff;border:none;padding:12px 6px;border-radius:11px;
-               font-weight:800;font-size:.73rem;cursor:pointer;width:100%;
-               touch-action:manipulation;-webkit-appearance:none}
+        .btn-r{background:var(--ok);color:#000;border:none;padding:12px 6px;border-radius:11px;font-weight:800;font-size:.73rem;cursor:pointer;width:100%;touch-action:manipulation;-webkit-appearance:none}
+        .btn-o{background:var(--no);color:#fff;border:none;padding:12px 6px;border-radius:11px;font-weight:800;font-size:.73rem;cursor:pointer;width:100%;touch-action:manipulation;-webkit-appearance:none}
         .btn-r.lk,.btn-o.lk{opacity:.28;cursor:default}
         .cmt-wrap{border-top:1px solid var(--bd);padding-top:11px;margin-top:2px}
         .cmt-list{max-height:118px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-bottom:7px}
@@ -134,115 +73,65 @@
         .cmt-tx{color:var(--tx);line-height:1.4}
         .no-cmt{text-align:center;padding:6px 0;font-size:.66rem;color:var(--dim)}
         .cmt-row{display:flex;gap:6px}
-        .cmt-in{flex:1;background:var(--s2);border:1px solid var(--bd);color:var(--tx);
-                border-radius:9px;padding:8px 11px;font-size:.73rem;font-family:inherit;outline:none}
-        .btn-post{background:var(--p);color:#000;border:none;border-radius:9px;padding:0 13px;
-                  font-weight:800;font-size:.7rem;cursor:pointer;min-height:38px;white-space:nowrap;
-                  touch-action:manipulation;-webkit-appearance:none}
-
-        /* MODALS */
-        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);
-               z-index:9000;align-items:center;justify-content:center;padding:16px}
+        .cmt-in{flex:1;background:var(--s2);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:8px 11px;font-size:.73rem;font-family:inherit;outline:none;-webkit-appearance:none}
+        .btn-post{background:var(--p);color:#000;border:none;border-radius:9px;padding:0 13px;font-weight:800;font-size:.7rem;cursor:pointer;min-height:38px;white-space:nowrap;touch-action:manipulation;-webkit-appearance:none}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9000;align-items:center;justify-content:center;padding:16px}
         .modal.open{display:flex}
-        .mbox{background:var(--s1);border:1px solid var(--bd);border-radius:20px;
-              padding:22px;width:100%;max-width:360px;text-align:center;max-height:90vh;overflow-y:auto}
+        .mbox{background:var(--s1);border:1px solid var(--bd);border-radius:20px;padding:22px;width:100%;max-width:360px;text-align:center;max-height:90vh;overflow-y:auto}
         .mbox h2{font-size:.95rem;font-weight:800;margin-bottom:15px}
-        .mclose{background:none;border:none;color:var(--dim);margin-top:12px;font-weight:700;
-                font-size:.8rem;cursor:pointer;padding:8px 20px;display:block;
-                margin-left:auto;margin-right:auto}
-        .shr-a{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;
-               border-radius:11px;text-decoration:none;color:#fff;font-weight:800;
-               font-size:.76rem;margin-bottom:8px}
-        .m-in{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--tx);
-              border-radius:10px;padding:10px 13px;font-size:.8rem;font-family:inherit;
-              outline:none;margin-bottom:9px;display:block;-webkit-appearance:none}
-
-        /* BOTTOM NAV */
-        .bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(5,5,7,.97);
-              border-top:1px solid var(--bd);padding:9px 0 20px;
-              display:flex;justify-content:space-around;z-index:8000}
-        .nb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;
-            color:var(--dim);touch-action:manipulation;font-size:.58rem;font-weight:800;padding:3px 20px}
-        .nb.on{color:var(--p)}
-
-        /* SUGGEST BTN */
-        .sug-btn{display:block;width:calc(100% - 32px);margin:4px 16px 14px;
-                 background:var(--s1);border:1px dashed var(--p);color:var(--p);
-                 padding:13px;border-radius:14px;font-weight:800;font-size:.73rem;
-                 cursor:pointer;touch-action:manipulation;-webkit-appearance:none}
-
+        .mclose{background:none;border:none;color:var(--dim);margin-top:12px;font-weight:700;font-size:.8rem;cursor:pointer;padding:8px 20px;display:block;margin-left:auto;margin-right:auto}
+        .shr-a{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:11px;text-decoration:none;color:#fff;font-weight:800;font-size:.76rem;margin-bottom:8px}
+        .m-in{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:10px 13px;font-size:.8rem;font-family:inherit;outline:none;margin-bottom:9px;display:block;-webkit-appearance:none}
+        .bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(5,5,7,.97);border-top:1px solid var(--bd);padding:9px 0 20px;display:flex;justify-content:space-around;z-index:8000}
+        .nb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--dim);touch-action:manipulation;font-size:.58rem;font-weight:800;padding:3px 20px}
+        .nb.act{color:var(--p)}
+        .sug-btn{display:block;width:calc(100% - 32px);margin:4px 16px 14px;background:var(--s1);border:1px dashed var(--p);color:var(--p);padding:13px;border-radius:14px;font-weight:800;font-size:.73rem;cursor:pointer;touch-action:manipulation;-webkit-appearance:none}
         .empty{text-align:center;padding:44px 20px;color:var(--dim)}
         .empty p{font-size:.8rem;font-weight:700;margin-top:10px}
     </style>
 </head>
 <body>
 
-<div id="ld">
-    <div class="spin"></div>
-    <p style="font-size:.7rem;color:var(--dim);font-weight:700;">Starting Up-Nepa Osun...</p>
-</div>
+<div id="ld"><div class="spin"></div><p style="font-size:.7rem;color:var(--dim);font-weight:700;">Starting Up-Nepa Osun...</p></div>
 <div id="toast"></div>
 
 <div class="ticker">
     <div class="t-badge">⚡ Live</div>
-    <div class="t-track">
-        <span class="t-inner">Up-Nepa Osun — Real-time electricity tracking for Osun State. Report outages. Stay informed. Help your community.</span>
-    </div>
+    <div class="t-track"><span class="t-inner">Up-Nepa Osun — Real-time electricity tracking across Osun State. Report outages. Help your community stay informed.</span></div>
 </div>
 
 <div class="topnav">
     <div class="brand">
-        <div class="logo-box">
-            <i data-lucide="zap" style="color:var(--p);width:20px;height:20px;"></i>
-        </div>
+        <div class="logo-box"><i data-lucide="zap" style="color:var(--p);width:20px;height:20px;"></i></div>
         <div>
             <div class="b-title">Up-Nepa <span>Osun</span></div>
-            <div class="b-sub">
-                <div class="conn-dot" id="cdot"></div>
-                <span class="conn-lbl" id="clbl">Connecting...</span>
-            </div>
+            <div class="b-sub"><div class="cdot" id="cdot"></div><span class="clbl" id="clbl">Connecting...</span></div>
         </div>
     </div>
-    <div class="online-chip" id="ochip">0 ONLINE</div>
+    <div class="ochip" id="ochip">0 ONLINE</div>
 </div>
 
-<div id="auth-bar">
-    <span style="font-size:.7rem;color:var(--dim);font-weight:600;">Not signed in</span>
-</div>
+<div id="auth-bar"><span style="font-size:.7rem;color:var(--dim);font-weight:600;">Not signed in</span></div>
 
-<div class="search-area" style="position:relative;">
+<div class="search-area">
     <div class="search-row">
-        <select class="tsel" id="tsel" onchange="App.filter()">
-            <option value="">ALL TOWNS</option>
-        </select>
-        <input class="sbox" id="sbox" type="text" placeholder="Search street..."
-               oninput="App.search(this.value)" autocomplete="off" spellcheck="false">
+        <select class="tsel" id="tsel" onchange="App.filter()"><option value="">ALL TOWNS</option></select>
+        <input class="sbox" id="sbox" type="text" placeholder="Search street..." oninput="App.search(this.value)" autocomplete="off" spellcheck="false">
     </div>
     <div id="sdrop"></div>
 </div>
 
 <div id="feed"></div>
-
-<button class="sug-btn" onclick="App.openM('mSuggest')">
-    + CAN'T FIND YOUR STREET? SUGGEST IT HERE
-</button>
+<button class="sug-btn" onclick="App.openM('mSuggest')">+ CAN'T FIND YOUR STREET? SUGGEST IT HERE</button>
 
 <!-- SHARE MODAL -->
 <div class="modal" id="mShare">
     <div class="mbox">
         <h2>Share Update</h2>
-        <a class="shr-a" id="sw" style="background:#25D366;" target="_blank" href="#">
-            <i data-lucide="message-circle" style="width:15px;height:15px;"></i> WhatsApp
-        </a>
-        <a class="shr-a" id="sx" style="background:#111;border:1px solid #333;" target="_blank" href="#">
-            <i data-lucide="twitter" style="width:15px;height:15px;"></i> X / Twitter
-        </a>
-        <a class="shr-a" id="sf" style="background:#1877F2;" target="_blank" href="#">
-            <i data-lucide="facebook" style="width:15px;height:15px;"></i> Facebook
-        </a>
-        <a class="shr-a" id="st" style="background:#0088cc;" target="_blank" href="#">
-            <i data-lucide="send" style="width:15px;height:15px;"></i> Telegram
-        </a>
+        <a class="shr-a" id="sw" style="background:#25D366;" target="_blank" href="#"><i data-lucide="message-circle" style="width:15px;height:15px;"></i> WhatsApp</a>
+        <a class="shr-a" id="sx" style="background:#111;border:1px solid #333;" target="_blank" href="#"><i data-lucide="twitter" style="width:15px;height:15px;"></i> X / Twitter</a>
+        <a class="shr-a" id="sf" style="background:#1877F2;" target="_blank" href="#"><i data-lucide="facebook" style="width:15px;height:15px;"></i> Facebook</a>
+        <a class="shr-a" id="st" style="background:#0088cc;" target="_blank" href="#"><i data-lucide="send" style="width:15px;height:15px;"></i> Telegram</a>
         <button class="mclose" onclick="App.closeM()">Cancel</button>
     </div>
 </div>
@@ -263,41 +152,18 @@
 <div class="modal" id="mSupport">
     <div class="mbox">
         <h2>Support Center</h2>
-        <a class="shr-a" style="background:#25D366;" href="https://wa.me/2348062516110" target="_blank">
-            <i data-lucide="message-circle" style="width:15px;height:15px;"></i> WhatsApp Support
-        </a>
-        <a class="shr-a" style="background:#4285F4;" href="mailto:aamuda34@gmail.com">
-            <i data-lucide="mail" style="width:15px;height:15px;"></i> Email Support
-        </a>
+        <a class="shr-a" style="background:#25D366;" href="https://wa.me/2348062516110" target="_blank"><i data-lucide="message-circle" style="width:15px;height:15px;"></i> WhatsApp Support</a>
+        <a class="shr-a" style="background:#4285F4;" href="mailto:aamuda34@gmail.com"><i data-lucide="mail" style="width:15px;height:15px;"></i> Email Support</a>
         <button class="mclose" onclick="App.closeM()">Close</button>
     </div>
 </div>
 
 <div class="bnav">
-    <div class="nb on" onclick="App.refresh()">
-        <i data-lucide="layout-grid" style="width:19px;height:19px;"></i>
-        <span>Grid</span>
-    </div>
-    <div class="nb" onclick="App.openM('mSupport')">
-        <i data-lucide="shield-check" style="width:19px;height:19px;"></i>
-        <span>Support</span>
-    </div>
+    <div class="nb act" onclick="App.refresh()"><i data-lucide="layout-grid" style="width:19px;height:19px;"></i><span>Grid</span></div>
+    <div class="nb" onclick="App.openM('mSupport')"><i data-lucide="shield-check" style="width:19px;height:19px;"></i><span>Support</span></div>
 </div>
 
 <script>
-// ====================================================================
-// UP-NEPA OSUN — CLEAN REBUILD
-//
-// KEY DESIGN DECISION:
-// All interactive functions live on window.App.*
-// This is the ONLY reliable way to use onclick="" attributes in
-// Capacitor's Android WebView. After a deep-link OAuth redirect,
-// WebView partially resets its JS context. Functions on window.*
-// survive this reset. Event listeners and module-scoped functions
-// do NOT survive it — that is why every previous version's buttons
-// stopped working after Google login.
-// ====================================================================
-
 window.App = (function () {
     'use strict';
 
@@ -305,45 +171,26 @@ window.App = (function () {
     var DB = supabase.createClient(
         'https://tzsumiudcqxpyphhjymu.supabase.co',
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6c3VtaXVkY3F4cHlwaGhqeW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMDczMzUsImV4cCI6MjA5MTU4MzMzNX0.gDjhwcitscFZfVhWq1YIYdvrccX5rP-BGYNkqUm5v8Y',
-        {
-            auth: {
-                persistSession:     true,
-                autoRefreshToken:   true,
-                detectSessionInUrl: true,
-                storage:            window.localStorage,
-                storageKey:         'upnepa_v3'
-            }
-        }
+        { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: 'upnepa_v5' } }
     );
 
     // ── STATE ────────────────────────────────────────────────────
-    var S = {
-        user:     null,
-        grid:     [],
-        subs:     [],
-        comments: [],
-        acts:     {},
-        rt:       null,
-        booted:   false
-    };
+    var S = { user: null, grid: [], subs: [], comments: [], acts: {}, rt: null, booted: false };
 
     // ── HELPERS ──────────────────────────────────────────────────
-    function toast(msg) {
-        var el = document.getElementById('toast');
-        if (!el) return;
-        el.textContent = msg;
-        el.classList.add('show');
+    function toast(m) {
+        var e = document.getElementById('toast');
+        if (!e) return;
+        e.textContent = m;
+        e.classList.add('show');
         clearTimeout(toast._t);
-        toast._t = setTimeout(function () { el.classList.remove('show'); }, 3000);
+        toast._t = setTimeout(function () { e.classList.remove('show'); }, 3000);
     }
 
     function esc(v) {
-        return v ? String(v)
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-            .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') : '';
+        return v ? String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') : '';
     }
 
-    // Safe for onclick="App.fn('...')"
     function sq(v) {
         return v ? String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'") : '';
     }
@@ -352,46 +199,42 @@ window.App = (function () {
         if (!d) return 'No updates';
         var s = Math.floor((Date.now() - new Date(d)) / 1000);
         if (s < 60) return 'Just now';
-        var m = Math.floor(s/60); if (m < 60) return m+'m ago';
-        var h = Math.floor(m/60); if (h < 24) return h+'h ago';
-        return Math.floor(h/24)+'d ago';
+        var m = Math.floor(s / 60); if (m < 60) return m + 'm ago';
+        var h = Math.floor(m / 60); if (h < 24) return h + 'h ago';
+        return Math.floor(h / 24) + 'd ago';
     }
 
     function td() { return new Date().toISOString().split('T')[0]; }
 
     function loadActs() {
-        try { S.acts = JSON.parse(localStorage.getItem('upnepa_acts') || '{}'); }
-        catch(e) { S.acts = {}; }
+        try { S.acts = JSON.parse(localStorage.getItem('upnepa_acts') || '{}'); } catch (e) { S.acts = {}; }
     }
     function saveActs() {
-        try { localStorage.setItem('upnepa_acts', JSON.stringify(S.acts)); }
-        catch(e) {}
+        try { localStorage.setItem('upnepa_acts', JSON.stringify(S.acts)); } catch (e) {}
     }
     function actToday(id) {
         var e = S.acts[id];
         return (e && e.d === td()) ? e.a : null;
     }
 
-    function icons() { try { lucide.createIcons(); } catch(e) {} }
+    function icons() { try { lucide.createIcons(); } catch (e) {} }
 
     function hideLd() {
-        var el = document.getElementById('ld');
-        if (!el) return;
-        el.style.opacity = '0';
-        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 420);
+        var e = document.getElementById('ld');
+        if (!e) return;
+        e.style.opacity = '0';
+        setTimeout(function () { if (e.parentNode) e.parentNode.removeChild(e); }, 420);
     }
 
     // ── DEEP LINK ────────────────────────────────────────────────
-    // Runs immediately. Catches OAuth tokens after Google redirect.
-    function initDeepLink() {
+    function initDL() {
         try {
             if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
                 window.Capacitor.Plugins.App.addListener('appUrlOpen', function (ev) {
                     if (ev && ev.url) processUrl(ev.url);
                 });
             }
-        } catch(e) {}
-        // Handle token in current URL (web/PWA)
+        } catch (e) {}
         processUrl(window.location.href);
     }
 
@@ -404,44 +247,37 @@ window.App = (function () {
         var p = new URLSearchParams(frag);
         var at = p.get('access_token'), rt = p.get('refresh_token');
         if (!at || !rt) return;
-     toast('Completing sign in\u2026');
+        toast('Completing sign in\u2026');
         DB.auth.setSession({ access_token: at, refresh_token: rt }).then(function (res) {
             if (res.error) { toast('Sign-in error. Try again.'); return; }
-            try { history.replaceState({}, '', location.pathname); } catch(e) {}
-            // onAuthStateChange fires automatically after setSession
+            try { history.replaceState({}, '', location.pathname); } catch (e) {}
+            // onAuthStateChange fires automatically
         });
     }
 
-    initDeepLink(); // must run before boot
+    initDL();
 
     // ── BOOT ─────────────────────────────────────────────────────
     function boot() {
         icons();
         loadActs();
 
-        // Auth state — fires on: page load (session restore), login,
-        // logout, token refresh, app resume. Single source of truth.
         DB.auth.onAuthStateChange(function (event, session) {
             var prev = S.user;
             S.user = (session && session.user) ? session.user : null;
             renderAuth();
-
             if (S.user && !prev) {
-                // Newly signed in
                 loadActs();
                 fetchSubs().then(function () { renderFeed(); });
                 toast('Welcome, ' + S.user.email.split('@')[0] + '!');
             } else if (!S.user && prev) {
-                // Signed out
                 S.subs = [];
                 renderFeed();
             } else if (S.user && prev) {
-                // Session refreshed / app resumed
                 fetchSubs().then(function () { renderFeed(); });
             }
         });
 
-        // Load grid data for everyone (logged in or not)
         Promise.all([fetchGrid(), fetchComments()]).then(function () {
             startRT();
             hideLd();
@@ -449,7 +285,6 @@ window.App = (function () {
         });
     }
 
-    // Refresh on app resume (swipe back)
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible' && S.booted) {
             fetchGrid();
@@ -460,25 +295,14 @@ window.App = (function () {
 
     // ── AUTH ─────────────────────────────────────────────────────
     function doLogin() {
-        var native = !!(window.Capacitor &&
-                        window.Capacitor.isNativePlatform &&
-                        window.Capacitor.isNativePlatform());
-        var redir = native
-            ? 'com.upnepa.osun://login-callback'
-            : (location.origin + location.pathname);
-        DB.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: redir, skipBrowserRedirect: false }
-        }).then(function (r) {
-            if (r.error) toast('Login failed: ' + r.error.message);
-        });
+        var native = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        var redir = native ? 'com.upnepa.osun://login-callback' : (location.origin + location.pathname);
+        DB.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redir, skipBrowserRedirect: false } })
+            .then(function (r) { if (r.error) toast('Login failed: ' + r.error.message); });
     }
 
     function doLogout() {
-        DB.auth.signOut().then(function (r) {
-            if (r.error) toast('Logout failed. Try again.');
-            // onAuthStateChange fires and clears state
-        });
+        DB.auth.signOut().then(function (r) { if (r.error) toast('Logout failed. Try again.'); });
     }
 
     function renderAuth() {
@@ -486,15 +310,11 @@ window.App = (function () {
         if (!el) return;
         if (S.user) {
             var n = S.user.email.split('@')[0].toUpperCase();
-            // onclick calls App.* — window-scoped, survives WebView resets
-            el.innerHTML =
-                '<span class="u-name">\uD83D\uDC64 ' + esc(n) + '</span>' +
+            el.innerHTML = '<span class="u-name">\uD83D\uDC64 ' + esc(n) + '</span>' +
                 '<button class="btn-out" onclick="App.logout()">LOGOUT</button>';
         } else {
-            el.innerHTML =
-                '<button class="btn-goo" onclick="App.login()">' +
-                '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">' +
-                'Sign in with Google</button>';
+            el.innerHTML = '<button class="btn-goo" onclick="App.login()">' +
+                '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">Sign in with Google</button>';
         }
     }
 
@@ -506,6 +326,7 @@ window.App = (function () {
             .order('name')
             .then(function (r) {
                 if (r.data) { S.grid = r.data; buildTowns(); renderFeed(); }
+                if (r.error) console.error('fetchGrid error:', r.error);
             });
     }
 
@@ -513,7 +334,10 @@ window.App = (function () {
         return DB.from('comments')
             .select('*')
             .order('created_at', { ascending: false })
-            .then(function (r) { if (r.data) S.comments = r.data; });
+            .then(function (r) {
+                if (r.data) S.comments = r.data;
+                if (r.error) console.error('fetchComments error:', r.error);
+            });
     }
 
     function fetchSubs() {
@@ -523,70 +347,52 @@ window.App = (function () {
             .eq('user_id', S.user.id)
             .then(function (r) {
                 if (r.data) S.subs = r.data.map(function (x) { return x.area_id; });
+                if (r.error) console.error('fetchSubs error:', r.error);
             });
     }
 
     // ── REALTIME ─────────────────────────────────────────────────
     function startRT() {
-        var dot = document.getElementById('cdot');
-        var lbl = document.getElementById('clbl');
-
-        function live() {
-            if (dot) dot.classList.add('live');
-            if (lbl) lbl.textContent = 'Grid Live';
-        }
-        function dead() {
-            if (dot) dot.classList.remove('live');
-            if (lbl) lbl.textContent = 'Reconnecting...';
-            setTimeout(startRT, 7000);
-        }
+        var dot = document.getElementById('cdot'), lbl = document.getElementById('clbl');
+        function live() { if (dot) dot.classList.add('live'); if (lbl) lbl.textContent = 'Grid Live'; }
+        function dead() { if (dot) dot.classList.remove('live'); if (lbl) lbl.textContent = 'Reconnecting...'; setTimeout(startRT, 7000); }
 
         try {
             if (S.rt) DB.removeChannel(S.rt);
-            S.rt = DB.channel('upnepa-rt-v3')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, function () {
-                    fetchGrid();
-                })
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, function () {
-                    fetchComments().then(renderFeed);
-                })
+            S.rt = DB.channel('upnepa-rt-v5')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, function () { fetchGrid(); })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, function () { fetchComments().then(renderFeed); })
                 .subscribe(function (st) {
                     if (st === 'SUBSCRIBED') live();
                     else if (st === 'CHANNEL_ERROR' || st === 'CLOSED' || st === 'TIMED_OUT') dead();
                 });
-        } catch(e) {}
+        } catch (e) {}
 
-        // Fallback ping after 6s
         setTimeout(function () {
             if (lbl && lbl.textContent === 'Connecting...') {
-                DB.from('areas').select('id').limit(1).then(function (r) {
-                    if (!r.error) live(); else dead();
-                });
+                DB.from('areas').select('id').limit(1).then(function (r) { if (!r.error) live(); else dead(); });
             }
         }, 6000);
 
-        // Presence
-        try {var pc = DB.channel('presence-v3');
+        try {
+            var pc = DB.channel('presence-v5');
             pc.on('presence', { event: 'sync' }, function () {
                 var st = pc.presenceState(), n = 0;
                 for (var k in st) n += st[k].length;
                 var el = document.getElementById('ochip');
                 if (el) el.textContent = n + ' ONLINE';
             }).subscribe(function (st) {
-                if (st === 'SUBSCRIBED') {
-                    pc.track({ t: Date.now(), u: (S.user && S.user.email) || 'anon' });
-                }
+                if (st === 'SUBSCRIBED') pc.track({ t: Date.now(), u: (S.user && S.user.email) || 'anon' });
             });
-        } catch(e) {}
+        } catch (e) {}
     }
 
-    // ── FILTER & RENDER ──────────────────────────────────────────
+    // ── RENDER ────────────────────────────────────────────────────
     function filtered() {
         var town = (document.getElementById('tsel') || {}).value || '';
         var q = ((document.getElementById('sbox') || {}).value || '').trim().toLowerCase();
         return S.grid.filter(function (s) {
-            return (!town || s.town === town) &&
-                   (!q || s.name.toLowerCase().indexOf(q) !== -1);
+            return (!town || s.town === town) && (!q || s.name.toLowerCase().indexOf(q) !== -1);
         });
     }
 
@@ -594,15 +400,12 @@ window.App = (function () {
         var sel = document.getElementById('tsel');
         if (!sel) return;
         var seen = {}, towns = [];
-        S.grid.forEach(function (s) {
-            if (s.town && !seen[s.town]) { towns.push(s.town); seen[s.town] = 1; }
-        });
+        S.grid.forEach(function (s) { if (s.town && !seen[s.town]) { towns.push(s.town); seen[s.town] = 1; } });
         towns.sort();
         var cur = sel.value;
-        sel.innerHTML = '<option value="">ALL TOWNS</option>' +
-            towns.map(function (t) {
-                return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
-            }).join('');
+        sel.innerHTML = '<option value="">ALL TOWNS</option>' + towns.map(function (t) {
+            return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
+        }).join('');
         if (cur) sel.value = cur;
     }
 
@@ -612,9 +415,7 @@ window.App = (function () {
         var list = filtered();
 
         if (!list.length) {
-            el.innerHTML = '<div class="empty">' +
-                '<i data-lucide="zap-off" style="width:38px;height:38px;color:var(--bd);"></i>' +
-                '<p>No streets found.</p></div>';
+            el.innerHTML = '<div class="empty"><i data-lucide="zap-off" style="width:38px;height:38px;color:var(--bd);"></i><p>No streets found.</p></div>';
             icons(); return;
         }
 
@@ -626,68 +427,71 @@ window.App = (function () {
             var rL  = act === 'restored';
             var oL  = act === 'outage';
 
+            // Use correct DB column names: on_count and off_count
+            var onCnt  = s.on_count  || 0;
+            var offCnt = s.off_count || 0;
+
+            // Use last_updated if updated_at is null
+            var lastTS = s.updated_at || s.last_updated || null;
+
             var cmts = S.comments.filter(function (c) { return c.area_id === s.id; }).slice(0, 3);
             var cHtml = cmts.length ? cmts.map(function (c) {
                 return '<div class="cmt-i">' +
-                    '<div class="cmt-m">' +
-                    '<span class="cmt-who">' + esc((c.user_email||'anon').split('@')[0]) + '</span>' +
-                    '<span class="cmt-wh">' + ago(c.created_at) + '</span>' +
-                    '</div><div class="cmt-tx">' + esc(c.content) + '</div></div>';
+                    '<div class="cmt-m"><span class="cmt-who">' + esc((c.user_email || 'anon').split('@')[0]) + '</span>' +
+                    '<span class="cmt-wh">' + ago(c.created_at) + '</span></div>' +
+                    '<div class="cmt-tx">' + esc(c.content) + '</div></div>';
             }).join('') : '<div class="no-cmt">No updates yet.</div>';
 
-            // Every single onclick uses App.* — window-scoped
-            return '<div class="card' + (on?' on':'') + '">' +
+            return '<div class="card' + (on ? ' on' : '') + '">' +
 
-            '<div class="c-head">' +
-            '<div class="c-info">' +
-            '<div class="c-town">' + esc(s.town||'') + '</div>' +
-            '<div class="c-name">' + esc(s.name) + '</div>' +
-            '<span class="c-pill ' + (on?'on':'off') + '">' + esc(s.status||'Unknown') + '</span>' +
-            '<div class="c-time">Updated ' + ago(s.updated_at) + '</div>' +
-            '</div>' +
-            '<div class="c-btns">' +
-            '<div class="ic-btn' + (sub?' on':'') + '" onclick="App.bell(' + s.id + ')">' +
-            '<i data-lucide="' + (sub?'bell-ring':'bell') + '" style="width:16px;height:16px;"></i></div>' +
-            '<div class="ic-btn" onclick="App.share(\'' + sq(s.name) + '\',\'' + sq(s.status||'') + '\')">' +
-            '<i data-lucide="share-2" style="width:16px;height:16px;"></i></div>' +
-            '</div></div>' +
+                '<div class="c-head">' +
+                '<div class="c-info">' +
+                '<div class="c-town">' + esc(s.town || '') + '</div>' +
+                '<div class="c-name">' + esc(s.name) + '</div>' +
+                '<span class="c-pill ' + (on ? 'on' : 'off') + '">' + esc(s.status || 'Unknown') + '</span>' +
+                '<div class="c-time">Updated ' + ago(lastTS) + '</div>' +
+                '</div>' +
+                '<div class="c-btns">' +
+                '<div class="ic-btn' + (sub ? ' on' : '') + '" onclick="App.bell(' + s.id + ')">' +
+                '<i data-lucide="' + (sub ? 'bell-ring' : 'bell') + '" style="width:16px;height:16px;"></i></div>' +
+                '<div class="ic-btn" onclick="App.share(\'' + sq(s.name) + '\',\'' + sq(s.status || '') + '\')">' +
+                '<i data-lucide="share-2" style="width:16px;height:16px;"></i></div>' +
+                '</div></div>' +
 
-            '<div class="c-stats">' +
-            '<span><i data-lucide="users" style="width:10px;height:10px;display:inline-block;vertical-align:middle;margin-right:2px;"></i>' + fol + ' Followers</span>' +
-            '<span class="s-ok">&#9679; ' + (s.restore_count||0) + ' Restored</span>' +
-            '<span class="s-no">&#9679; ' + (s.outage_count||0) + ' Outages</span>' +
-            '</div>' +
+                '<div class="c-stats">' +
+                '<span><i data-lucide="users" style="width:10px;height:10px;display:inline-block;vertical-align:middle;margin-right:2px;"></i>' + fol + ' Followers</span>' +
+                '<span class="s-ok">&#9679; ' + onCnt + ' Restored today</span>' +
+                '<span class="s-no">&#9679; ' + offCnt + ' Outages today</span>' +
+                '</div>' +
 
-            '<div class="chips">' +
-            '<button class="chip" onclick="App.chip(' + s.id + ',\'Weather Issue\')">&#x26C8; Weather</button>' +
-            '<button class="chip" onclick="App.chip(' + s.id + ',\'Low Voltage\')">&#x26A1; Voltage</button>' +
-            '<button class="chip" onclick="App.chip(' + s.id + ',\'Phase Issue\')">&#x1F527; Phase</button>' +
-            '<button class="chip" onclick="App.chip(' + s.id + ',\'Transformer Fault\')">&#x1F50C; Transformer</button>' +
-            '</div>' +
+                '<div class="chips">' +
+                '<button class="chip" onclick="App.chip(' + s.id + ',\'Weather Issue\')">&#x26C8; Weather</button>' +
+                '<button class="chip" onclick="App.chip(' + s.id + ',\'Low Voltage\')">&#x26A1; Voltage</button>' +
+                '<button class="chip" onclick="App.chip(' + s.id + ',\'Phase Issue\')">&#x1F527; Phase</button>' +
+                '<button class="chip" onclick="App.chip(' + s.id + ',\'Transformer Fault\')">&#x1F50C; Transformer</button>' +
+                '</div>' +
+                '<button class="btn-r' + (rL ? ' lk' : '') + '" onclick="App.report(' + s.id + ',\'Light On\',' + rL + ')">' +
+                (rL ? '&#x2705; RESTORED &#x2713;' : '&#x2705; RESTORED') + '</button>' +
+                '<button class="btn-o' + (oL ? ' lk' : '') + '" onclick="App.report(' + s.id + ',\'No Light\',' + oL + ')">' +
+                (oL ? '&#x26A1; OUTAGE &#x2713;' : '&#x26A1; OUTAGE') + '</button>' +
+                '</div>' +
 
-            '<div class="rep-row">' +
-            '<button class="btn-r' + (rL?' lk':'') + '" onclick="App.report(' + s.id + ',\'Light On\',' + rL + ')">' +
-            (rL ? '&#x2705; RESTORED &#x2713;' : '&#x2705; RESTORED') + '</button>' +
-            '<button class="btn-o' + (oL?' lk':'') + '" onclick="App.report(' + s.id + ',\'No Light\',' + oL + ')">' +
-            (oL ? '&#x26A1; OUTAGE &#x2713;' : '&#x26A1; OUTAGE') + '</button>' +
-            '</div>' +
+                '<div class="cmt-wrap">' +
+                '<div class="cmt-list">' + cHtml + '</div>' +
+                '<div class="cmt-row">' +
+                '<input class="cmt-in" id="ci' + s.id + '" type="text" placeholder="Add an update...">' +
+                '<button class="btn-post" onclick="App.post(' + s.id + ')">Post</button>' +
+                '</div></div>' +
 
-            '<div class="cmt-wrap">' +
-            '<div class="cmt-list">' + cHtml + '</div>' +
-            '<div class="cmt-row">' +
-            '<input class="cmt-in" id="ci' + s.id + '" type="text" placeholder="Add an update...">' +
-            '<button class="btn-post" onclick="App.post(' + s.id + ')">Post</button>' +
-            '</div></div>' +
-
-            '</div>';
+                '</div>';
         }).join('');
 
         icons();
     }
 
-    // ── CARD ACTIONS ─────────────────────────────────────────────
+    // ── ACTIONS ──────────────────────────────────────────────────
     function guard() {
-if (!S.user) {
+        if (!S.user) {
             toast('Please sign in first.');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return false;
@@ -702,14 +506,9 @@ if (!S.user) {
             ? DB.from('subscriptions').delete().eq('user_id', S.user.id).eq('area_id', id)
             : DB.from('subscriptions').insert([{ user_id: S.user.id, area_id: id }]);
         p.then(function (r) {
-            if (r.error) { toast('Error. Try again.'); return; }
-            if (had) {
-                S.subs = S.subs.filter(function (x) { return x !== id; });
-                toast('Unfollowed.');
-            } else {
-                S.subs.push(id);
-                toast('Following! You will get alerts.');
-            }
+            if (r.error) { toast('Error. Try again.'); console.error('bell error:', r.error); return; }
+            if (had) { S.subs = S.subs.filter(function (x) { return x !== id; }); toast('Unfollowed.'); }
+            else { S.subs.push(id); toast('Following! You will get alerts.'); }
             renderFeed();
         });
     }
@@ -717,14 +516,13 @@ if (!S.user) {
     function doReport(id, status, locked) {
         if (!guard()) return;
         if (locked) {
-            toast(status === 'No Light'
-                ? 'Already reported OUTAGE. Press RESTORED first.'
-                : 'Already reported RESTORED. Press OUTAGE first.');
+            toast(status === 'No Light' ? 'Already reported OUTAGE. Press RESTORED first.' : 'Already reported RESTORED. Press OUTAGE first.');
             return;
         }
         var newAct = (status === 'Light On') ? 'restored' : 'outage';
         if (actToday(id) === newAct) { toast('Already reported today.'); return; }
 
+        // Find the street
         var s = null;
         for (var i = 0; i < S.grid.length; i++) { if (S.grid[i].id === id) { s = S.grid[i]; break; } }
         if (!s) return;
@@ -732,22 +530,57 @@ if (!S.user) {
         var now    = new Date();
         var nowISO = now.toISOString();
         var nowD   = nowISO.split('T')[0];
-        var lastD  = s.updated_at ? new Date(s.updated_at).toISOString().split('T')[0] : '';
-        var oC = (lastD === nowD) ? (s.outage_count  || 0) : 0;
-        var rC = (lastD === nowD) ? (s.restore_count || 0) : 0;
-        if (status === 'Light On') rC++; else oC++;
+
+        // Use last_updated to check if counts should reset today
+        var refDate = s.updated_at || s.last_updated || '';
+        var lastD   = refDate ? new Date(refDate).toISOString().split('T')[0] : '';
+
+        // Reset counts if it's a new day
+        // CORRECT column names: on_count and off_count
+        var onC  = (lastD === nowD) ? (s.on_count  || 0) : 0;
+        var offC = (lastD === nowD) ? (s.off_count || 0) : 0;
+        if (status === 'Light On') onC++; else offC++;
+
+        // Also log as a comment so it appears in the comment section
+        var chipLabel = status === 'Light On' ? '✅ Light Restored' : '⚡ Power Outage Reported';
 
         DB.from('areas').update({
-            status: status, updated_at: nowISO, outage_count: oC, restore_count: rC
+            status:      status,
+            updated_at:  nowISO,
+            last_updated: nowISO,
+            on_count:    onC,
+            off_count:   offC
         }).eq('id', id).then(function (r) {
-            if (r.error) { toast('Update failed. Check connection.'); return; }
+            if (r.error) {
+                toast('Update failed: ' + r.error.message);
+                console.error('report error:', r.error);
+                return;
+            }
+
+            // Save user's action lock
             S.acts[id] = { a: newAct, d: nowD };
             saveActs();
+
+            // Auto-post a comment so the action is visible in the comment section
+            DB.from('comments').insert([{
+                area_id:    id,
+                user_email: S.user.email,
+                content:    chipLabel + ' — reported by ' + S.user.email.split('@')[0]
+            }]).then(function () {
+                fetchComments().then(renderFeed);
+            });
+
             toast(newAct === 'outage' ? '\u26A1 Outage reported!' : '\u2705 Restored reported!');
+
+            // Update local state immediately so UI reflects change right away
             for (var j = 0; j < S.grid.length; j++) {
                 if (S.grid[j].id === id) {
                     S.grid[j] = Object.assign({}, S.grid[j], {
-                        status: status, updated_at: nowISO, outage_count: oC, restore_count: rC
+                        status:      status,
+                        updated_at:  nowISO,
+                        last_updated: nowISO,
+                        on_count:    onC,
+                        off_count:   offC
                     });
                     break;
                 }
@@ -758,13 +591,27 @@ if (!S.user) {
 
     function doChip(id, label) {
         if (!guard()) return;
-        DB.from('areas').update({ status: label, updated_at: new Date().toISOString() })
+
+        var now = new Date().toISOString();
+
+        // Update area status
+        DB.from('areas').update({ status: label, updated_at: now, last_updated: now })
             .eq('id', id).then(function (r) {
-                if (r.error) { toast('Failed. Try again.'); return; }
+                if (r.error) { toast('Failed. Try again.'); console.error('chip error:', r.error); return; }
+
+                // Also save chip as a comment
+                DB.from('comments').insert([{
+                    area_id:    id,
+                    user_email: S.user.email,
+                    content:    '\uD83D\uDCCC ' + label + ' — logged by ' + S.user.email.split('@')[0]
+                }]).then(function () {
+                    fetchComments().then(renderFeed);
+                });
+
                 toast('Logged: ' + label);
                 for (var i = 0; i < S.grid.length; i++) {
                     if (S.grid[i].id === id) {
-                        S.grid[i] = Object.assign({}, S.grid[i], { status: label, updated_at: new Date().toISOString() });
+                        S.grid[i] = Object.assign({}, S.grid[i], { status: label, updated_at: now, last_updated: now });
                         break;
                     }
                 }
@@ -778,9 +625,10 @@ if (!S.user) {
         if (!inp) return;
         var txt = inp.value.trim();
         if (!txt) { toast('Please type something first.'); return; }
+
         DB.from('comments').insert([{ area_id: id, user_email: S.user.email, content: txt }])
             .then(function (r) {
-                if (r.error) { toast('Failed to post. Try again.'); return; }
+                if (r.error) { toast('Post failed: ' + r.error.message); console.error('post error:', r.error); return; }
                 inp.value = '';
                 toast('Comment posted!');
                 fetchComments().then(renderFeed);
@@ -810,83 +658,56 @@ if (!S.user) {
         if (drop) {
             drop.innerHTML = m.map(function (s) {
                 return '<div class="sdrop-i" onclick="App.pick(\'' + sq(s.name) + '\')">' +
-                       '<i data-lucide="map-pin" style="width:12px;height:12px;flex-shrink:0;"></i>' +
-                       esc(s.name) + '</div>';
+                    '<i data-lucide="map-pin" style="width:12px;height:12px;flex-shrink:0;"></i>' + esc(s.name) + '</div>';
             }).join('');
             drop.style.display = m.length ? 'block' : 'none';
             icons();
-        }
+            }
         renderFeed();
     }
 
-    // ── MODALS ───────────────────────────────────────────────────
-    function doOpenM(id) {
-        var el = document.getElementById(id);
-        if (el) el.classList.add('open');
-    }
-    function doCloseM() {
-        document.querySelectorAll('.modal').forEach(function (m) { m.classList.remove('open'); });
-    }
+    function doOpenM(id) { var el = document.getElementById(id); if (el) el.classList.add('open'); }
+    function doCloseM() { document.querySelectorAll('.modal').forEach(function (m) { m.classList.remove('open'); }); }
 
-    // Close modal on backdrop tap
-    document.querySelectorAll('.modal').forEach(function (m) {
-        m.addEventListener('click', function (e) {
-            if (e.target === m) doCloseM();
-        });
-    });
-
-    // ── SHARE ────────────────────────────────────────────────────
     function doShare(name, status) {
         var txt = encodeURIComponent('\uD83D\uDCA1 Up-Nepa Osun: ' + name + ' is currently ' + status + '. Check your area:');
         var url = encodeURIComponent('https://up-nepa-osun.vercel.app/');
-        function setHref(id, h) { var e = document.getElementById(id); if (e) e.href = h; }
-        setHref('sw', 'https://wa.me/?text=' + txt + '%20' + url);
-        setHref('sx', 'https://twitter.com/intent/tweet?text=' + txt + '&url=' + url);
-        setHref('sf', 'https://www.facebook.com/sharer/sharer.php?u=' + url);
-        setHref('st', 'https://t.me/share/url?url=' + url + '&text=' + txt);
+        function sh(id, h) { var e = document.getElementById(id); if (e) e.href = h; }
+        sh('sw', 'https://wa.me/?text=' + txt + '%20' + url);
+        sh('sx', 'https://twitter.com/intent/tweet?text=' + txt + '&url=' + url);
+        sh('sf', 'https://www.facebook.com/sharer/sharer.php?u=' + url);
+        sh('st', 'https://t.me/share/url?url=' + url + '&text=' + txt);
         doOpenM('mShare');
     }
 
     // ── PUBLIC API ───────────────────────────────────────────────
-    // Every method here is accessible as App.xxx() from onclick=""
     return {
-        login:    doLogin,
-        logout:   doLogout,
-        filter:   function ()         { renderFeed(); },
-        search:   function (v)        { doSearch(v); },
-        pick:     function (name)     {
-            var el = document.getElementById('sbox');
-            if (el) el.value = name;
-            var dr = document.getElementById('sdrop');
-            if (dr) dr.style.display = 'none';
-            renderFeed();
-        },
-        bell:     function (id)              { doBell(id); },
-        share:    function (name, status)    { doShare(name, status); },
-        chip:     function (id, label)       { doChip(id, label); },
-        report:   function (id, st, lk)      { doReport(id, st, lk); },
-        post:     function (id)              { doPost(id); },
-        suggest:  function ()                { doSuggest(); },
-        openM:    function (id)              { doOpenM(id); },
-        closeM:   function ()                { doCloseM(); },
-        refresh:  function () {
+        login:   doLogin,
+        logout:  doLogout,
+        filter:  function ()        { renderFeed(); },
+        search:  function (v)       { doSearch(v); },
+        pick:    function (name)    { var el = document.getElementById('sbox'); if (el) el.value = name; var dr = document.getElementById('sdrop'); if (dr) dr.style.display = 'none'; renderFeed(); },
+        bell:    function (id)      { doBell(id); },
+        share:   function (n, s)    { doShare(n, s); },
+        chip:    function (id, l)   { doChip(id, l); },
+        report:  function (id, st, lk) { doReport(id, st, lk); },
+        post:    function (id)      { doPost(id); },
+        suggest: function ()        { doSuggest(); },
+        openM:   function (id)      { doOpenM(id); },
+        closeM:  function ()        { doCloseM(); },
+        refresh: function () {
             toast('Refreshing...');
             Promise.all([fetchGrid(), fetchComments()]).then(function () {
-                if (S.user) fetchSubs().then(renderFeed);
-                else renderFeed();
+                if (S.user) fetchSubs().then(renderFeed); else renderFeed();
                 toast('Updated!');
             });
         },
-        // Expose boot so window.onload can call it
         _boot: boot
     };
 
-}()); // end App IIFE
+}());
 
-// ── SINGLE BOOT ENTRY POINT ──────────────────────────────────────
-window.addEventListener('DOMContentLoaded', function () {
-    App._boot();
-});
+document.addEventListener('DOMContentLoaded', function () { App._boot(); });
 </script>
 </body>
 </html>
