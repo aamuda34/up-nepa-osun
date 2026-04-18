@@ -192,24 +192,24 @@
             
             syncRealtime();
 
-            // 3. CAPACITOR DEEP LINK FIX (Professional implementation)
+            // 3. CAPACITOR DEEP LINK BRIDGE (CRITICAL FIX)
+            // This listens for the URL when Google redirects back from the browser to the APK
             if (window.Capacitor && window.Capacitor.Plugins.App) {
                 window.Capacitor.Plugins.App.addListener('appUrlOpen', async (data) => {
                     const url = new URL(data.url);
-                    // Extract tokens from com.upnepa.osun://login-callback#access_token=...
-                    const fragment = url.hash.substring(1);
-                    const params = new URLSearchParams(fragment);
-                    const accessToken = params.get('access_token');
-                    const refreshToken = params.get('refresh_token');
+                    // Extract access token from the URL hash (#)
+                    const hash = url.hash.substring(1);
+                    if (hash) {
+                        const params = new URLSearchParams(hash);
+                        const access_token = params.get('access_token');
+                        const refresh_token = params.get('refresh_token');
 
-                    if (accessToken && refreshToken) {
-                        const { error } = await _client.auth.setSession({
-                            access_token: accessToken,
-                            refresh_token: refreshToken
-                        });
-                        if (!error) {
-                            showToast("Logged in successfully!");
-                            window.location.reload();
+                        if (access_token && refresh_token) {
+                            const { error } = await _client.auth.setSession({ access_token, refresh_token });
+                            if (!error) {
+                                showToast("Authenticated via Deep Link");
+                                setTimeout(() => window.location.reload(), 500);
+                            }
                         }
                     }
                 });
@@ -218,13 +218,17 @@
 
         async function loginGoogle() { 
             const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
+            // Critical Fix: redirectTo must use the custom scheme to return to the APK
             const redirectUrl = isNative 
                 ? 'com.upnepa.osun://login-callback' 
-                : window.location.origin + window.location.pathname;
+                : window.location.origin;
 
             const { error } = await _client.auth.signInWithOAuth({ 
                 provider: 'google', 
-                options: { redirectTo: redirectUrl } 
+                options: { 
+                    redirectTo: redirectUrl,
+                    skipBrowserRedirect: false 
+                } 
             });
             if (error) showToast("Login failed: " + error.message);
         }
@@ -268,37 +272,37 @@
             filterGrid();
         }
 
-        // REALTIME SYNC (FIXED "CONNECTING" STATUS)
+        // REALTIME SYNC (FIXED: Instantly shows "Grid Live" when connected)
         function syncRealtime() {
             const dot = document.getElementById('status-dot');
             const text = document.getElementById('status-text');
 
-            // Listen for data updates
-            _client.channel('public-db')
+            const mainChannel = _client.channel('public-db')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'areas' }, () => fetchGrid())
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => fetchComments())
-                .subscribe();
+                .subscribe((status) => {
+                    // Update UI status based on real-time subscription
+                    if (status === 'SUBSCRIBED') {
+                        if (dot) dot.style.background = 'var(--success)';
+                        if (text) text.innerText = 'Grid Live';
+                    } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+                        if (dot) dot.style.background = 'var(--danger)';
+                        if (text) text.innerText = 'Reconnecting...';
+                    }
+                });
             
-            // Presence Tracking
+            // Presence Tracking for "Online Count"
             const presenceChannel = _client.channel('online-status');
-            
             presenceChannel.on('presence', { event: 'sync' }, () => {
                 const state = presenceChannel.presenceState();
                 let count = 0;
                 for (const key in state) count += state[key].length;
                 document.getElementById('member-count').innerText = `${count} ONLINE`;
-                
-                // Set UI to "Live" once sync is confirmed
-                if (dot) dot.style.background = 'var(--success)';
-                if (text) text.innerText = 'Grid Live';
             });
 
             presenceChannel.subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
                     await presenceChannel.track({ online_at: new Date().toISOString(), email: user?.email || 'anon' });
-                } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
-                    if (dot) dot.style.background = 'var(--danger)';
-                    if (text) text.innerText = 'Reconnecting...';
                 }
             });
         }
@@ -328,7 +332,7 @@
                 const isOn = s.status === 'Light On';
                 const subbed = userSubs.includes(s.id);
                 const followers = s.subscriptions?.[0]?.count || 0;
-                const commentsHTML = allComments.filter(c => c.area_id === s.id).map(c => `
+                const commentsHTML = allComments.filter(c => c.area_id === s.id).slice(0, 3).map(c => `
                     <div class="comment-item">
                         <div class="comment-user"><span>${c.user_email.split('@')[0]}</span> <span>${timeAgo(c.created_at)}</span></div>
                         <div style="color:#fff;">${c.content}</div>
@@ -370,7 +374,7 @@
                     <div class="comment-section">
                         <div style="max-height: 120px; overflow-y: auto;">${commentsHTML || '<p style="font-size:0.7rem; color:var(--text-dim); text-align:center;">No comments yet.</p>'}</div>
                         <div class="comment-input-row">
-                            <input type="text" id="comment-input-${s.id}" class="minimal-input" placeholder="Write a comment..." style="padding: 10px; font-size: 0.75rem;">
+                            <input type="text" id="comment-input-${s.id}" class="minimal-input" placeholder="Update info..." style="padding: 10px; font-size: 0.75rem;">
                             <button class="btn-post" onclick="if(interactionGuard()) postComment(${s.id})">Post</button>
                         </div>
                     </div>
@@ -470,7 +474,6 @@
             document.getElementById('share-modal').style.display = 'flex';
         }
 
-        // Initialize
         window.onload = startApp;
     </script>
 </body>
