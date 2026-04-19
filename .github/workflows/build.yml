@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -34,19 +35,14 @@ jobs:
             @capacitor/browser@6 \
             @capacitor/status-bar@6
 
-      # -------------------------------------------------------
-      # FIX: capacitor.config.json is inside www/ in your repo
-      # but Capacitor CLI requires it at the ROOT level.
-      # We write a fresh correct one at root here.
-      # -------------------------------------------------------
-      - name: Create capacitor.config.json at root
+      # â”€â”€ Write capacitor.config.json at ROOT (Capacitor requires it here)
+      - name: Create capacitor.config.json
         run: |
-          cat > capacitor.config.json << 'CAPEOF'
+          cat > capacitor.config.json << 'EOF'
           {
             "appId": "com.upnepa.osun",
             "appName": "Up-Nepa Osun",
             "webDir": "www",
-            "bundledWebRuntime": false,
             "server": {
               "androidScheme": "https",
               "hostname": "up-nepa-osun.vercel.app"
@@ -57,7 +53,7 @@ jobs:
               }
             }
           }
-          CAPEOF
+          EOF
 
       - name: Add Android Platform
         run: npx cap add android || true
@@ -65,28 +61,44 @@ jobs:
       - name: Sync Web Assets to Android
         run: npx cap sync android
 
-      # -------------------------------------------------------
-      # FIX 1: APP ICON
-      # www/icon.png exists in your repo (confirmed from screenshot).
-      # We use Python Pillow (always available on GitHub runners)
-      # to resize into every required Android mipmap density.
-      # More reliable than imagemagick on CI runners.
-      # -------------------------------------------------------
-      - name: Install Pillow for icon resizing
-        run: pip install Pillow
+      # â”€â”€ FIX: App Name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      # Capacitor sometimes overrides strings.xml with default name.
+      # We overwrite it directly after sync.
+      - name: Set App Name
+        run: |
+          FILE="android/app/src/main/res/values/strings.xml"
+          mkdir -p "$(dirname $FILE)"
+          cat > "$FILE" << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Up-Nepa Osun</string>
+              <string name="title_activity_main">Up-Nepa Osun</string>
+              <string name="package_name">com.upnepa.osun</string>
+              <string name="custom_url_scheme">com.upnepa.osun</string>
+          </resources>
+          EOF
 
-      - name: Apply App Icon to all Android mipmap folders
+      # â”€â”€ FIX: App Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      # Uses Python Pillow (pre-installed on GitHub runners).
+      # Resizes www/icon.png into every required Android mipmap
+      # density. No ImageMagick needed â€” Pillow is more reliable on CI.
+      - name: Install Pillow
+        run: pip install Pillow --quiet
+
+      - name: Apply App Icon to all mipmap folders
         run: |
           python3 << 'PYEOF'
           from PIL import Image
-          import os
+          import os, sys
 
           src = "www/icon.png"
           if not os.path.exists(src):
-              print("ERROR: www/icon.png not found!")
-              exit(1)
+              print(f"ERROR: {src} not found!")
+              sys.exit(1)
 
+          # Open and convert to RGBA so transparency is handled
           img = Image.open(src).convert("RGBA")
+          print(f"Source icon: {img.size[0]}x{img.size[1]}px")
 
           densities = {
               "mdpi":    48,
@@ -102,66 +114,85 @@ jobs:
 
               resized = img.resize((size, size), Image.LANCZOS)
 
-              # Standard square icon
-              resized.save(f"{folder}/ic_launcher.png")
+              # Standard launcher icon
+              resized.save(f"{folder}/ic_launcher.png", "PNG")
 
-              # Round icon (Android clips it to circle automatically)
-              resized.save(f"{folder}/ic_launcher_round.png")
+              # Round launcher icon (Android clips to circle automatically)
+              resized.save(f"{folder}/ic_launcher_round.png", "PNG")
 
-              print(f"  {density}: {size}x{size}px written")
+              # Foreground layer (for adaptive icons)
+              resized.save(f"{folder}/ic_launcher_foreground.png", "PNG")
 
-          # Also write to drawable folder (legacy fallback)
+              print(f"  {density}: {size}x{size}px -> {folder}")
+
+          # Legacy drawable fallback
           os.makedirs("android/app/src/main/res/drawable", exist_ok=True)
-          img.resize((192, 192), Image.LANCZOS).save("android/app/src/main/res/drawable/ic_launcher.png")
+          img.resize((192, 192), Image.LANCZOS).save(
+              "android/app/src/main/res/drawable/ic_launcher.png", "PNG"
+          )
 
-          print("All icons applied successfully.")
+          print("All icons written successfully.")
           PYEOF
 
-      # -------------------------------------------------------
-      # FIX: App Name in strings.xml
-      # -------------------------------------------------------
-      - name: Set correct App Name
+      # â”€â”€ FIX: Adaptive Icon XML â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      # Modern Android (8+) uses adaptive icons defined in XML.
+      # Without this file, some devices ignore the mipmap PNGs.
+      - name: Create Adaptive Icon XML
         run: |
-          STRINGS_FILE="android/app/src/main/res/values/strings.xml"
-          mkdir -p "$(dirname $STRINGS_FILE)"
-          cat > "$STRINGS_FILE" << 'STREOF'
+          MIPMAP_DIR="android/app/src/main/res/mipmap-anydpi-v26"
+          mkdir -p "$MIPMAP_DIR"
+
+          cat > "$MIPMAP_DIR/ic_launcher.xml" << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background"/>
+              <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
+          cat > "$MIPMAP_DIR/ic_launcher_round.xml" << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background"/>
+              <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
+          # Background color for adaptive icon (dark to match app theme)
+          VALUES_DIR="android/app/src/main/res/values"
+          mkdir -p "$VALUES_DIR"
+
+          # Add background color (only if not already in colors.xml)
+          cat > "$VALUES_DIR/ic_launcher_background.xml" << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <string name="app_name">Up-Nepa Osun</string>
-              <string name="title_activity_main">Up-Nepa Osun</string>
-              <string name="package_name">com.upnepa.osun</string>
-              <string name="custom_url_scheme">com.upnepa.osun</string>
+              <color name="ic_launcher_background">#07080D</color>
           </resources>
-          STREOF
+          EOF
 
-      # -------------------------------------------------------
-      # FIX 2: GOOGLE LOGIN DEEP LINK
-      # After user picks Google account, browser redirects to
-      # com.upnepa.osun://login-callback
-      # Android needs an intent-filter in AndroidManifest.xml
-      # to catch that URL and bring your app back to foreground.
-      # Without this, the browser just keeps spinning.
-      # -------------------------------------------------------
-      - name: Inject Deep Link Intent Filter into AndroidManifest.xml
+          echo "Adaptive icon XML created."
+
+      # â”€â”€ FIX: Deep Link Intent Filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      # Injects com.upnepa.osun://login-callback into AndroidManifest
+      # so Google OAuth redirects back to the app after login.
+      - name: Inject Deep Link Intent Filter
         run: |
           python3 << 'PYEOF'
           import os
 
-          manifest_path = "android/app/src/main/AndroidManifest.xml"
-
-          if not os.path.exists(manifest_path):
-              print("ERROR: AndroidManifest.xml not found!")
+          path = "android/app/src/main/AndroidManifest.xml"
+          if not os.path.exists(path):
+              print("AndroidManifest.xml not found!")
               exit(1)
 
-          with open(manifest_path, "r") as f:
+          with open(path, "r") as f:
               content = f.read()
 
-          # Avoid duplicate injection on re-runs
           if "com.upnepa.osun" in content:
-              print("Deep link intent filter already present. Skipping.")
+              print("Deep link already present. Skipping.")
               exit(0)
 
-          deep_link_block = """
+          intent_filter = """
                   <intent-filter android:label="Up-Nepa Osun Login">
                       <action android:name="android.intent.action.VIEW" />
                       <category android:name="android.intent.category.DEFAULT" />
@@ -171,41 +202,37 @@ jobs:
                           android:host="login-callback" />
                   </intent-filter>"""
 
-          # Insert before the first </activity> closing tag
-          content = content.replace("</activity>", deep_link_block + "\n        </activity>", 1)
+          content = content.replace("</activity>", intent_filter + "\n        </activity>", 1)
 
-          with open(manifest_path, "w") as f:
+          with open(path, "w") as f:
               f.write(content)
 
-          print("Deep link intent filter injected into AndroidManifest.xml")
+          print("Deep link intent filter injected.")
           PYEOF
 
-      # -------------------------------------------------------
-      # FIX: Copy google-services.json to correct Android folder
-      # Yours is in www/ but Firebase needs it at:
-      # android/app/google-services.json
-      # -------------------------------------------------------
-      - name: Copy google-services.json to Android folder
+      # â”€â”€ Copy google-services.json â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Copy google-services.json
         run: |
           if [ -f "www/google-services.json" ]; then
             cp www/google-services.json android/app/google-services.json
-            echo "google-services.json copied to android/app/"
+            echo "google-services.json copied."
           else
-            echo "WARNING: www/google-services.json not found. Firebase notifications may not work."
+            echo "WARNING: www/google-services.json not found."
           fi
 
+      # â”€â”€ BUILD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       - name: Build Debug APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Rename APK
         run: |
           mv android/app/build/outputs/apk/debug/app-debug.apk \
              android/app/build/outputs/apk/debug/Up-Nepa-Osun.apk
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Up-Nepa-Osun-APK
