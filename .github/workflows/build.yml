@@ -1,1 +1,117 @@
+name: Build Up-Nepa Osun APK
 
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Set up Java (required for Android build)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Capacitor CLI
+        run: npm install -g @capacitor/cli
+
+      - name: Add Android platform
+        run: npx cap add android || echo "Android already added"
+
+      - name: Copy web assets to Android
+        run: npx cap copy android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      # ── CUSTOM APP ICON ─────────────────────────────────────────
+      # This copies your icon.png from www/ and generates all
+      # required sizes for Android (replaces the default blue icon)
+      - name: Install sharp for icon resizing
+        run: npm install sharp
+
+      - name: Generate all Android icon sizes from www/icon.png
+        run: |
+          node -e "
+          const sharp = require('sharp');
+          const fs = require('fs');
+          const path = require('path');
+
+          const src = 'www/icon.png';
+          if (!fs.existsSync(src)) {
+            console.log('No www/icon.png found, skipping icon generation');
+            process.exit(0);
+          }
+
+          const sizes = [
+            { dir: 'mipmap-mdpi',    size: 48  },
+            { dir: 'mipmap-hdpi',    size: 72  },
+            { dir: 'mipmap-xhdpi',   size: 96  },
+            { dir: 'mipmap-xxhdpi',  size: 144 },
+            { dir: 'mipmap-xxxhdpi', size: 192 },
+          ];
+
+          const base = 'android/app/src/main/res';
+
+          Promise.all(sizes.map(function(s) {
+            var outDir = path.join(base, s.dir);
+            fs.mkdirSync(outDir, { recursive: true });
+            return sharp(src)
+              .resize(s.size, s.size)
+              .toFile(path.join(outDir, 'ic_launcher.png'))
+              .then(function() {
+                return sharp(src)
+                  .resize(s.size, s.size)
+                  .toFile(path.join(outDir, 'ic_launcher_round.png'));
+              });
+          })).then(function() {
+            console.log('All icon sizes generated successfully!');
+          }).catch(function(e) {
+            console.error('Icon generation failed:', e);
+            process.exit(1);
+          });
+          "
+
+      # ── BUILD DEBUG APK ─────────────────────────────────────────
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build Debug APK
+        run: cd android && ./gradlew assembleDebug --no-daemon
+
+      # ── UPLOAD APK AS ARTIFACT ──────────────────────────────────
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: up-nepa-osun-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: Show APK info
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          if [ -f "$APK" ]; then
+            echo "✅ APK built successfully!"
+            ls -lh "$APK"
+          else
+            echo "❌ APK not found"
+            exit 1
+          fi
