@@ -2056,6 +2056,29 @@ async function safeVote(areaId, type){
     console.log("vote error", e);
   }
 }
+    // ==========================
+// ✅ CONNECT BUTTONS TO SAFE VOTE
+// ==========================
+document.addEventListener("click", function(e){
+  const btn = e.target.closest(".btn-approve, .btn-disapprove");
+  if(!btn) return;
+
+  const card = btn.closest("[data-id]");
+  if(!card) return;
+
+  const areaId = card.getAttribute("data-id");
+  if(!areaId) return;
+
+  // Prevent old onclick from running
+  e.preventDefault();
+  e.stopPropagation();
+
+  if(btn.classList.contains("btn-approve")){
+    safeVote(areaId, "approve");
+  } else {
+    safeVote(areaId, "disapprove");
+  }
+});
 </script>
 </body>
 </html>
