@@ -10,20 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # â”€â”€ 1. CHECKOUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # â”€â”€ 2. NODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install npm dependencies
+      - name: Install dependencies
         run: npm install
 
-      # â”€â”€ 3. JAVA & ANDROID SDK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
@@ -33,118 +30,93 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # â”€â”€ 4. CAPACITOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       - name: Install Capacitor CLI
         run: npm install -g @capacitor/cli
 
-      - name: Add Android platform (safe if already exists)
-        run: npx cap add android 2>/dev/null || echo "Android platform already exists, continuing..."
+      - name: Add Android platform
+        run: npx cap add android 2>/dev/null || echo "Already exists"
 
-      - name: Copy web assets to Android
+      - name: Copy web assets
         run: npx cap copy android
 
-      - name: Sync Capacitor plugins
+      - name: Sync Capacitor
         run: npx cap sync android
 
-      # â”€â”€ 5. FIX APP NAME â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      - name: Set correct app name in strings.xml
+      - name: Fix app name
         run: |
-          STRINGS_FILE="android/app/src/main/res/values/strings.xml"
-          mkdir -p "android/app/src/main/res/values"
-          if [ -f "$STRINGS_FILE" ]; then
-            sed -i 's|<string name="app_name">.*</string>|<string name="app_name">Up-Nepa Osun</string>|g' "$STRINGS_FILE"
-            echo "App name updated:"
-            cat "$STRINGS_FILE"
+          DIR="android/app/src/main/res/values"
+          mkdir -p "$DIR"
+          FILE="$DIR/strings.xml"
+          if [ -f "$FILE" ]; then
+            sed -i 's|<string name="app_name">.*</string>|<string name="app_name">Up-Nepa Osun</string>|g' "$FILE"
           else
-            cat > "$STRINGS_FILE" << 'EOF'
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Up-Nepa Osun</string>
-    <string name="title_activity_main">Up-Nepa Osun</string>
-    <string name="package_name">com.upnepa.osun</string>
-    <string name="custom_url_scheme">com.upnepa.osun</string>
-</resources>
-EOF
-            echo "strings.xml created"
+            printf '%s\n' "<?xml version='1.0' encoding='utf-8'?>" "<resources>" "    <string name=\"app_name\">Up-Nepa Osun</string>" "    <string name=\"title_activity_main\">Up-Nepa Osun</string>" "    <string name=\"package_name\">com.upnepa.osun</string>" "    <string name=\"custom_url_scheme\">com.upnepa.osun</string>" "</resources>" > "$FILE"
           fi
+          echo "strings.xml content:"
+          cat "$FILE"
 
-      # â”€â”€ 6. GENERATE CUSTOM ICONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Set icon background color
+        run: |
+          DIR="android/app/src/main/res/values"
+          mkdir -p "$DIR"
+          printf '%s\n' "<?xml version='1.0' encoding='utf-8'?>" "<resources>" "    <color name=\"ic_launcher_background\">#07080F</color>" "</resources>" > "$DIR/ic_launcher_background.xml"
+          echo "Icon background color set"
+
+      - name: Fix adaptive icon XML
+        run: |
+          DIR="android/app/src/main/res/mipmap-anydpi-v26"
+          mkdir -p "$DIR"
+          printf '%s\n' "<?xml version=\"1.0\" encoding=\"utf-8\"?>" "<adaptive-icon xmlns:android=\"http://schemas.android.com/apk/res/android\">" "    <background android:drawable=\"@color/ic_launcher_background\"/>" "    <foreground android:drawable=\"@mipmap/ic_launcher_foreground\"/>" "</adaptive-icon>" > "$DIR/ic_launcher.xml"
+          cp "$DIR/ic_launcher.xml" "$DIR/ic_launcher_round.xml"
+          echo "Adaptive icon XML fixed"
+
       - name: Install sharp for icon resizing
         run: npm install sharp --save-dev
 
-      - name: Generate all Android icon sizes from www/icon.png
+      - name: Generate icons from www/icon.png
         run: |
-          node << 'SCRIPT'
-          const sharp = require('sharp');
-          const fs = require('fs');
-          const path = require('path');
-
-          const src = 'www/icon.png';
-          if (!fs.existsSync(src)) {
-            console.log('www/icon.png not found - skipping');
-            process.exit(0);
-          }
-
-          const base = 'android/app/src/main/res';
-          const sizes = [
-            { dir: 'mipmap-mdpi',    size: 48  },
-            { dir: 'mipmap-hdpi',    size: 72  },
-            { dir: 'mipmap-xhdpi',   size: 96  },
-            { dir: 'mipmap-xxhdpi',  size: 144 },
-            { dir: 'mipmap-xxxhdpi', size: 192 },
+          node -e "
+          var sharp = require('sharp');
+          var fs = require('fs');
+          var path = require('path');
+          var src = 'www/icon.png';
+          if (!fs.existsSync(src)) { console.log('No icon.png found'); process.exit(0); }
+          var base = 'android/app/src/main/res';
+          var sizes = [
+            {dir:'mipmap-mdpi',size:48},
+            {dir:'mipmap-hdpi',size:72},
+            {dir:'mipmap-xhdpi',size:96},
+            {dir:'mipmap-xxhdpi',size:144},
+            {dir:'mipmap-xxxhdpi',size:192}
           ];
+          var tasks = sizes.map(function(s) {
+            var d = path.join(base, s.dir);
+            fs.mkdirSync(d, {recursive:true});
+            return sharp(src).resize(s.size, s.size, {fit:'cover'}).png().toFile(path.join(d,'ic_launcher.png'))
+              .then(function() { return sharp(src).resize(s.size, s.size, {fit:'cover'}).png().toFile(path.join(d,'ic_launcher_round.png')); })
+              .then(function() { return sharp(src).resize(s.size, s.size, {fit:'contain',background:{r:7,g:8,b:15,alpha:1}}).png().toFile(path.join(d,'ic_launcher_foreground.png')); })
+              .then(function() { console.log('Done: ' + s.dir); });
+          });
+          Promise.all(tasks).then(function() { console.log('All icons done!'); }).catch(function(e) { console.error(e); process.exit(1); });
+          "
 
-          async function run() {
-            for (const s of sizes) {
-              const outDir = path.join(base, s.dir);
-              fs.mkdirSync(outDir, { recursive: true });
-              await sharp(src).resize(s.size, s.size, { fit: 'cover' }).png()
-                .toFile(path.join(outDir, 'ic_launcher.png'));
-              await sharp(src).resize(s.size, s.size, { fit: 'cover' }).png()
-                .toFile(path.join(outDir, 'ic_launcher_round.png'));
-              await sharp(src).resize(s.size, s.size, { fit: 'contain', background: { r:7, g:8, b:15, alpha:1 } }).png()
-                .toFile(path.join(outDir, 'ic_launcher_foreground.png'));
-              console.log('Generated mipmap-' + s.dir + ' at ' + s.size + 'px');
-            }
-            console.log('All icons generated!');
-          }
-          run().catch(e => { console.error(e); process.exit(1); });
-          SCRIPT
-
-      - name: Fix adaptive icon XMLs and background color
+      - name: Verify icons
         run: |
-          ANYDPI="android/app/src/main/res/mipmap-anydpi-v26"
-          mkdir -p "$ANYDPI"
-          cat > "$ANYDPI/ic_launcher.xml" << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background"/>
-    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
-</adaptive-icon>
-EOF
-          cat > "$ANYDPI/ic_launcher_round.xml" << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background"/>
-    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
-</adaptive-icon>
-EOF
-          cat > "android/app/src/main/res/values/ic_launcher_background.xml" << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="ic_launcher_background">#07080F</color>
-</resources>
-EOF
-          echo "Adaptive icons and background color set"
+          for dir in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            FILE="android/app/src/main/res/mipmap-$dir/ic_launcher.png"
+            if [ -f "$FILE" ]; then
+              echo "OK: mipmap-$dir"
+            else
+              echo "MISSING: mipmap-$dir"
+            fi
+          done
 
-      # â”€â”€ 7. BUILD APK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
       - name: Build Debug APK
         run: cd android && ./gradlew assembleDebug --no-daemon
 
-      # â”€â”€ 8. UPLOAD APK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -152,11 +124,11 @@ EOF
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
-      - name: Show result
+      - name: Result
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
           if [ -f "$APK" ]; then
-            echo "SUCCESS - APK built:"
+            echo "SUCCESS:"
             ls -lh "$APK"
           else
             echo "FAILED - APK not found"
