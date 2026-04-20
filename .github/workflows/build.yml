@@ -10,129 +10,430 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # â”€â”€ 1. CHECKOUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Install Capacitor App plugin for deep links
-        run: npm install @capacitor/app
-
+      # â”€â”€ 2. JAVA 17 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
           java-version: '17'
+          distribution: 'temurin'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # â”€â”€ 3. NODE 20 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Install Capacitor CLI
-        run: npm install -g @capacitor/cli
-
-      - name: Add Android platform
-        run: npx cap add android 2>/dev/null || echo "Already exists"
-
-      - name: Copy web assets
-        run: npx cap copy android
-
-      - name: Sync Capacitor plugins
-        run: npx cap sync android
-
-      - name: Fix app name in strings.xml
+      # â”€â”€ 4. INSTALL CAPACITOR + PLUGINS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Install Capacitor and plugins
         run: |
-          DIR="android/app/src/main/res/values"
-          mkdir -p "$DIR"
-          FILE="$DIR/strings.xml"
-          if [ -f "$FILE" ]; then
-            sed -i 's|<string name="app_name">.*</string>|<string name="app_name">Up-Nepa Osun</string>|g' "$FILE"
-            sed -i 's|<string name="title_activity_main">.*</string>|<string name="title_activity_main">Up-Nepa Osun</string>|g' "$FILE"
-          else
-            printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="app_name">Up-Nepa Osun</string>\n    <string name="title_activity_main">Up-Nepa Osun</string>\n    <string name="package_name">com.upnepa.osun</string>\n    <string name="custom_url_scheme">com.upnepa.osun</string>\n</resources>\n' > "$FILE"
-          fi
-          echo "strings.xml:"
-          cat "$FILE"
+          npm install \
+            @capacitor/core@6 \
+            @capacitor/cli@6 \
+            @capacitor/android@6 \
+            @capacitor/app@6 \
+            @capacitor/browser@6 \
+            @capacitor/status-bar@6 \
+            @capacitor/local-notifications@6 \
+            --save-exact
 
-      - name: Add deep link intent filter to AndroidManifest.xml
+      # â”€â”€ 5. WRITE capacitor.config.json â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Write capacitor.config.json
         run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if grep -q "login-callback" "$MANIFEST"; then
-            echo "Deep link already present"
-          else
-            sed -i 's|</activity>|        <intent-filter>\n            <action android:name="android.intent.action.VIEW"/>\n            <category android:name="android.intent.category.DEFAULT"/>\n            <category android:name="android.intent.category.BROWSABLE"/>\n            <data android:scheme="com.upnepa.osun" android:host="login-callback"/>\n        </intent-filter>\n    </activity>|' "$MANIFEST"
-            echo "Deep link intent filter added"
-          fi
-          echo "Manifest:"
-          cat "$MANIFEST"
-
-      - name: Set icon background color
-        run: |
-          DIR="android/app/src/main/res/values"
-          mkdir -p "$DIR"
-          printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#07080F</color>\n</resources>\n' > "$DIR/ic_launcher_background.xml"
-
-      - name: Fix adaptive icon XML
-        run: |
-          DIR="android/app/src/main/res/mipmap-anydpi-v26"
-          mkdir -p "$DIR"
-          printf '<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n    <background android:drawable="@color/ic_launcher_background"/>\n    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n</adaptive-icon>\n' > "$DIR/ic_launcher.xml"
-          cp "$DIR/ic_launcher.xml" "$DIR/ic_launcher_round.xml"
-          echo "Adaptive icon XML fixed"
-
-      - name: Install sharp
-        run: npm install sharp --save-dev
-
-      - name: Generate icons from www/icon.png
-        run: |
-          node -e "
-          var sharp=require('sharp');
-          var fs=require('fs');
-          var path=require('path');
-          var src='www/icon.png';
-          if(!fs.existsSync(src)){console.log('No www/icon.png');process.exit(0);}
-          var base='android/app/src/main/res';
-          var sizes=[{d:'mipmap-mdpi',s:48},{d:'mipmap-hdpi',s:72},{d:'mipmap-xhdpi',s:96},{d:'mipmap-xxhdpi',s:144},{d:'mipmap-xxxhdpi',s:192}];
-          function next(i){
-            if(i>=sizes.length){console.log('All icons done!');return;}
-            var item=sizes[i];
-            var dir=path.join(base,item.d);
-            fs.mkdirSync(dir,{recursive:true});
-            sharp(src).resize(item.s,item.s,{fit:'cover'}).png().toFile(path.join(dir,'ic_launcher.png')).then(function(){
-              return sharp(src).resize(item.s,item.s,{fit:'cover'}).png().toFile(path.join(dir,'ic_launcher_round.png'));
-            }).then(function(){
-              return sharp(src).resize(item.s,item.s,{fit:'contain',background:{r:7,g:8,b:15,alpha:1}}).png().toFile(path.join(dir,'ic_launcher_foreground.png'));
-            }).then(function(){console.log('Done '+item.d);next(i+1);}).catch(function(e){console.error(e);process.exit(1);});
+          cat > capacitor.config.json << 'EOF'
+          {
+            "appId": "com.upnepa.osun",
+            "appName": "Up-Nepa Osun",
+            "webDir": "www",
+            "androidScheme": "https",
+            "plugins": {
+              "LocalNotifications": {
+                "smallIcon": "ic_launcher",
+                "iconColor": "#C084FC",
+                "sound": "light_alert.wav"
+              },
+              "SplashScreen": {
+                "launchShowDuration": 2000,
+                "backgroundColor": "#07080F",
+                "showSpinner": false
+              }
+            }
           }
-          next(0);
-          "
+          EOF
 
-      - name: Verify icons exist
+      # â”€â”€ 6. WRITE service worker for web push â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Write service worker
         run: |
-          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
-            F="android/app/src/main/res/mipmap-$d/ic_launcher.png"
-            if [ -f "$F" ]; then echo "OK $d"; else echo "MISSING $d"; fi
-          done
+          cat > www/sw.js << 'EOF'
+          // Up-Nepa Osun Service Worker â€” handles background push notifications
+          var CACHE_NAME = 'upnepa-v1';
 
-      - name: Make Gradle executable
+          self.addEventListener('install', function(e) {
+            self.skipWaiting();
+          });
+
+          self.addEventListener('activate', function(e) {
+            e.waitUntil(clients.claim());
+          });
+
+          self.addEventListener('push', function(e) {
+            var data = {};
+            try { data = e.data ? e.data.json() : {}; } catch(err) {}
+            var title  = data.title  || 'Up-Nepa Osun';
+            var body   = data.body   || 'Power status updated in your area!';
+            var icon   = data.icon   || '/www/icon.png';
+            var badge  = data.badge  || '/www/icon.png';
+            var sound  = data.sound  || false;
+
+            e.waitUntil(
+              self.registration.showNotification(title, {
+                body: body,
+                icon: icon,
+                badge: badge,
+                vibrate: [200, 100, 200, 100, 200],
+                tag: 'upnepa-update',
+                requireInteraction: false
+              })
+            );
+          });
+
+          self.addEventListener('notificationclick', function(e) {
+            e.notification.close();
+            e.waitUntil(
+              clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+                for (var i = 0; i < clientList.length; i++) {
+                  var client = clientList[i];
+                  if (client.url && 'focus' in client) {
+                    return client.focus();
+                  }
+                }
+                if (clients.openWindow) {
+                  return clients.openWindow('/');
+                }
+              })
+            );
+          });
+          EOF
+
+      # â”€â”€ 7. GENERATE LIGHT ALERT SOUND (WAV) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Generate light alert sound
+        run: |
+          python3 << 'PYEOF'
+          import struct, math, wave, os
+
+          # Generate a pleasant two-tone "ding-ding" alert sound
+          # Tone 1: 880 Hz (A5) for 0.25s, Tone 2: 1109 Hz (C#6) for 0.25s
+          # Then silence 0.1s, repeat once more
+          SAMPLE_RATE = 44100
+          AMPLITUDE   = 28000
+
+          def tone(freq, duration_s, sample_rate=SAMPLE_RATE, amp=AMPLITUDE, fade_ms=20):
+              n = int(sample_rate * duration_s)
+              fade_n = int(sample_rate * fade_ms / 1000)
+              samples = []
+              for i in range(n):
+                  t = i / sample_rate
+                  val = int(amp * math.sin(2 * math.pi * freq * t))
+                  # Apply fade in / fade out to avoid clicks
+                  if i < fade_n:
+                      val = int(val * (i / fade_n))
+                  elif i > n - fade_n:
+                      val = int(val * ((n - i) / fade_n))
+                  samples.append(val)
+              return samples
+
+          def silence(duration_s, sample_rate=SAMPLE_RATE):
+              return [0] * int(sample_rate * duration_s)
+
+          samples = (
+              tone(880,  0.20) +   # A5
+              tone(1109, 0.20) +   # C#6
+              silence(0.08)    +
+              tone(880,  0.15) +   # A5 short
+              tone(1318, 0.25) +   # E6
+              silence(0.10)
+          )
+
+          os.makedirs('www', exist_ok=True)
+          path = 'www/light_alert.wav'
+          with wave.open(path, 'w') as wf:
+              wf.setnchannels(1)
+              wf.setsampwidth(2)
+              wf.setframerate(SAMPLE_RATE)
+              data = struct.pack('<' + 'h' * len(samples), *samples)
+              wf.writeframes(data)
+
+          print(f'Created {path} ({os.path.getsize(path)} bytes)')
+          PYEOF
+
+      # â”€â”€ 8. INSTALL PILLOW FOR ICON PROCESSING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Install Pillow
+        run: pip install Pillow --break-system-packages
+
+      # â”€â”€ 9. INIT CAPACITOR + ADD ANDROID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Init Capacitor and add Android platform
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      # â”€â”€ 10. WRITE STRINGS.XML â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Set app name in strings.xml
+        run: |
+          cat > android/app/src/main/res/values/strings.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Up-Nepa Osun</string>
+              <string name="title_activity_main">Up-Nepa Osun</string>
+              <string name="package_name">com.upnepa.osun</string>
+              <string name="custom_url_scheme">com.upnepa.osun</string>
+          </resources>
+          EOF
+
+      # â”€â”€ 11. PROCESS CUSTOM ICON â†’ ALL MIPMAP SIZES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Generate all icon sizes from www/icon.png
+        run: |
+          python3 << 'PYEOF'
+          from PIL import Image
+          import os, shutil
+
+          src = 'www/icon.png'
+          if not os.path.exists(src):
+              print(f'WARNING: {src} not found â€” using placeholder.')
+              img = Image.new('RGBA', (1024, 1024), (187, 134, 252, 255))
+          else:
+              img = Image.open(src).convert('RGBA')
+
+          base = 'android/app/src/main/res'
+
+          # (density, folder, ic_launcher_px, round_px, foreground_px)
+          densities = [
+              ('mdpi',    48,  48,  108),
+              ('hdpi',    72,  72,  162),
+              ('xhdpi',  96,  96,  216),
+              ('xxhdpi', 144, 144, 324),
+              ('xxxhdpi',192, 192, 432),
+          ]
+
+          for density, sz, rsz, fsz in densities:
+              folder = os.path.join(base, f'mipmap-{density}')
+              os.makedirs(folder, exist_ok=True)
+
+              # ic_launcher.png â€” square icon
+              icon = img.resize((sz, sz), Image.LANCZOS)
+              bg = Image.new('RGBA', (sz, sz), (7, 8, 15, 255))
+              if icon.mode == 'RGBA':
+                  bg.paste(icon, mask=icon.split()[3])
+              else:
+                  bg.paste(icon)
+              bg.convert('RGB').save(os.path.join(folder, 'ic_launcher.png'))
+
+              # ic_launcher_round.png â€” circular icon
+              from PIL import ImageDraw
+              round_img = img.resize((rsz, rsz), Image.LANCZOS)
+              mask = Image.new('L', (rsz, rsz), 0)
+              draw = ImageDraw.Draw(mask)
+              draw.ellipse([0, 0, rsz, rsz], fill=255)
+              bg2 = Image.new('RGBA', (rsz, rsz), (7, 8, 15, 255))
+              if round_img.mode == 'RGBA':
+                  bg2.paste(round_img, mask=round_img.split()[3])
+              else:
+                  bg2.paste(round_img)
+              bg2.putalpha(mask)
+              final_round = Image.new('RGB', (rsz, rsz), (7, 8, 15))
+              final_round.paste(bg2, mask=bg2.split()[3])
+              final_round = final_round.resize((sz, sz), Image.LANCZOS)
+              final_round.save(os.path.join(folder, 'ic_launcher_round.png'))
+
+              # ic_launcher_foreground.png â€” for adaptive icon (108dp canvas)
+              fg = img.resize((fsz, fsz), Image.LANCZOS)
+              canvas = Image.new('RGBA', (fsz, fsz), (0, 0, 0, 0))
+              pad = int(fsz * 0.125)
+              inner = img.resize((fsz - pad*2, fsz - pad*2), Image.LANCZOS)
+              if inner.mode == 'RGBA':
+                  canvas.paste(inner, (pad, pad), mask=inner.split()[3])
+              else:
+                  canvas.paste(inner, (pad, pad))
+              canvas.save(os.path.join(folder, 'ic_launcher_foreground.png'))
+
+              print(f'  {density}: {sz}px launcher, {rsz}px round, {fsz}px foreground')
+
+          print('All icon sizes generated.')
+          PYEOF
+
+      # â”€â”€ 12. WRITE ADAPTIVE ICON XML (Android 8+) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Write adaptive icon XML
+        run: |
+          mkdir -p android/app/src/main/res/mipmap-anydpi-v26
+
+          cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background"/>
+              <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
+          cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background"/>
+              <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
+          # Write the background color resource
+          mkdir -p android/app/src/main/res/values
+          cat > android/app/src/main/res/values/ic_launcher_background.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="ic_launcher_background">#07080F</color>
+          </resources>
+          EOF
+
+      # â”€â”€ 13. GENERATE SPLASH SCREEN FROM ICON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Generate splash screen drawable
+        run: |
+          python3 << 'PYEOF'
+          from PIL import Image
+          import os
+
+          src = 'www/icon.png'
+          if not os.path.exists(src):
+              print('No icon.png â€” skip splash')
+              exit(0)
+
+          img = Image.open(src).convert('RGBA')
+
+          # Splash screen sizes: (folder, width, height)
+          splashes = [
+              ('drawable',          480,  800),
+              ('drawable-land-hdpi',800,  480),
+              ('drawable-port-hdpi',480,  800),
+              ('drawable-land-mdpi',320,  240),
+              ('drawable-port-mdpi',240,  320),
+              ('drawable-xxhdpi',   960, 1600),
+              ('drawable-xxxhdpi', 1280, 1920),
+          ]
+
+          for folder, w, h in splashes:
+              path = f'android/app/src/main/res/{folder}'
+              os.makedirs(path, exist_ok=True)
+              splash = Image.new('RGB', (w, h), (7, 8, 15))  # #07080F background
+              icon_size = min(w, h) // 3
+              icon = img.resize((icon_size, icon_size), Image.LANCZOS)
+              x = (w - icon_size) // 2
+              y = (h - icon_size) // 2
+              if icon.mode == 'RGBA':
+                  splash.paste(icon, (x, y), mask=icon.split()[3])
+              else:
+                  splash.paste(icon, (x, y))
+              splash.save(os.path.join(path, 'splash.png'))
+              print(f'  {folder}: {w}x{h}')
+
+          print('Splash screens generated.')
+          PYEOF
+
+      # â”€â”€ 14. INJECT DEEP LINK INTO AndroidManifest.xml â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Inject deep link intent filter into AndroidManifest.xml
+        run: |
+          python3 << 'PYEOF'
+          import re
+
+          manifest_path = 'android/app/src/main/AndroidManifest.xml'
+          with open(manifest_path, 'r', encoding='utf-8') as f:
+              content = f.read()
+
+          deep_link = '''
+                  <intent-filter android:autoVerify="true">
+                      <action android:name="android.intent.action.VIEW" />
+                      <category android:name="android.intent.category.DEFAULT" />
+                      <category android:name="android.intent.category.BROWSABLE" />
+                      <data android:scheme="com.upnepa.osun" android:host="login-callback" />
+                  </intent-filter>'''
+
+          if 'login-callback' not in content:
+              # Insert before the closing </activity> tag
+              content = content.replace('</activity>', deep_link + '\n        </activity>', 1)
+              with open(manifest_path, 'w', encoding='utf-8') as f:
+                  f.write(content)
+              print('Deep link injected.')
+          else:
+              print('Deep link already present.')
+
+          # Also add VIBRATE and RECEIVE_BOOT_COMPLETED permissions for notifications
+          permissions = [
+              '<uses-permission android:name="android.permission.VIBRATE" />',
+              '<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />',
+              '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
+          ]
+          for perm in permissions:
+              perm_name = re.search(r'android:name="([^"]+)"', perm).group(1)
+              if perm_name not in content:
+                  content = content.replace('<application', perm + '\n    <application', 1)
+
+          with open(manifest_path, 'w', encoding='utf-8') as f:
+              f.write(content)
+          print('Permissions added.')
+          PYEOF
+
+      # â”€â”€ 15. COPY NOTIFICATION SOUND TO ANDROID RAW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Copy notification sound to Android raw resources
+        run: |
+          mkdir -p android/app/src/main/res/raw
+          if [ -f www/light_alert.wav ]; then
+            cp www/light_alert.wav android/app/src/main/res/raw/light_alert.wav
+            echo "light_alert.wav copied to raw resources"
+          else
+            echo "WARNING: light_alert.wav not found"
+          fi
+
+      # â”€â”€ 16. COPY google-services.json â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Copy google-services.json
+        run: |
+          if [ -f www/google-services.json ]; then
+            cp www/google-services.json android/app/google-services.json
+            echo "google-services.json copied"
+          else
+            echo "WARNING: google-services.json not found in www/"
+          fi
+
+      # â”€â”€ 17. SET GRADLE PROPERTIES FOR FASTER BUILD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Configure Gradle properties
+        run: |
+          cat >> android/gradle.properties << 'EOF'
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m
+          org.gradle.parallel=true
+          org.gradle.caching=true
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
+      # â”€â”€ 18. MAKE GRADLEW EXECUTABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build Debug APK
-        run: cd android && ./gradlew assembleDebug --no-daemon
+      # â”€â”€ 19. BUILD DEBUG APK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Upload APK
+      # â”€â”€ 20. RENAME AND UPLOAD APK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: Rename APK and upload artifact
+        run: |
+          APK_PATH=$(find android -name "*.apk" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "ERROR: No APK found!"
+            exit 1
+          fi
+          cp "$APK_PATH" Up-Nepa-Osun.apk
+          echo "APK ready: Up-Nepa-Osun.apk ($(du -sh Up-Nepa-Osun.apk | cut -f1))"
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: UpNepaOsun-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
-
-      - name: Show result
-        run: |
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          if [ -f "$APK" ]; then echo "SUCCESS:"; ls -lh "$APK"; else echo "FAILED"; exit 1; fi
+          name: Up-Nepa-Osun-APK
+          path: Up-Nepa-Osun.apk
+          retention-days: 14
