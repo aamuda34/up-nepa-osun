@@ -559,8 +559,11 @@
 // ════════════════════════════════════════════════════════════════
 
 // ── CEO EMAILS ────────────────────────────────────────────────────
-var CEO_EMAILS = ['aamuda34@gmail.com','adedapoamuda720@gmail.com'];
-
+var CEO_EMAILS = [
+  'upnepaosun@gmail.com',
+  'aamuda34@gmail.com',
+  'adedapoamuda720@gmail.com'
+];
 // ── TICKER NEWS ───────────────────────────────────────────────────
 // HOW TO UPDATE: Edit this array, commit to GitHub. Changes appear instantly.
 // The ticker reads from Supabase 'settings' table if available, fallback to this array.
@@ -1657,7 +1660,7 @@ window.App = (function(){
             }).join(''):'<div class="no-cmt">No updates yet. Be the first!</div>';
 
             var cardClass='card'+(on?' on':'');
-            return'<div class="'+cardClass+'" id="card-'+s.id+'">'+
+            return '<div class="'+cardClass+'" data-id="'+s.id+'" id="card-'
                 tcHTML+
                 '<div class="card-head"><div class="card-top-row">'+
                 '<div class="card-info">'+
