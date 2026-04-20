@@ -2010,6 +2010,52 @@ window.App = (function(){
 }());
 
 document.addEventListener('DOMContentLoaded',function(){App._boot();});
+    // ==========================
+// ✅ SAFE VOTING SYSTEM
+// ==========================
+async function safeVote(areaId, type){
+  try{
+    if(!App || !App.S || !App.S.user){
+      toast("Login required","err");
+      return;
+    }
+
+    const userId = App.S.user.id;
+
+    // Check if already voted
+    const { data: existing } = await DB
+      .from('votes')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('area_id', areaId)
+      .single();
+
+    if(existing){
+      toast("You already voted","err");
+      return;
+    }
+
+    // Insert vote
+    const { error } = await DB.from('votes').insert([{
+      user_id: userId,
+      area_id: areaId,
+      vote_type: type
+    }]);
+
+    if(error){
+      toast("Vote failed","err");
+      return;
+    }
+
+    // Reward user once
+    await addPoints(userId, 2, "vote");
+
+    toast("Vote recorded","ok");
+
+  }catch(e){
+    console.log("vote error", e);
+  }
+}
 </script>
 </body>
 </html>
